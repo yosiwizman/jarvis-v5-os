@@ -1,0 +1,16 @@
+{
+  "name": "jarvis",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "node apps/web/scripts/mkcert-dev.mjs && concurrently -n server,next,tls \"npm -w @jarvis/server run dev\" \"cd apps/web && node node_modules/next/dist/bin/next dev -p 3001 -H localhost\" \"cd apps/web && node dev-proxy.mjs\"",
+    "web": "node apps/web/scripts/mkcert-dev.mjs && concurrently -n next,tls \"cd apps/web && node node_modules/next/dist/bin/next dev -p 3001 -H localhost\" \"cd apps/web && node dev-proxy.mjs\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "turbo": "latest"
+  }
+}

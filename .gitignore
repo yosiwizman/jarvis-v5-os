@@ -1,0 +1,23 @@
+node_modules
+pnpm-lock.yaml
+yarn.lock
+.next
+out
+.DS_Store
+dist
+.env
+infra/certs/*.pem
+!infra/certs/localhost.pem
+!infra/certs/localhost-key.pem
+apps/server/certs/*.pem
+
+# API keys and secrets
+apps/server/data/secrets.json
+apps/server/data/files/
+
+# Infrastructure certificates
+apps/server/infra/
+
+# Web certificates
+apps/web/certs/
+apps/web/*.pem

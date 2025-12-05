@@ -1,0 +1,838 @@
+'use client';
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent
+} from 'react';
+import { readSettings, type TextChatSettings } from '@shared/settings';
+import { buildServerUrl } from '@/lib/api';
+import { getFunctionTools } from '@/lib/jarvis-functions';
+import { useRouter } from 'next/navigation';
+import { getSecuritySocket, type CameraPresence, type SecurityFramePayload } from '@/lib/socket';
+
+type ChatMessage = {
+  id: string;
+  role: 'user' | 'assistant' | 'function';
+  content: string;
+  status?: 'pending' | 'error' | 'executing';
+  functionName?: string;
+  imageUrl?: string;
+};
+
+type ToolCall = {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+};
+
+function createId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2);
+}
+
+export default function ChatPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [responseId, setResponseId] = useState<string | null>(null);
+  const [chatSettings, setChatSettings] = useState<TextChatSettings>(() => readSettings().textChat);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'smartMirrorSettings') {
+        setChatSettings(readSettings().textChat);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  useEffect(() => {
+    if (endRef.current) {
+      endRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [messages]);
+
+  const activeModel = useMemo(() => chatSettings?.model || 'gpt-5', [chatSettings?.model]);
+  const activeReasoning = useMemo(
+    () => chatSettings?.reasoningEffort || 'low',
+    [chatSettings?.reasoningEffort]
+  );
+  const activeVerbosity = useMemo(
+    () => chatSettings?.verbosity || 'medium',
+    [chatSettings?.verbosity]
+  );
+
+  // Function execution handlers (same as JarvisAssistant)
+  async function executeFunction(name: string, args: any): Promise<{ success: boolean; message: string; data?: any; imageUrl?: string }> {
+    console.log(`Executing function: ${name}`, args);
+    
+    try {
+      switch (name) {
+        case 'create_image':
+          return await handleCreateImage(args);
+        case 'create_3d_model':
+          return await handleCreate3DModel(args);
+        case 'navigate_to_page':
+          return handleNavigate(args);
+        case 'list_files':
+          return await handleListFiles();
+        case 'capture_images':
+          return await handleCaptureImages(args);
+        case 'analyze_camera_view':
+          return await handleAnalyzeCameraView(args);
+        default:
+          return { success: false, message: `Unknown function: ${name}` };
+      }
+    } catch (error: any) {
+      console.error(`Error executing ${name}:`, error);
+      return {
+        success: false,
+        message: error.message || 'Function execution failed'
+      };
+    }
+  }
+
+  async function handleCreateImage(args: { prompt: string; size?: string }) {
+    const { prompt, size = '1024x1024' } = args;
+    
+    try {
+      console.log('🎨 Starting image generation:', prompt);
+      
+      const imageSettings = chatSettings.imageGeneration || readSettings().imageGeneration || {
+        model: 'dall-e-3',
+        size: '1024x1024',
+        quality: 'high',
+        partialImages: 0
+      };
+      
+      const response = await fetch(buildServerUrl('/openai/generate-image'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          settings: {
+            ...imageSettings,
+            size
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Image generation error:', errorData);
+        throw new Error(errorData.error || `Failed to generate image: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      let imageUrl = '';
+      let buffer = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) continue;
+          
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            console.log('📨 Image generation event:', parsed.type);
+            
+            if (parsed.type === 'final_image' && parsed.image) {
+              imageUrl = `data:image/png;base64,${parsed.image}`;
+              console.log('✅ Final image received');
+            } else if (parsed.type === 'error') {
+              const errorMsg = parsed.error || parsed.message || 'Image generation failed';
+              console.error('🚨 OpenAI API Error:', errorMsg);
+              throw new Error(errorMsg);
+            }
+          } catch (e) {
+            if (e instanceof Error && (
+              e.message.includes('generation failed') || 
+              e.message.includes('Image generation failed') ||
+              e.message.includes('OpenAI') ||
+              e.message.includes('server had an error')
+            )) {
+              throw e;
+            }
+          }
+        }
+      }
+
+      if (imageUrl) {
+        console.log('✅ Image generation completed successfully');
+        return { 
+          success: true, 
+          message: 'I\'ve created your image. Here it is:', 
+          imageUrl 
+        };
+      } else {
+        console.error('❌ No image URL after stream completed');
+        throw new Error('No image generated. This may be due to an OpenAI API error. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error creating image:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Failed to create image' 
+      };
+    }
+  }
+
+  async function handleCreate3DModel(args: { prompt: string }) {
+    const { prompt } = args;
+    
+    try {
+      console.log('🎲 Starting 3D model generation:', prompt);
+      
+      const createResponse = await fetch(buildServerUrl('/models/create'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'text',
+          prompt,
+          settings: {
+            artStyle: 'realistic',
+            outputFormat: 'glb'
+          }
+        })
+      });
+
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to create 3D model job: ${createResponse.statusText}`);
+      }
+
+      const { id: jobId } = await createResponse.json();
+      console.log('🎲 Job created:', jobId);
+      
+      return {
+        success: true,
+        message: `I'm generating your 3D model now. This will take 15-30 minutes. You can check the progress on the 3D Model page.`,
+        data: { jobId }
+      };
+      
+    } catch (error) {
+      console.error('Error creating 3D model:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Failed to create 3D model' 
+      };
+    }
+  }
+
+  function handleNavigate(args: { page: string }) {
+    const { page } = args;
+    
+    setTimeout(() => {
+      router.push(page);
+    }, 1000);
+    
+    const pageName = page.split('/').pop() || 'page';
+    return {
+      success: true,
+      message: `Opening ${pageName} page...`
+    };
+  }
+
+  async function handleListFiles() {
+    try {
+      const response = await fetch(buildServerUrl('/file-library'));
+      const data = await response.json();
+      const files = data.files || [];
+      
+      setTimeout(() => {
+        router.push('/files');
+      }, 1500);
+      
+      return {
+        success: true,
+        message: `You have ${files.length} files in your library. Opening the files page...`,
+        data: files
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: `Failed to list files: ${error.message}`
+      };
+    }
+  }
+
+  async function handleCaptureImages(args: { tag?: string | null }) {
+    try {
+      await fetch(buildServerUrl('/tools/invoke'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'cameras.captureAll',
+          args: { tag: args.tag || 'jarvis-capture' }
+        })
+      });
+      
+      return {
+        success: true,
+        message: 'Capturing images from all connected cameras...'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: `Failed to capture images: ${error.message}`
+      };
+    }
+  }
+
+  async function handleAnalyzeCameraView(args: { camera_id?: string | null; question?: string | null }) {
+    const { camera_id, question } = args;
+    
+    try {
+      console.log('👁️ Analyzing camera view...', args);
+      
+      const socket = getSecuritySocket();
+      
+      if (!socket) {
+        throw new Error('Security socket not available');
+      }
+      
+      const cameras = await new Promise<CameraPresence[]>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout waiting for camera list'));
+        }, 5000);
+        
+        const handleList = ({ cameras }: { cameras: CameraPresence[] }) => {
+          clearTimeout(timeout);
+          socket.off('cameras:list', handleList);
+          resolve(cameras);
+        };
+        
+        socket.on('cameras:list', handleList);
+        socket.emit('cameras:requestList');
+      });
+      
+      if (cameras.length === 0) {
+        return {
+          success: false,
+          message: 'No cameras are currently available. Please ensure a camera is connected on the Security page.'
+        };
+      }
+      
+      const targetCamera = camera_id 
+        ? cameras.find(c => c.cameraId === camera_id)
+        : cameras[0];
+      
+      if (!targetCamera) {
+        return {
+          success: false,
+          message: camera_id 
+            ? `Camera "${camera_id}" not found.`
+            : 'No cameras available.'
+        };
+      }
+      
+      console.log('📹 Using camera:', targetCamera.friendlyName);
+      
+      socket.emit('security:subscribe', { cameraId: targetCamera.cameraId });
+      
+      const frame = await new Promise<SecurityFramePayload>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout waiting for camera frame'));
+        }, 8000);
+        
+        const handleFrame = (payload: SecurityFramePayload) => {
+          if (payload.cameraId === targetCamera.cameraId) {
+            clearTimeout(timeout);
+            socket.off('security:frame', handleFrame);
+            resolve(payload);
+          }
+        };
+        
+        socket.on('security:frame', handleFrame);
+      });
+      
+      console.log('📸 Frame captured from camera');
+      
+      socket.emit('security:unsubscribe', { cameraId: targetCamera.cameraId });
+      
+      const timestamp = new Date(frame.ts).toLocaleTimeString();
+      const imageDataUrl = `data:image/jpeg;base64,${frame.jpegBase64}`;
+      
+      // Save the frame to file library
+      try {
+        const saveResponse = await fetch(buildServerUrl('/file-library/store-image'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataUrl: imageDataUrl,
+            filename: `jarvis-vision-${targetCamera.friendlyName}`,
+            prompt: `Camera view from ${targetCamera.friendlyName}`
+          })
+        });
+        
+        if (saveResponse.ok) {
+          const { filename } = await saveResponse.json();
+          console.log('💾 Saved camera frame to files:', filename);
+        }
+      } catch (saveError) {
+        console.warn('⚠️ Error saving camera frame:', saveError);
+      }
+      
+      return {
+        success: true,
+        message: `Captured view from ${targetCamera.friendlyName} at ${timestamp}. Analyzing the image...`,
+        imageUrl: imageDataUrl,
+        data: {
+          camera: targetCamera.friendlyName,
+          timestamp: frame.ts,
+          question: question || 'What do you see in this image?'
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Error analyzing camera view:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to analyze camera view.'
+      };
+    }
+  }
+
+  // Handle tool calls from the API
+  async function handleToolCalls(toolCalls: ToolCall[], currentResponseId: string) {
+    console.log('🔧 Handling tool calls:', toolCalls);
+    
+    // Add function execution messages
+    const executionMessages: ChatMessage[] = toolCalls.map(tc => ({
+      id: createId(),
+      role: 'function' as const,
+      content: `Executing ${tc.function.name}...`,
+      status: 'executing' as const,
+      functionName: tc.function.name
+    }));
+    
+    setMessages(prev => [...prev, ...executionMessages]);
+    
+    // Execute all functions
+    const toolResults = await Promise.all(
+      toolCalls.map(async (tc) => {
+        try {
+          const args = JSON.parse(tc.function.arguments);
+          const result = await executeFunction(tc.function.name, args);
+          
+          // Update the execution message with result
+          setMessages(prev => prev.map(msg => {
+            if (msg.functionName === tc.function.name && msg.status === 'executing') {
+              return {
+                ...msg,
+                content: result.message,
+                status: result.success ? undefined : 'error' as const,
+                imageUrl: result.imageUrl
+              };
+            }
+            return msg;
+          }));
+          
+          return {
+            toolCallId: tc.id,
+            output: JSON.stringify(result)
+          };
+        } catch (error) {
+          console.error(`Error executing ${tc.function.name}:`, error);
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          
+          setMessages(prev => prev.map(msg => {
+            if (msg.functionName === tc.function.name && msg.status === 'executing') {
+              return {
+                ...msg,
+                content: `Error: ${errorMsg}`,
+                status: 'error' as const
+              };
+            }
+            return msg;
+          }));
+          
+          return {
+            toolCallId: tc.id,
+            output: JSON.stringify({ success: false, message: errorMsg })
+          };
+        }
+      })
+    );
+    
+    // Send tool results back to continue the conversation
+    return submitToolResults(currentResponseId, toolResults);
+  }
+
+  async function submitToolResults(currentResponseId: string, toolResults: Array<{ toolCallId: string; output: string }>) {
+    const latestSettings = readSettings().textChat;
+    
+    // Parse all tool results to extract meaningful messages
+    const resultMessages = toolResults.map(tr => {
+      try {
+        const parsed = JSON.parse(tr.output);
+        return parsed.message || JSON.stringify(parsed);
+      } catch {
+        return tr.output;
+      }
+    }).join('\n');
+    
+    try {
+      // For simpler compatibility, just send a continuation message asking for acknowledgment
+      const response = await fetch(buildServerUrl('/openai/text-chat'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            ...messages
+              .filter(m => m.role !== 'function')  // Exclude function execution messages
+              .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+            { role: 'user', content: `[Function results: ${resultMessages}]\n\nPlease acknowledge or respond naturally based on these function results.` }
+          ],
+          settings: {
+            model: latestSettings?.model,
+            initialPrompt: latestSettings?.initialPrompt,
+            reasoningEffort: latestSettings?.reasoningEffort,
+            verbosity: latestSettings?.verbosity,
+            maxOutputTokens: latestSettings?.maxOutputTokens
+          },
+          tools: getFunctionTools()
+        })
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = payload?.error || 'Failed to get response after function execution.';
+        throw new Error(message);
+      }
+
+      // Check if there are more tool calls
+      if (payload?.toolCalls && payload.toolCalls.length > 0) {
+        console.log('🔄 More tool calls to execute...');
+        setResponseId(payload.responseId || null);
+        return handleToolCalls(payload.toolCalls, payload.responseId);
+      }
+
+      // Otherwise, we got the final response
+      if (payload?.message) {
+        const assistantMessage: ChatMessage = {
+          id: createId(),
+          role: 'assistant',
+          content: payload.message.trim()
+        };
+        
+        setMessages(prev => [...prev, assistantMessage]);
+        setResponseId(payload.responseId || null);
+      }
+    } catch (error) {
+      console.error('Error after function execution:', error);
+      const errorMessage: ChatMessage = {
+        id: createId(),
+        role: 'assistant',
+        content: error instanceof Error ? error.message : 'Failed to continue conversation after function execution.',
+        status: 'error'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  }
+
+  const sendMessage = useCallback(async () => {
+    const trimmed = input.trim();
+    if (!trimmed || isSending) {
+      return;
+    }
+
+    const latestSettings = readSettings().textChat;
+    setChatSettings(latestSettings);
+
+    const userMessage: ChatMessage = { id: createId(), role: 'user', content: trimmed };
+    const pendingId = createId();
+    const conversation = [...messages, userMessage];
+
+    setMessages([
+      ...conversation,
+      { id: pendingId, role: 'assistant', content: '', status: 'pending' }
+    ]);
+    setInput('');
+    setError(null);
+    setIsSending(true);
+
+    try {
+      const response = await fetch(buildServerUrl('/openai/text-chat'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: conversation.map(({ role, content }) => ({ role, content })),
+          previousResponseId: responseId ?? undefined,
+          settings: {
+            model: latestSettings?.model,
+            initialPrompt: latestSettings?.initialPrompt,
+            reasoningEffort: latestSettings?.reasoningEffort,
+            verbosity: latestSettings?.verbosity,
+            maxOutputTokens: latestSettings?.maxOutputTokens
+          },
+          tools: getFunctionTools()
+        })
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = payload?.error || 'Unable to get a response from GPT-5.';
+        throw new Error(message);
+      }
+
+      // Remove pending message
+      setMessages(prev => prev.filter(m => m.id !== pendingId));
+
+      // Check if response contains tool calls
+      if (payload?.toolCalls && payload.toolCalls.length > 0) {
+        console.log('🔧 Tool calls received:', payload.toolCalls);
+        setResponseId(payload.responseId || null);
+        await handleToolCalls(payload.toolCalls, payload.responseId);
+      } else {
+        // Regular text response
+        const assistantContent =
+          typeof payload?.message === 'string' ? payload.message.trim() : '';
+        const nextResponseId = payload?.responseId ? String(payload.responseId) : null;
+
+        setResponseId(nextResponseId);
+        const assistantMessage: ChatMessage = {
+          id: createId(),
+          role: 'assistant',
+          content: assistantContent || 'I had trouble generating a response this time.',
+          status: assistantContent ? undefined : 'error'
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send message.';
+      setError(message);
+      setMessages((prev) =>
+        prev.map((entry) =>
+          entry.id === pendingId
+            ? ({
+                id: pendingId,
+                role: 'assistant',
+                content: message,
+                status: 'error'
+              } satisfies ChatMessage)
+            : entry
+        )
+      );
+    } finally {
+      setIsSending(false);
+    }
+  }, [input, isSending, messages, responseId]);
+
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void sendMessage();
+    },
+    [sendMessage]
+  );
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        void sendMessage();
+      }
+    },
+    [sendMessage]
+  );
+
+  const clearConversation = useCallback(() => {
+    setMessages([]);
+    setResponseId(null);
+    setError(null);
+  }, []);
+
+  const disableSend = isSending || !input.trim();
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Text Chat with Function Calling</h1>
+          <p className="text-sm text-white/60">
+            Using {activeModel} • reasoning: {activeReasoning} • verbosity: {activeVerbosity}
+          </p>
+          <p className="text-xs text-cyan-400 mt-1">
+            ✨ Function calling enabled - I can create images, generate 3D models, navigate pages, and more!
+          </p>
+        </div>
+        {messages.length ? (
+          <button
+            className="btn border-white/15 bg-transparent text-white/70 hover:bg-white/10"
+            type="button"
+            onClick={clearConversation}
+            disabled={isSending}
+          >
+            Clear conversation
+          </button>
+        ) : null}
+      </div>
+
+      <div className="card flex h-[70vh] flex-col overflow-hidden">
+        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+          {messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-center text-sm text-white/50">
+              <div className="space-y-4 max-w-xl">
+                <p>
+                  Start a conversation with Jarvis's GPT-5 text assistant with function calling.
+                </p>
+                <div className="text-xs text-left space-y-2 p-4 bg-white/5 rounded-xl">
+                  <p className="text-cyan-400 font-semibold">Try asking me to:</p>
+                  <ul className="space-y-1 text-white/70">
+                    <li>• Create an image of a futuristic city</li>
+                    <li>• Generate a 3D model of a hammer</li>
+                    <li>• Show me my files</li>
+                    <li>• Navigate to the settings page</li>
+                    <li>• Capture images from the cameras</li>
+                    <li>• What do you see? (with camera connected)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+            messages.map((message) => {
+              const isUser = message.role === 'user';
+              const isFunction = message.role === 'function';
+              
+              let bubbleClass = '';
+              if (isUser) {
+                bubbleClass = 'bg-sky-500/80 text-white border border-sky-400/40 shadow-sky-900/20';
+              } else if (isFunction) {
+                if (message.status === 'executing') {
+                  bubbleClass = 'bg-cyan-500/20 text-cyan-100 border border-cyan-500/40 animate-pulse';
+                } else if (message.status === 'error') {
+                  bubbleClass = 'bg-rose-500/10 text-rose-100 border border-rose-500/40';
+                } else {
+                  bubbleClass = 'bg-cyan-500/10 text-cyan-100 border border-cyan-500/30';
+                }
+              } else {
+                if (message.status === 'error') {
+                  bubbleClass = 'bg-rose-500/10 text-rose-100 border border-rose-500/40';
+                } else {
+                  bubbleClass = 'bg-white/5 text-white/90 border border-white/10 backdrop-blur-sm';
+                }
+              }
+              
+              return (
+                <div
+                  key={message.id}
+                  className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`flex max-w-[75%] flex-col gap-1 ${
+                      isUser ? 'items-end text-right' : 'items-start text-left'
+                    }`}
+                  >
+                    <span
+                      className={`text-xs uppercase tracking-wide ${
+                        isUser ? 'text-sky-200' : isFunction ? 'text-cyan-300' : 'text-white/50'
+                      }`}
+                    >
+                      {isUser ? 'You' : isFunction ? '⚙️ Function' : 'Jarvis'}
+                    </span>
+                    <div
+                      className={`whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-lg ${bubbleClass}`}
+                    >
+                      {message.status === 'pending' ? (
+                        <span className="flex items-center gap-2 text-white/70">
+                          <span className="h-2 w-2 animate-ping rounded-full bg-white/70" />
+                          Thinking…
+                        </span>
+                      ) : (
+                        <>
+                          {message.content}
+                          {message.imageUrl && (
+                            <div className="mt-3">
+                              <img
+                                src={message.imageUrl}
+                                alt="Generated content"
+                                className="max-w-full rounded-lg border border-cyan-500/30"
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    {message.status === 'error' ? (
+                      <span className="text-xs text-rose-200">An error occurred.</span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={endRef} />
+        </div>
+
+        <form
+          className="space-y-3 border-t border-white/5 bg-black/20 px-6 py-4 backdrop-blur"
+          onSubmit={handleSubmit}
+        >
+          {error ? (
+            <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+              {error}
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
+            <div className="flex-1">
+              <label className="sr-only" htmlFor="chat-input">
+                Message
+              </label>
+              <textarea
+                id="chat-input"
+                rows={3}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask me to create images, generate 3D models, or anything else… (Shift + Enter for a new line)"
+                className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400/40"
+                disabled={isSending}
+              />
+            </div>
+            <div className="flex gap-2 md:w-auto">
+              <button
+                className="btn flex items-center gap-2 border-sky-500/40 bg-sky-500/80 px-5 py-2 text-sm font-medium text-white hover:bg-sky-500/70"
+                type="submit"
+                disabled={disableSend}
+              >
+                {isSending ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

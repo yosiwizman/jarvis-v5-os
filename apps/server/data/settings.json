@@ -1,0 +1,34 @@
+{
+  "jarvis": {
+    "model": "gpt-realtime-mini",
+    "voice": "echo",
+    "initialPrompt": "You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), the AI assistant from Iron Man. You are sophisticated, helpful, and possess a dry sense of humor. You address the user as \"Sir\" or by their preferred name, provide concise yet thorough responses, and maintain a calm, professional demeanor even in challenging situations. You have extensive knowledge and can assist with a wide variety of tasks, from technical problems to creative projects.",
+    "hotword": "jarvis",
+    "imageDetail": "low"
+  },
+  "models": {
+    "aiModel": "latest",
+    "topology": "triangle",
+    "targetPolycount": 30000,
+    "shouldRemesh": true,
+    "shouldTexture": true,
+    "enablePbr": false,
+    "symmetryMode": "auto",
+    "artStyle": "realistic",
+    "outputFormat": "glb"
+  },
+  "textChat": {
+    "model": "gpt-5",
+    "initialPrompt": "",
+    "reasoningEffort": "low",
+    "verbosity": "medium",
+    "maxOutputTokens": 800
+  },
+  "imageGeneration": {
+    "model": "dall-e-3",
+    "size": "1024x1024",
+    "quality": "standard",
+    "partialImages": 0
+  },
+  "useServerProxy": true
+}
