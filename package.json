@@ -12,6 +12,7 @@
     "build": "npm run build -ws --if-present",
     "lint": "npm run lint -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",
+    "smoke": "tsx scripts/smoke.ts",
     "clean": "rimraf node_modules apps/*/node_modules packages/*/node_modules .next apps/*/.next"
   },
   "devDependencies": {

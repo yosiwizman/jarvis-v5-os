@@ -101,7 +101,7 @@ export default function FunctionsPage() {
       {/* Overview Stats */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card p-6">
-          <div className="text-4xl font-bold text-cyan-400">{jarvisFunctions.length}</div>
+          <div className="text-4xl font-bold jarvis-accent-text">{jarvisFunctions.length}</div>
           <div className="text-white/70 mt-2">Total Functions</div>
         </div>
         <div className="card p-6">
@@ -150,8 +150,8 @@ export default function FunctionsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-3xl">{icon}</span>
-                      <h3 className="text-xl font-mono text-cyan-400">{func.name}</h3>
-                      <span className="text-xs px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded">
+                      <h3 className="text-xl font-mono jarvis-accent-text">{func.name}</h3>
+                      <span className="text-xs px-2 py-1 bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text rounded">
                         {func.parameters.required.length > 0 ? 'Required Params' : 'Optional Params'}
                       </span>
                       {/* Enabled/Disabled Badge */}
@@ -205,19 +205,19 @@ export default function FunctionsPage() {
                 <div className="px-6 pb-6 space-y-6 border-t border-white/10 pt-6">
                   {/* Parameters */}
                   <div>
-                    <h4 className="text-lg font-semibold mb-3 text-purple-400">📋 Parameters</h4>
+                    <h4 className="text-lg font-semibold mb-3 jarvis-accent-text">📋 Parameters</h4>
                     <div className="space-y-3">
                       {Object.entries(func.parameters.properties).map(([paramName, paramDef]: [string, any]) => (
                         <div key={paramName} className="bg-black/30 rounded-lg p-4 border border-white/10">
                           <div className="flex items-start justify-between mb-2">
-                            <code className="text-sm font-mono text-cyan-300">{paramName}</code>
+                            <code className="text-sm font-mono jarvis-accent-text">{paramName}</code>
                             <div className="flex gap-2">
                               {func.parameters.required.includes(paramName) && (
                                 <span className="text-xs px-2 py-1 bg-red-500/20 text-red-300 rounded">
                                   required
                                 </span>
                               )}
-                              <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded font-mono">
+                              <span className="text-xs px-2 py-1 bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text rounded font-mono">
                                 {getParameterType(paramDef)}
                               </span>
                             </div>
@@ -244,8 +244,8 @@ export default function FunctionsPage() {
                   </div>
 
                   {/* Usage Notes */}
-                  <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-                    <h4 className="text-sm font-semibold mb-2 text-blue-400">💡 Usage Notes</h4>
+                  <div className="bg-[color:rgb(var(--jarvis-accent)_/_0.1)] rounded-lg p-4 border border-[color:rgb(var(--jarvis-accent)_/_0.2)]">
+                    <h4 className="text-sm font-semibold mb-2 jarvis-accent-text">💡 Usage Notes</h4>
                     <ul className="text-sm text-white/70 space-y-1 list-disc list-inside">
                       {func.name === 'search_files' && (
                         <>

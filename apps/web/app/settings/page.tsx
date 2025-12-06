@@ -6,9 +6,13 @@ import {
   updateJarvisSettings,
   updateModelSettings,
   updateTextChatSettings,
+  updateIntegration,
   updateSettings,
   type AppSettings,
-  type TextChatSettings
+  type TextChatSettings,
+  type IntegrationId,
+  integrationMetadata,
+  isIntegrationConnected
 } from '@shared/settings';
 import { buildServerUrl } from '@/lib/api';
 import { getRootSocket } from '@/lib/socket';
@@ -19,7 +23,7 @@ type KeyMetaState = Record<KeyName, { present: boolean }>;
 type FeedbackState = Partial<Record<KeyName, { type: 'success' | 'error'; message: string }>>;
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [keysMeta, setKeysMeta] = useState<KeyMetaState | null>(null);
   const [pendingKeys, setPendingKeys] = useState<Record<KeyName, string>>({ openai: '', meshy: '' });
@@ -318,12 +322,15 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-semibold">Settings</h1>
 
       {/* Appearance / Theme Section */}
-      <section className="card p-6 space-y-4">
-        <header className="flex items-center justify-between">
-          <div>
-            <div className="text-lg font-semibold">Appearance</div>
-            <div className="text-white/60 text-sm">Choose your interface theme for Jarvis and Holomat</div>
-          </div>
+      <section className="card p-6 space-y-6">
+        <header>
+          <div className="text-lg font-semibold">Appearance</div>
+          <div className="text-white/60 text-sm">Choose your interface theme for Jarvis and Holomat</div>
+        </header>
+        
+        {/* Light/Dark Mode */}
+        <div>
+          <div className="text-sm text-white/70 mb-3">Brightness Mode</div>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -348,7 +355,103 @@ export default function SettingsPage() {
               🌙 Dark
             </button>
           </div>
-        </header>
+        </div>
+        
+        {/* Color Theme Selector */}
+        <div>
+          <div className="text-sm text-white/70 mb-3">Color Theme</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setColorTheme('cyber-blue')}
+              className={`px-4 py-3 text-left rounded-lg border transition-all ${
+                colorTheme === 'cyber-blue'
+                  ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow'
+                  : 'bg-transparent border-white/10 hover:border-white/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                <div>
+                  <div className="text-sm font-medium">Cyber Blue</div>
+                  <div className="text-xs text-white/50">Classic futuristic blue</div>
+                </div>
+              </div>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setColorTheme('midnight-purple')}
+              className={`px-4 py-3 text-left rounded-lg border transition-all ${
+                colorTheme === 'midnight-purple'
+                  ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow'
+                  : 'bg-transparent border-white/10 hover:border-white/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-purple-600"></div>
+                <div>
+                  <div className="text-sm font-medium">Midnight Purple</div>
+                  <div className="text-xs text-white/50">Deep space purple vibes</div>
+                </div>
+              </div>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setColorTheme('solar-flare')}
+              className={`px-4 py-3 text-left rounded-lg border transition-all ${
+                colorTheme === 'solar-flare'
+                  ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow'
+                  : 'bg-transparent border-white/10 hover:border-white/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-orange-500"></div>
+                <div>
+                  <div className="text-sm font-medium">Solar Flare</div>
+                  <div className="text-xs text-white/50">Warm orange energy</div>
+                </div>
+              </div>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setColorTheme('digital-rain')}
+              className={`px-4 py-3 text-left rounded-lg border transition-all ${
+                colorTheme === 'digital-rain'
+                  ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow'
+                  : 'bg-transparent border-white/10 hover:border-white/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                <div>
+                  <div className="text-sm font-medium">Digital Rain</div>
+                  <div className="text-xs text-white/50">Hacker green matrix style</div>
+                </div>
+              </div>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setColorTheme('ice-crystal')}
+              className={`px-4 py-3 text-left rounded-lg border transition-all ${
+                colorTheme === 'ice-crystal'
+                  ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow'
+                  : 'bg-transparent border-white/10 hover:border-white/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-cyan-500"></div>
+                <div>
+                  <div className="text-sm font-medium">Ice Crystal</div>
+                  <div className="text-xs text-white/50">Cool cyan frost</div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className="card p-6 space-y-4">
@@ -874,6 +977,254 @@ export default function SettingsPage() {
             <span>Connected - Your printers are available in the 3D Printers dashboard</span>
           </div>
         )}
+      </section>
+
+      {/* Integrations Cockpit */}
+      <section className="card p-6 space-y-6">
+        <header>
+          <div className="text-lg font-semibold">Integrations</div>
+          <div className="text-white/60 text-sm">Manage external services and providers</div>
+        </header>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Weather Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.weather.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.weather.description}</div>
+              </div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('weather', settings?.integrations?.weather)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('weather', settings?.integrations?.weather) ? 'Connected' : 'Not connected'}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={!!settings?.integrations?.weather?.enabled}
+                onChange={(e) => {
+                  updateIntegration('weather', { enabled: e.target.checked });
+                  setSettings(readSettings());
+                }}
+              />
+              Enable
+            </label>
+
+            {settings?.integrations?.weather?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Location</div>
+                  <input
+                    type="text"
+                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.weather?.defaultLocation ?? ''}
+                    onChange={(e) => {
+                      updateIntegration('weather', { defaultLocation: e.target.value });
+                      setSettings(readSettings());
+                    }}
+                    placeholder="Miami,US"
+                  />
+                </label>
+                <p className="text-xs text-white/40">Requires OPENWEATHER_API_KEY on server</p>
+              </div>
+            )}
+          </div>
+
+          {/* Web Search Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.webSearch.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.webSearch.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.webSearch?.enabled}
+                onChange={(e) => { updateIntegration('webSearch', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.webSearch?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">API Key</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.webSearch?.apiKey ?? ''}
+                    onChange={(e) => { updateIntegration('webSearch', { apiKey: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="SERP API key" />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Local LLM Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.localLLM.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.localLLM.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.localLLM?.enabled}
+                onChange={(e) => { updateIntegration('localLLM', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.localLLM?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Base URL</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.localLLM?.baseUrl ?? ''}
+                    onChange={(e) => { updateIntegration('localLLM', { baseUrl: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="http://localhost:11434" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Model Name</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.localLLM?.modelName ?? ''}
+                    onChange={(e) => { updateIntegration('localLLM', { modelName: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="llama2" />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* ElevenLabs Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.elevenLabs.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.elevenLabs.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.elevenLabs?.enabled}
+                onChange={(e) => { updateIntegration('elevenLabs', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.elevenLabs?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">API Key</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.elevenLabs?.apiKey ?? ''}
+                    onChange={(e) => { updateIntegration('elevenLabs', { apiKey: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="ElevenLabs API key" />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Azure TTS Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.azureTTS.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.azureTTS.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.azureTTS?.enabled}
+                onChange={(e) => { updateIntegration('azureTTS', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.azureTTS?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">API Key</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.azureTTS?.apiKey ?? ''}
+                    onChange={(e) => { updateIntegration('azureTTS', { apiKey: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="Azure key" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Region</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.azureTTS?.region ?? ''}
+                    onChange={(e) => { updateIntegration('azureTTS', { region: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="eastus" />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Spotify Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.spotify.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.spotify.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.spotify?.enabled}
+                onChange={(e) => { updateIntegration('spotify', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.spotify?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.spotify?.clientId ?? ''}
+                    onChange={(e) => { updateIntegration('spotify', { clientId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="Spotify client ID" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client Secret</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.spotify?.clientSecret ?? ''}
+                    onChange={(e) => { updateIntegration('spotify', { clientSecret: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="Client secret" />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Gmail Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.gmail.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.gmail.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.gmail?.enabled}
+                onChange={(e) => { updateIntegration('gmail', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+          </div>
+
+          {/* Google Calendar Card */}
+          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.googleCalendar.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.googleCalendar.description}</div>
+              </div>
+              <div className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-400">Coming soon</div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.googleCalendar?.enabled}
+                onChange={(e) => { updateIntegration('googleCalendar', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+          </div>
+        </div>
       </section>
     </div>
   );

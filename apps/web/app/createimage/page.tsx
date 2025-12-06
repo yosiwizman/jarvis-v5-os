@@ -384,7 +384,7 @@ export default function CreateImagePage() {
           <div className="flex items-center gap-3">
             {!isGenerating ? (
               <button
-                className="btn flex items-center gap-2 border-violet-500/60 bg-violet-500/80 text-white hover:border-violet-400 hover:bg-violet-500"
+                className="btn flex items-center gap-2 border-[color:rgb(var(--jarvis-accent)_/_0.6)] bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white hover:border-[color:rgb(var(--jarvis-accent))] hover:bg-[color:rgb(var(--jarvis-accent))]"
                 onClick={generate}
                 type="button"
               >
@@ -465,9 +465,9 @@ export default function CreateImagePage() {
                 </ol>
               </div>
 
-              <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
-                <div className="text-sm font-semibold text-blue-200 mb-2">💡 Quick Tip</div>
-                <p className="text-sm text-blue-100/80">
+              <div className="rounded-xl border border-[color:rgb(var(--jarvis-accent)_/_0.3)] bg-[color:rgb(var(--jarvis-accent)_/_0.1)] p-4">
+                <div className="text-sm font-semibold jarvis-accent-text mb-2">💡 Quick Tip</div>
+                <p className="text-sm text-white/80">
                   While waiting for verification, you can use <strong>dall-e-3</strong> or <strong>dall-e-2</strong> instead. 
                   These models work immediately without verification!
                 </p>
@@ -476,7 +476,7 @@ export default function CreateImagePage() {
                     updateSetting('model', 'dall-e-3');
                     setError(null);
                   }}
-                  className="mt-3 btn border-blue-500/60 bg-blue-500/80 text-white hover:border-blue-400 hover:bg-blue-500 text-sm px-3 py-1.5"
+                  className="mt-3 btn border-[color:rgb(var(--jarvis-accent)_/_0.6)] bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white hover:border-[color:rgb(var(--jarvis-accent))] hover:bg-[color:rgb(var(--jarvis-accent))] text-sm px-3 py-1.5"
                 >
                   Switch to DALL-E 3
                 </button>

@@ -39,7 +39,14 @@ export type AppSettings = {
   models: ModelSettings;
   textChat: TextChatSettings;
   imageGeneration: ImageGenerationSettings;
+  integrations: import('./integrations').IntegrationSettings;
   useServerProxy?: boolean;
+  // Legacy field for backward compat during migration
+  weather?: {
+    enabled?: boolean;
+    provider?: 'openweather';
+    location?: string;
+  };
 };
 
 const STORAGE_KEY = 'smartMirrorSettings';
@@ -80,6 +87,7 @@ const defaultSettings: AppSettings = {
     quality: 'standard',
     partialImages: 0
   },
+  integrations: require('./integrations').defaultIntegrationSettings,
   useServerProxy: true
 };
 
@@ -109,7 +117,8 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
       jarvis: { ...defaultSettings.jarvis, ...(serverSettings?.jarvis ?? {}) },
       models: { ...defaultSettings.models, ...(serverSettings?.models ?? {}) },
       textChat: { ...defaultSettings.textChat, ...(serverSettings?.textChat ?? {}) },
-      imageGeneration: { ...defaultSettings.imageGeneration, ...(serverSettings?.imageGeneration ?? {}) }
+      imageGeneration: { ...defaultSettings.imageGeneration, ...(serverSettings?.imageGeneration ?? {}) },
+      integrations: { ...defaultSettings.integrations, ...(serverSettings?.integrations ?? {}) }
     } satisfies AppSettings;
     
     // Cache in memory
@@ -138,7 +147,8 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
         jarvis: { ...defaultSettings.jarvis, ...(parsed?.jarvis ?? {}) },
         models: { ...defaultSettings.models, ...(parsed?.models ?? {}) },
         textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
-        imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) }
+        imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
+        integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) }
       } satisfies AppSettings;
       
       settingsCache = merged;
@@ -175,7 +185,8 @@ export function readSettings(): AppSettings {
       jarvis: { ...defaultSettings.jarvis, ...(parsed?.jarvis ?? {}) },
       models: { ...defaultSettings.models, ...(parsed?.models ?? {}) },
       textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
-      imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) }
+      imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
+      integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) }
     } satisfies AppSettings;
   } catch (error) {
     console.warn('Failed to read settings', error);
@@ -241,4 +252,28 @@ export function updateImageGenerationSettings(partial: Partial<ImageGenerationSe
   writeSettings({ ...current, imageGeneration: { ...current.imageGeneration, ...partial } });
 }
 
+export function updateIntegrations(partial: Partial<import('./integrations').IntegrationSettings>) {
+  const current = readSettings();
+  writeSettings({ ...current, integrations: { ...current.integrations, ...partial } });
+}
+
+export function updateIntegration<K extends import('./integrations').IntegrationId>(
+  id: K,
+  patch: Partial<import('./integrations').IntegrationSettings[K]>
+) {
+  const current = readSettings();
+  const updated = {
+    ...current,
+    integrations: {
+      ...current.integrations,
+      [id]: { ...current.integrations[id], ...patch }
+    }
+  };
+  writeSettings(updated);
+}
+
 export { defaultSettings as defaultAppSettings };
+
+// Re-export integrations module for convenience
+export type { IntegrationId, IntegrationSettings, WeatherIntegrationConfig } from './integrations';
+export { defaultIntegrationSettings, integrationMetadata, isIntegrationConnected } from './integrations';
