@@ -551,19 +551,49 @@ eventSource.onerror = () => {
 - Logs motion detection events with camera ID and friendly name
 - Production note: Could be upgraded to proper image diff/computer vision libraries
 
-### Future Enhancements (Recommended)
+### Notification History & Preferences (Implemented)
 
-The notification system foundation is complete. Additional features to consider:
+**Notification History API:**
+- `GET /api/notifications/history` endpoint with filtering and pagination
+- Query parameters: `?type=camera_alert&limit=50&offset=0`
+- Returns: `{ ok, notifications, total, limit, offset }`
+- Logs all access attempts with timestamp and filter details
+- Uses existing scheduler's `getFiredEvents()` - no additional storage needed
+- Sorts by `firedAt` descending (most recent first)
 
-1. **Notification History:**
-   - Persistent storage of fired notifications with delivery status
-   - `GET /api/notifications/history` endpoint with filtering
-   - UI component to view past notifications (type, status, timestamp)
+**Notification History UI:**
+- `NotificationHistory.tsx` component (207 lines)
+- Displays past notifications with type icons, timestamps, payload summaries
+- Filter dropdown: All Types, Calendar, Printer, Camera, System, Integration
+- Relative timestamps (e.g., "2h ago", "3d ago") with fallback to absolute dates
+- "Delivered" status badge for all fired notifications
+- Empty state with type-specific messaging
+- Pagination support (50 per page, showing X of Y total)
 
-2. **User Preferences:**
-   - Settings endpoint to store notification type preferences (enabled/disabled per type)
-   - Frontend toggle switches in Settings page
-   - Filter notifications in NotificationContext based on user preferences
+**User Preferences Backend:**
+- Extended `AppSettings` with `notificationPreferences?: NotificationPreferences`
+- Schema: `{ calendar_reminder, printer_alert, camera_alert, system_update, integration_error, custom }` (all boolean)
+- Defaults: All types enabled (true)
+- Persisted to server via `/api/settings` endpoint
+- Merged with defaults in settings loader (localStorage fallback)
+
+**User Preferences UI:**
+- `NotificationPreferences.tsx` component (70 lines)
+- Toggle switches for each notification type with icons and descriptions
+- Real-time updates via `updateSettings()` and `readSettings()`
+- Accessible toggle UI (focus rings, keyboard support)
+- Explanatory text: "Disabled notifications still logged in history"
+
+**Preference Filtering:**
+- `NotificationContext.tsx` updated to check preferences before displaying toasts
+- Filters incoming SSE notifications based on user preferences
+- Logs filtered notifications to console: `"Notification filtered by preferences: {type}"`
+- Default behavior: If preference not set, notification is shown (fail-open)
+- History API does NOT filter by preferences (all events returned regardless)
+
+### Future Enhancements (Optional)
+
+The notification system is now **fully complete** with history and preferences. Additional polish could include:
 
 3. **Advanced Motion Detection:**
    - Upgrade to proper image diff libraries (e.g. pixelmatch, opencv)
@@ -584,8 +614,10 @@ The notification system foundation is complete. Additional features to consider:
 - **Storage:** `apps/server/data/scheduled-events.json` (event persistence)
 
 **Frontend:**
-- **Context:** `apps/web/context/NotificationContext.tsx` (123 lines)
+- **Context:** `apps/web/context/NotificationContext.tsx` (with preference filtering)
 - **Toast Component:** `apps/web/components/NotificationToast.tsx` (131 lines)
+- **History Component:** `apps/web/components/NotificationHistory.tsx` (207 lines)
+- **Preferences Component:** `apps/web/components/NotificationPreferences.tsx` (70 lines)
 - **Camera Settings:** `apps/web/components/CameraSettings.tsx` (100 lines)
 - **Root Integration:** `apps/web/app/layout.tsx` (NotificationProvider + NotificationToast)
 
