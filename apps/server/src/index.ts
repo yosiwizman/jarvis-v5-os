@@ -510,6 +510,94 @@ fastify.post('/integrations/gmail/test', async (req, reply) => {
   }
 });
 
+// Google Calendar sync reminders endpoint
+fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) => {
+  fastify.log.info('Calendar reminder sync requested');
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    fastify.log.error({ error }, 'Failed to load settings for calendar sync');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const calendarConfig = settings?.integrations?.googleCalendar;
+  
+  // Check if configured
+  if (
+    !calendarConfig?.enabled ||
+    !calendarConfig?.clientId ||
+    !calendarConfig?.clientSecret ||
+    !calendarConfig?.refreshToken ||
+    !calendarConfig?.calendarId
+  ) {
+    fastify.log.warn('Google Calendar not configured');
+    return reply.status(503).send({ ok: false, error: 'google_calendar_not_configured' });
+  }
+  
+  try {
+    const { testGoogleCalendarConnection } = await import('./clients/googleCalendarClient.js');
+    
+    const result = await testGoogleCalendarConnection({
+      clientId: calendarConfig.clientId,
+      clientSecret: calendarConfig.clientSecret,
+      refreshToken: calendarConfig.refreshToken,
+      calendarId: calendarConfig.calendarId
+    });
+    
+    if (!result.ok || !result.events) {
+      fastify.log.error({ result }, 'Failed to fetch calendar events');
+      return reply.status(502).send({ ok: false, error: 'failed_to_fetch_events' });
+    }
+    
+    // Schedule reminder notifications for upcoming events (15 minutes before)
+    let scheduledCount = 0;
+    for (const event of result.events) {
+      if (!event.start || !event.summary) continue;
+      
+      try {
+        const eventStartTime = new Date(event.start);
+        const reminderTime = new Date(eventStartTime.getTime() - 15 * 60 * 1000); // 15 minutes before
+        
+        // Only schedule if reminder time is in the future
+        if (reminderTime.getTime() > Date.now()) {
+          await notificationScheduler.scheduleEvent(
+            'calendar_reminder',
+            {
+              eventName: event.summary,
+              eventId: event.id,
+              startTime: event.start,
+              reminderMinutes: 15
+            },
+            reminderTime.toISOString()
+          );
+          scheduledCount++;
+          fastify.log.info({ eventId: event.id, summary: event.summary, reminderTime }, 'Scheduled calendar reminder');
+        }
+      } catch (scheduleError) {
+        fastify.log.error({ error: scheduleError, eventId: event.id }, 'Failed to schedule event reminder');
+      }
+    }
+    
+    fastify.log.info({ eventsFound: result.events.length, scheduledCount }, 'Calendar reminder sync complete');
+    
+    return reply.send({
+      ok: true,
+      eventsFound: result.events.length,
+      scheduledCount,
+      message: `Scheduled ${scheduledCount} reminder(s) for upcoming events`
+    });
+  } catch (error) {
+    fastify.log.error({ error }, 'Calendar reminder sync failed');
+    return reply.status(502).send({ ok: false, error: 'calendar_sync_failed' });
+  }
+});
+
 // Google Calendar integration endpoint (note: /api prefix is stripped by dev-proxy)
 fastify.post('/integrations/google-calendar/test', async (req, reply) => {
   // Load settings
@@ -1856,6 +1944,43 @@ function updateJob(id: string, patch: Partial<ModelJob>) {
     updatedAt: Date.now()
   };
   jobs.set(id, next);
+  
+  // Trigger printer_alert notification on job completion or failure
+  if (patch.status === 'done' && existing.status !== 'done') {
+    const prompt = next.metadata?.prompt || `${next.source} model`;
+    notificationScheduler.scheduleEvent(
+      'printer_alert',
+      {
+        message: `3D model generation completed: ${prompt.substring(0, 50)}`,
+        jobId: id,
+        status: 'completed',
+        source: next.source
+      },
+      new Date(Date.now() + 1000).toISOString() // Fire in 1 second
+    ).then(() => {
+      fastify.log.info({ jobId: id, prompt }, 'Scheduled printer completion notification');
+    }).catch((err) => {
+      fastify.log.error({ error: err, jobId: id }, 'Failed to schedule printer completion notification');
+    });
+  } else if (patch.status === 'error' && existing.status !== 'error') {
+    const errorMsg = patch.error || 'Unknown error';
+    const prompt = next.metadata?.prompt || `${next.source} model`;
+    notificationScheduler.scheduleEvent(
+      'printer_alert',
+      {
+        message: `3D model generation failed: ${errorMsg.substring(0, 50)}`,
+        jobId: id,
+        status: 'failed',
+        error: errorMsg,
+        source: next.source
+      },
+      new Date(Date.now() + 1000).toISOString() // Fire in 1 second
+    ).then(() => {
+      fastify.log.info({ jobId: id, error: errorMsg }, 'Scheduled printer failure notification');
+    }).catch((err) => {
+      fastify.log.error({ error: err, jobId: id }, 'Failed to schedule printer failure notification');
+    });
+  }
 }
 
 function extractOutputText(payload: any): string | null {
@@ -2270,11 +2395,33 @@ type CameraDirectoryInfo = {
   lastSeenTs: number;
   latestFrameBase64?: string;
   latestFrameTs?: number;
+  previousFrameBase64?: string;
+  lastMotionAlertTs?: number;
 };
 
 const CAMERA_TTL_MS = 120_000; // 2 minutes - generous timeout for long-running cameras
 
 const cameraDirectory = new Map<string, CameraDirectoryInfo>();
+
+/**
+ * Simple motion detection by comparing base64 string lengths
+ * In production, this would use proper image diff/computer vision
+ * Returns true if significant difference detected between frames
+ */
+function detectMotion(entry: CameraDirectoryInfo, newFrameBase64: string): boolean {
+  if (!entry.previousFrameBase64) return false; // Need 2 frames to compare
+  
+  const prevLength = entry.previousFrameBase64.length;
+  const newLength = newFrameBase64.length;
+  
+  // Calculate percentage difference
+  const diff = Math.abs(newLength - prevLength);
+  const percentDiff = (diff / prevLength) * 100;
+  
+  // Trigger if difference > 5% (tunable threshold)
+  const motionThreshold = 5;
+  return percentDiff > motionThreshold;
+}
 
 const cameras = io.of('/cameras');
 
@@ -2345,10 +2492,39 @@ cameras.on('connection', (socket) => {
     if (!cameraId || !jpegBase64) return;
     const entry = cameraDirectory.get(cameraId);
     if (!entry) return;
+    
+    // Simple motion detection: compare frame sizes (basic heuristic)
+    // In production, this could use image diff libraries or computer vision
+    const motionDetected = detectMotion(entry, jpegBase64);
+    
     entry.lastSeenTs = Date.now();
+    entry.previousFrameBase64 = entry.latestFrameBase64;
     entry.latestFrameBase64 = jpegBase64;
     entry.latestFrameTs = ts ?? Date.now();
     cameras.to(`camera:${cameraId}`).emit('security:frame', { cameraId, ts: entry.latestFrameTs, jpegBase64 });
+    
+    // Trigger motion alert if detected and not recently alerted (cooldown: 30 seconds)
+    if (motionDetected) {
+      const now = Date.now();
+      const cooldown = 30_000; // 30 seconds
+      if (!entry.lastMotionAlertTs || (now - entry.lastMotionAlertTs) > cooldown) {
+        entry.lastMotionAlertTs = now;
+        notificationScheduler.scheduleEvent(
+          'camera_alert',
+          { 
+            message: `Motion detected on camera "${entry.friendlyName}"`, 
+            cameraId, 
+            action: 'motion_detected',
+            timestamp: now
+          },
+          new Date(now + 1000).toISOString() // Fire in 1 second
+        ).then(() => {
+          fastify.log.info({ cameraId, friendlyName: entry.friendlyName }, 'Motion detected, notification scheduled');
+        }).catch((err) => {
+          fastify.log.error({ error: err, cameraId }, 'Failed to schedule motion detection notification');
+        });
+      }
+    }
   });
 
   socket.on('camera:heartbeat', ({ cameraId }: { cameraId: string }) => {
