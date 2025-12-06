@@ -167,6 +167,13 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
+    check('Google Calendar API (unconfigured)', '/integrations/google-calendar/test', {
+      method: 'POST',
+      body: {},
+      expectedStatus: 503,  // Expected: not configured
+      validateJson: true,
+      useApiBase: true,
+    }),
   ];
 
   const results = await Promise.all(checks);

@@ -66,10 +66,20 @@
       "clientSecret": ""
     },
     "gmail": {
-      "enabled": false
+      "enabled": false,
+      "clientId": null,
+      "clientSecret": null,
+      "redirectUri": null,
+      "refreshToken": null,
+      "userEmail": null
     },
     "googleCalendar": {
-      "enabled": false
+      "enabled": false,
+      "clientId": null,
+      "clientSecret": null,
+      "redirectUri": null,
+      "refreshToken": null,
+      "calendarId": "primary"
     }
   },
   "useServerProxy": true
