@@ -43,7 +43,7 @@ This repo uses a simple and clear versioning approach:
 
 ### What are version tags?
 
-- **Version tags** (like `v5.0.0`, `v5.1.0`, `v5.2.0`) are **frozen restore points**.
+- **Version tags** (like `v5.0.0`, `v5.1.0`, `v5.2.0`, `v5.3.0`) are **frozen restore points**.
 - Each tag represents a specific, stable state of the codebase that has been tested and confirmed working.
 - Tags never change. Once created, a tag like `v5.0.0` always points to the exact same code.
 
@@ -76,8 +76,8 @@ When a set of changes has been tested and is stable, the CTO (or owner) can crea
 
 1. **Confirm stability**: Make sure all features work, tests pass, and there are no critical bugs.
 2. **Decide the version number**:
-   - **Patch release** (bug fixes, small tweaks): `v5.2.1`, `v5.2.2`
-   - **Minor release** (new features, backwards-compatible): `v5.3.0`, `v5.4.0`
+   - **Patch release** (bug fixes, small tweaks): `v5.3.1`, `v5.3.2`
+   - **Minor release** (new features, backwards-compatible): `v5.4.0`, `v5.5.0`
    - **Major release** (big changes, breaking changes): `v6.0.0`
 3. **Create the tag**: The CTO will run a command like this from the repo root:
 
