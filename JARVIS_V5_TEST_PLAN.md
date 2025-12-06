@@ -1,14 +1,14 @@
-# Jarvis V5 OS – Test Plan (v5.1.0)
+# Jarvis V5 OS – Test Plan (v5.2.0)
 
 **For:** Mr. W  
-**Version:** v5.1.0  
+**Version:** v5.2.0
 **Date:** 2025-12-06
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V5 OS version 5.1.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, and the theme system functions as expected. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V5 OS version 5.2.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, and the theme system functions as expected. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
