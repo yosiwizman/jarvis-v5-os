@@ -14,6 +14,8 @@ import { register3DPrintRoutes } from './routes/3dprint.routes';
 import { readSecrets } from './storage/secretStore';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
+import { notificationScheduler } from './notificationScheduler.js';
+import type { ScheduleNotificationRequest, ScheduleNotificationResponse } from '@shared/core';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -114,6 +116,85 @@ fastify.get('/config', async () => ({
     ]
   }
 }));
+
+// Initialize notification scheduler
+await notificationScheduler.initialize();
+fastify.log.info('Notification scheduler initialized');
+
+// Notification API: Schedule a notification
+fastify.post('/api/notifications/schedule', async (req, reply) => {
+  const body = req.body as Partial<ScheduleNotificationRequest>;
+
+  // Validate required fields
+  if (!body.type || typeof body.type !== 'string') {
+    return reply.status(400).send({ ok: false, error: 'type is required and must be a string' } as ScheduleNotificationResponse);
+  }
+
+  if (!body.payload || typeof body.payload !== 'object') {
+    return reply.status(400).send({ ok: false, error: 'payload is required and must be an object' } as ScheduleNotificationResponse);
+  }
+
+  if (!body.triggerAt || typeof body.triggerAt !== 'string') {
+    return reply.status(400).send({ ok: false, error: 'triggerAt is required and must be an ISO 8601 timestamp string' } as ScheduleNotificationResponse);
+  }
+
+  // Validate ISO timestamp format
+  const triggerDate = new Date(body.triggerAt);
+  if (isNaN(triggerDate.getTime())) {
+    return reply.status(400).send({ ok: false, error: 'triggerAt must be a valid ISO 8601 timestamp' } as ScheduleNotificationResponse);
+  }
+
+  try {
+    const eventId = await notificationScheduler.scheduleEvent(
+      body.type,
+      body.payload,
+      body.triggerAt
+    );
+
+    fastify.log.info({ eventId, type: body.type, triggerAt: body.triggerAt }, 'Notification scheduled');
+
+    return reply.send({ ok: true, eventId } as ScheduleNotificationResponse);
+  } catch (error) {
+    fastify.log.error({ error, type: body.type }, 'Failed to schedule notification');
+    return reply.status(500).send({ ok: false, error: 'failed_to_schedule_notification' } as ScheduleNotificationResponse);
+  }
+});
+
+// Notification API: SSE stream for real-time notification delivery
+fastify.get('/api/notifications/stream', async (req, reply) => {
+  // Set SSE headers
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+
+  // Generate client ID
+  const clientId = randomUUID();
+
+  // Register SSE client
+  notificationScheduler.registerSSEClient(clientId, (data: string) => {
+    try {
+      reply.raw.write(data);
+    } catch (error) {
+      fastify.log.error({ clientId, error }, 'Failed to write SSE data to client');
+    }
+  });
+
+  fastify.log.info({ clientId }, 'SSE client connected to notification stream');
+
+  // Send initial connection confirmation
+  reply.raw.write(`data: ${JSON.stringify({ type: 'connection', payload: { status: 'connected', clientId }, triggeredAt: new Date().toISOString() })}\n\n`);
+
+  // Handle client disconnect
+  req.raw.on('close', () => {
+    notificationScheduler.unregisterSSEClient(clientId);
+    fastify.log.info({ clientId }, 'SSE client disconnected from notification stream');
+  });
+
+  // Keep connection alive (don't await, let it stay open)
+  return reply;
+});
 
 // System metrics endpoint (note: /api prefix is stripped by dev-proxy)
 fastify.get('/system/metrics', async () => {
@@ -2203,9 +2284,21 @@ function emitCameraList() {
 
 function removeCamera(cameraId: string) {
   if (!cameraDirectory.has(cameraId)) return;
+  const info = cameraDirectory.get(cameraId);
   cameraDirectory.delete(cameraId);
   cameras.emit('camera:left', { cameraId });
   emitCameraList();
+  
+  // Schedule notification for camera disconnection (immediate)
+  if (info) {
+    notificationScheduler.scheduleEvent(
+      'camera_alert',
+      { message: `Camera "${info.friendlyName}" disconnected`, cameraId, action: 'disconnected' },
+      new Date(Date.now() + 1000).toISOString() // Fire in 1 second
+    ).catch((err) => {
+      fastify.log.error({ error: err, cameraId }, 'Failed to schedule camera disconnected notification');
+    });
+  }
 }
 
 cameras.on('connection', (socket) => {
@@ -2237,6 +2330,15 @@ cameras.on('connection', (socket) => {
     socket.join('camera.clients');
     cameras.emit('camera:joined', { cameraId: info.cameraId, friendlyName: info.friendlyName, lastSeenTs: info.lastSeenTs });
     emitCameraList();
+    
+    // Schedule notification for camera connection (immediate)
+    notificationScheduler.scheduleEvent(
+      'camera_alert',
+      { message: `Camera "${name}" connected`, cameraId, action: 'connected' },
+      new Date(Date.now() + 1000).toISOString() // Fire in 1 second
+    ).catch((err) => {
+      fastify.log.error({ error: err, cameraId }, 'Failed to schedule camera connected notification');
+    });
   });
 
   socket.on('camera:frame', ({ cameraId, ts, jpegBase64 }: { cameraId: string; ts?: number; jpegBase64: string }) => {

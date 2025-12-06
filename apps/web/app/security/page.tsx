@@ -88,11 +88,13 @@ export default function SecurityPage() {
     };
 
     const handleJoined = (camera: CameraPresence) => {
+      console.log(`[Security] Camera joined: ${camera.friendlyName} (${camera.cameraId})`);
       setCameras((prev) => ({ ...prev, [camera.cameraId]: camera }));
       ensureSubscriptions([camera.cameraId], true);
     };
 
     const handleLeft = ({ cameraId }: { cameraId: string }) => {
+      console.log(`[Security] Camera left: ${cameraId}`);
       setCameras((prev) => {
         const next = { ...prev };
         delete next[cameraId];
@@ -111,6 +113,8 @@ export default function SecurityPage() {
     };
 
     const handleFrame = (payload: SecurityFramePayload) => {
+      // Log frame receipt (verbose - consider throttling in production)
+      // console.log(`[Security] Frame received from ${payload.cameraId}`);
       setFrames((prev) => ({ ...prev, [payload.cameraId]: payload }));
       setCameras((prev) => {
         const next = { ...prev };

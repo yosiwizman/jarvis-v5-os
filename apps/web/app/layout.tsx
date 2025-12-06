@@ -6,6 +6,8 @@ import { NavigationBridge } from '@/components/navigation-bridge';
 import { JarvisAssistant, JarvisIcon } from '@/components/JarvisAssistant';
 import { HudWidget } from '@/components/HudWidget';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { NotificationToast } from '@/components/NotificationToast';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
@@ -32,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen relative">
         <ThemeProvider>
+          <NotificationProvider>
           <aside className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'} w-[260px]`}>
           <div className="flex items-center justify-between mb-4">
             <button 
@@ -114,6 +117,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <JarvisAssistant isOpen={isJarvisOpen} onClose={() => setIsJarvisOpen(false)} />
             </>
           )}
+          
+          {/* Global Notification Toast */}
+          <NotificationToast />
+          </NotificationProvider>
         </ThemeProvider>
       </body>
     </html>

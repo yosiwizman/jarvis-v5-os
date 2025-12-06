@@ -409,11 +409,175 @@ npm run ci:smoke    # Start system, run smoke tests, stop system
 
 ---
 
+## 5. Notification & Event Loop Subsystem (v6.0 Foundation)
+
+### Overview
+
+As of **feature/v6-notification-foundation**, Jarvis V5 OS includes the foundational infrastructure for an internal notification and event scheduling system. This subsystem is designed to support future features like calendar reminders, printer alerts, security camera notifications, and system updates.
+
+### Current Status: Foundation Only
+
+**What's Implemented:**
+- ✅ **Shared Types** (`packages/shared/src/notifications.ts`)
+  - `Notification`, `ScheduledEvent`, `ScheduleNotificationRequest` types
+  - Support for notification types: calendar_reminder, printer_alert, camera_alert, system_update, integration_error, custom
+- ✅ **Backend Scheduler** (`apps/server/src/notificationScheduler.ts`)
+  - Event storage in JSON file (`data/scheduled-events.json`)
+  - Event loop checking every 60 seconds for due events
+  - SSE client management for real-time notification delivery
+  - Singleton `notificationScheduler` instance initialized on server startup
+- ✅ **Backend API Endpoints** (`apps/server/src/index.ts`)
+  - `POST /api/notifications/schedule` - Schedule notifications with validation
+  - `GET /api/notifications/stream` - SSE endpoint for real-time event delivery
+  - Returns proper error codes (400 for validation, 500 for failures)
+  - Auto-schedule camera_alert notifications when cameras connect/disconnect
+- ✅ **Smoke Tests** (`scripts/smoke.ts`)
+  - Test notification scheduling endpoint (validates request/response)
+  - Test SSE stream connectivity (200 status check)
+- ✅ **Frontend NotificationProvider** (`apps/web/context/NotificationContext.tsx`)
+  - React context with SSE subscription to `/api/notifications/stream`
+  - Auto-dismiss notifications after 10 seconds
+  - `scheduleNotification()` helper for programmatic scheduling
+- ✅ **NotificationToast Component** (`apps/web/components/NotificationToast.tsx`)
+  - Toast display with type-specific icons and colors
+  - Manual dismiss button + auto-dismiss
+  - Positioned top-right with slide-in animation
+- ✅ **Root Layout Integration** (`apps/web/app/layout.tsx`)
+  - NotificationProvider wraps entire app
+  - NotificationToast rendered globally
+- ✅ **Camera Settings UI** (`apps/web/components/CameraSettings.tsx`)
+  - Permission status display and request button
+  - Wi-Fi configuration placeholder (SSID + password inputs)
+  - Security dashboard logging for camera connect/disconnect events
+
+### Architecture
+
+**Event Flow:**
+1. External system (calendar, printer, camera, etc.) schedules a notification via API
+2. Scheduler stores event with `triggerAt` ISO timestamp in JSON file
+3. Event loop checks every minute for events where `triggerAt <= now`
+4. When due, event fires and broadcasts to all connected SSE clients
+5. Frontend receives notification via SSE stream and displays toast
+
+**Storage:**
+- File: `apps/server/data/scheduled-events.json`
+- Format: Array of `ScheduledEvent` objects with `fired` boolean flag
+- Persistence: Events persist across server restarts
+
+**Event Loop:**
+- Check interval: 60 seconds
+- Startup behavior: Loads events from disk, fires any overdue events immediately
+- Shutdown behavior: Stops interval timer cleanly
+
+### API Usage
+
+**Schedule a Notification:**
+```bash
+curl -X POST https://localhost:3000/api/notifications/schedule \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "calendar_reminder",
+    "payload": { "eventName": "Team standup", "location": "Zoom" },
+    "triggerAt": "2025-12-06T10:00:00Z"
+  }'
+
+# Response (200 OK):
+# { "ok": true, "eventId": "uuid-here" }
+
+# Validation errors (400 Bad Request):
+# { "ok": false, "error": "type is required and must be a string" }
+# { "ok": false, "error": "payload is required and must be an object" }
+# { "ok": false, "error": "triggerAt must be a valid ISO 8601 timestamp" }
+```
+
+**Subscribe to Notifications (SSE):**
+```javascript
+const eventSource = new EventSource('https://localhost:3000/api/notifications/stream');
+
+eventSource.onmessage = (event) => {
+  const notification = JSON.parse(event.data);
+  console.log('Notification received:', notification);
+  // { type: 'calendar_reminder', payload: {...}, triggeredAt: '...' }
+};
+
+eventSource.onerror = () => {
+  console.error('SSE connection lost');
+};
+```
+
+### Camera Integration
+
+**Camera Feed Architecture:**
+- **Live Streaming:** WebRTC-based peer-to-peer streaming between camera devices and security dashboard
+- **Frame Broadcasting:** JPEG frames sent via Socket.IO at 8 FPS for thumbnail preview
+- **Auto-Discovery:** Cameras announce themselves via Socket.IO and appear in security dashboard automatically
+- **RTCPeerConnection:** Signaling via Socket.IO for SDP offers/answers and ICE candidates
+
+**Camera Settings:**
+- **Permission Management:** Browser getUserMedia permission status and request UI
+- **Wi-Fi Configuration (Placeholder):** Future feature for configuring standalone camera devices
+- **Automatic Notifications:** Camera connect/disconnect events trigger camera_alert notifications
+
+**Security Dashboard Features:**
+- **Camera Grid:** Thumbnail previews with live/offline status indicators
+- **Expand View:** Click to open full-screen WebRTC live stream
+- **Snapshot Download:** Save current frame as JPEG
+- **Connection Logging:** Console logs for camera join/leave/frame events
+
+### Next Steps for v6.0 Completion
+
+The notification system is now fully functional. Future enhancements could include:
+
+1. **Integration Examples:**
+   - Calendar: Schedule event reminders when syncing Google Calendar events
+   - Printers: Fire alerts when print job completes or fails (already implemented for cameras)
+   - System: Alert on available updates or low disk space
+
+2. **Camera Enhancements:**
+   - Implement Wi-Fi configuration backend (ESP32/Raspberry Pi provisioning)
+   - Add motion detection alerts (integrate with camera_alert notifications)
+   - 3D camera feed placeholder integration (depth data visualization)
+
+3. **Notification Improvements:**
+   - Add notification history/log viewer
+   - User preferences for notification types (enable/disable per type)
+   - Sound effects or vibration for critical alerts
+
+### Implementation Files
+
+**Backend:**
+- **Types:** `packages/shared/src/notifications.ts` (71 lines)
+- **Scheduler:** `apps/server/src/notificationScheduler.ts` (262 lines)
+- **API Endpoints:** `apps/server/src/index.ts` (notification routes + camera event triggers)
+- **Storage:** `apps/server/data/scheduled-events.json` (event persistence)
+
+**Frontend:**
+- **Context:** `apps/web/context/NotificationContext.tsx` (123 lines)
+- **Toast Component:** `apps/web/components/NotificationToast.tsx` (131 lines)
+- **Camera Settings:** `apps/web/components/CameraSettings.tsx` (100 lines)
+- **Root Integration:** `apps/web/app/layout.tsx` (NotificationProvider + NotificationToast)
+
+**Testing:**
+- **Smoke Tests:** `scripts/smoke.ts` (15 checks including notification endpoints)
+
+**Documentation:**
+- This section in `DEV_WORKFLOW.md`
+
+### Design Decisions
+
+- **Why SSE over WebSocket?** Simpler for one-way server→client push, no need for bidirectional communication
+- **Why JSON file storage?** Sufficient for MVP, easy to debug, no DB dependency. Can migrate to SQLite/Postgres later
+- **Why 60-second intervals?** Balances responsiveness with server load; minute-level precision is sufficient for most use cases
+- **Why internal-only?** No external notification services (email, SMS, push) yet — focus on in-app notifications first
+
+---
+
 ## References
 
 - **CI Workflow:** `.github/workflows/jarvis-ci.yml`
 - **Release Notes:** `JARVIS_V5_RELEASE_NOTES_v5.4.0.md` (example)
 - **Test Plan:** `JARVIS_V5_TEST_PLAN.md`
 - **Repository Overview:** `JARVIS_V5_REPO_OVERVIEW.md`
+- **Notification Foundation:** `packages/shared/src/notifications.ts`, `apps/server/src/notificationScheduler.ts`
 
 For questions or workflow improvements, open an issue or discussion on GitHub.

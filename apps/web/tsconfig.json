@@ -18,7 +18,11 @@
     "incremental": true,
     "paths": {
       "@/*": [
-        "./src/*"
+        "./src/*",
+        "./app/*",
+        "./components/*",
+        "./context/*",
+        "./*"
       ],
       "@shared/*": [
         "../../packages/shared/src/*"

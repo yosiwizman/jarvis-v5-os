@@ -174,6 +174,24 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
+
+    // Notification system endpoints
+    check('Notification schedule API', '/api/notifications/schedule', {
+      method: 'POST',
+      body: {
+        type: 'system.test',
+        payload: { message: 'smoke test notification' },
+        triggerAt: new Date(Date.now() + 300000).toISOString() // 5 minutes from now
+      },
+      validateJson: true,
+      assertOkField: true,
+      useApiBase: true,
+    }),
+    check('Notification SSE stream API', '/api/notifications/stream', {
+      method: 'GET',
+      expectedStatus: 200,
+      useApiBase: true,
+    }),
   ];
 
   const results = await Promise.all(checks);

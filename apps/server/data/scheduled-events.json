@@ -1,0 +1,16 @@
+{
+  "events": [
+    {
+      "id": "4d382092-7707-4fe7-8600-1cad2c04ff2a",
+      "type": "system.test",
+      "payload": {
+        "message": "smoke test notification"
+      },
+      "triggerAt": "2025-12-06T08:27:56.923Z",
+      "createdAt": "2025-12-06T08:22:56.952Z",
+      "fired": true,
+      "firedAt": "2025-12-06T08:28:29.162Z"
+    }
+  ],
+  "lastUpdated": "2025-12-06T08:28:29.162Z"
+}
