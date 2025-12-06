@@ -22,7 +22,10 @@
     "initialPrompt": "",
     "reasoningEffort": "low",
     "verbosity": "medium",
-    "maxOutputTokens": 800
+    "maxOutputTokens": 800,
+    "useWebSearch": false,
+    "useLocalLlm": false,
+    "localLlmPrimary": false
   },
   "imageGeneration": {
     "model": "dall-e-3",

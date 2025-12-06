@@ -146,6 +146,13 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
+    check('Azure TTS API (unconfigured)', '/integrations/azure-tts/tts', {
+      method: 'POST',
+      body: { text: 'Hello from smoke tests' },
+      expectedStatus: 503,  // Expected: not configured
+      validateJson: true,
+      useApiBase: true,
+    }),
   ];
 
   const results = await Promise.all(checks);

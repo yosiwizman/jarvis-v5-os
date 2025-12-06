@@ -759,6 +759,27 @@ export default function SettingsPage() {
               </label>
             </div>
           )}
+          <label className="space-y-2 md:col-span-2">
+            <div className="text-sm text-white/70">Text-to-speech provider</div>
+            <select
+              className="w-full bg-transparent border border-white/10 rounded-xl px-3 py-2"
+              value={chat.ttsProvider ?? 'elevenlabs'}
+              onChange={(event) => updateTextChat('ttsProvider', event.target.value as any)}
+            >
+              <option className="bg-[#0b0f14]" value="none">
+                None — no TTS button
+              </option>
+              <option className="bg-[#0b0f14]" value="elevenlabs">
+                ElevenLabs
+              </option>
+              <option className="bg-[#0b0f14]" value="azure">
+                Azure TTS
+              </option>
+            </select>
+            <p className="text-xs text-white/40">
+              Choose which TTS service to use for "Speak answer" in Chat. Provider must be configured in Integrations.
+            </p>
+          </label>
         </div>
       </section>
 
@@ -1306,13 +1327,27 @@ export default function SettingsPage() {
           </div>
 
           {/* Azure TTS Card */}
-          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('azureTTS', settings?.integrations?.azureTTS)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{integrationMetadata.azureTTS.name}</div>
                 <div className="text-xs text-white/50 mt-1">{integrationMetadata.azureTTS.description}</div>
               </div>
-              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('azureTTS', settings?.integrations?.azureTTS)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('azureTTS', settings?.integrations?.azureTTS) ? 'Connected' : 'Not connected'}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!settings?.integrations?.azureTTS?.enabled}
@@ -1322,19 +1357,57 @@ export default function SettingsPage() {
             {settings?.integrations?.azureTTS?.enabled && (
               <div className="space-y-3 pt-2 border-t border-white/10">
                 <label className="space-y-1">
-                  <div className="text-xs text-white/60">API Key</div>
-                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.azureTTS?.apiKey ?? ''}
-                    onChange={(e) => { updateIntegration('azureTTS', { apiKey: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="Azure key" />
-                </label>
-                <label className="space-y-1">
                   <div className="text-xs text-white/60">Region</div>
                   <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
                     value={settings?.integrations?.azureTTS?.region ?? ''}
                     onChange={(e) => { updateIntegration('azureTTS', { region: e.target.value }); setSettings(readSettings()); }}
                     placeholder="eastus" />
+                  <div className="text-xs text-white/40">e.g. eastus, westus, westeurope</div>
                 </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">API Key</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.azureTTS?.apiKey ?? ''}
+                    onChange={(e) => { updateIntegration('azureTTS', { apiKey: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="********" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Voice Name</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.azureTTS?.voiceName ?? ''}
+                    onChange={(e) => { updateIntegration('azureTTS', { voiceName: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="en-US-JennyNeural" />
+                  <div className="text-xs text-white/40">Default: en-US-JennyNeural</div>
+                </label>
+                <details className="space-y-3">
+                  <summary className="text-xs text-white/60 cursor-pointer">Advanced Settings</summary>
+                  <div className="space-y-3 pt-2">
+                    <label className="space-y-1">
+                      <div className="text-xs text-white/60">Style (optional)</div>
+                      <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                        value={settings?.integrations?.azureTTS?.style ?? ''}
+                        onChange={(e) => { updateIntegration('azureTTS', { style: e.target.value || null }); setSettings(readSettings()); }}
+                        placeholder="cheerful, sad, excited" />
+                      <div className="text-xs text-white/40">For expressive voices only</div>
+                    </label>
+                    <label className="space-y-1">
+                      <div className="text-xs text-white/60">Rate (optional)</div>
+                      <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                        value={settings?.integrations?.azureTTS?.rate ?? ''}
+                        onChange={(e) => { updateIntegration('azureTTS', { rate: e.target.value || null }); setSettings(readSettings()); }}
+                        placeholder="+0%" />
+                      <div className="text-xs text-white/40">e.g. -20%, +10%</div>
+                    </label>
+                    <label className="space-y-1">
+                      <div className="text-xs text-white/60">Pitch (optional)</div>
+                      <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                        value={settings?.integrations?.azureTTS?.pitch ?? ''}
+                        onChange={(e) => { updateIntegration('azureTTS', { pitch: e.target.value || null }); setSettings(readSettings()); }}
+                        placeholder="+0st" />
+                      <div className="text-xs text-white/40">e.g. +2st, -1st (semitones)</div>
+                    </label>
+                  </div>
+                </details>
               </div>
             )}
           </div>

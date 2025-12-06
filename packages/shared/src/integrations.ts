@@ -46,9 +46,12 @@ export interface ElevenLabsIntegrationConfig {
 
 export interface AzureTTSIntegrationConfig {
   enabled: boolean;
-  apiKey?: string;
-  region?: string;
-  voiceName?: string;
+  apiKey: string | null;
+  region: string | null;      // e.g. "eastus"
+  voiceName: string | null;   // e.g. "en-US-JennyNeural"
+  style: string | null;       // optional, for expressive styles
+  rate: string | null;        // e.g. "+0%" or "-20%"
+  pitch: string | null;       // e.g. "+0%" or "+2st"
 }
 
 export interface SpotifyIntegrationConfig {
@@ -112,9 +115,12 @@ export const defaultIntegrationSettings: IntegrationSettings = {
   },
   azureTTS: {
     enabled: false,
-    apiKey: '',
-    region: '',
-    voiceName: ''
+    apiKey: null,
+    region: 'eastus',
+    voiceName: 'en-US-JennyNeural',
+    style: null,
+    rate: null,
+    pitch: null
   },
   spotify: {
     enabled: false,
@@ -173,7 +179,7 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
     name: 'Azure TTS',
     description: 'Cloud TTS voices from Azure',
     requiresApiKey: true,
-    comingSoon: true
+    comingSoon: false
   },
   spotify: {
     id: 'spotify',
@@ -221,8 +227,10 @@ export function isIntegrationConnected(
       const elConfig = config as ElevenLabsIntegrationConfig;
       return !!(elConfig.apiKey && elConfig.voiceId);
     }
-    case 'azureTTS':
-      return !!(config as AzureTTSIntegrationConfig).apiKey;
+    case 'azureTTS': {
+      const azConfig = config as AzureTTSIntegrationConfig;
+      return !!(azConfig.apiKey && azConfig.region && azConfig.voiceName);
+    }
     case 'spotify':
       return !!(config as SpotifyIntegrationConfig).clientId &&
              !!(config as SpotifyIntegrationConfig).clientSecret;

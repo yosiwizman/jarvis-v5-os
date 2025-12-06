@@ -716,12 +716,27 @@ export default function ChatPage() {
     setSpeakingMessageId(null);
   }, []);
 
-  const speakMessage = useCallback(async (messageId: string, text: string) => {
+  // Determine active TTS provider and endpoint
+  const getActiveTtsProvider = useCallback((): { endpoint: string; name: string } | null => {
     const settings = readSettings();
-    const elevenLabsConfig = settings.integrations?.elevenLabs;
+    const ttsProvider = settings.textChat?.ttsProvider || 'elevenlabs';
+    
+    // Check provider based on setting
+    if (ttsProvider === 'azure' && isIntegrationConnected('azureTTS', settings.integrations?.azureTTS)) {
+      return { endpoint: '/integrations/azure-tts/tts', name: 'Azure TTS' };
+    } else if (ttsProvider === 'elevenlabs' && isIntegrationConnected('elevenLabs', settings.integrations?.elevenLabs)) {
+      return { endpoint: '/integrations/elevenlabs/tts', name: 'ElevenLabs' };
+    }
+    
+    // No provider available
+    return null;
+  }, []);
 
-    if (!isIntegrationConnected('elevenLabs', elevenLabsConfig)) {
-      setError('ElevenLabs is not configured. Please enable and configure it in Settings.');
+  const speakMessage = useCallback(async (messageId: string, text: string) => {
+    const ttsProvider = getActiveTtsProvider();
+    
+    if (!ttsProvider) {
+      setError('TTS provider is not configured. Please enable and configure a provider in Settings.');
       return;
     }
 
@@ -734,7 +749,7 @@ export default function ChatPage() {
         audioRef.current = null;
       }
 
-      const response = await fetch(buildServerUrl('/integrations/elevenlabs/tts'), {
+      const response = await fetch(buildServerUrl(ttsProvider.endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text })
@@ -767,7 +782,7 @@ export default function ChatPage() {
       setSpeakingMessageId(null);
       setError(err instanceof Error ? err.message : 'Failed to speak message.');
     }
-  }, []);
+  }, [getActiveTtsProvider]);
 
   const stopSpeaking = useCallback(() => {
     if (audioRef.current) {
@@ -904,7 +919,7 @@ export default function ChatPage() {
                       )}
                     </div>
                     {/* Speak button for assistant messages */}
-                    {!isUser && !isFunction && message.content && message.status !== 'pending' && message.status !== 'error' && isIntegrationConnected('elevenLabs', readSettings().integrations?.elevenLabs) && (
+                    {!isUser && !isFunction && message.content && message.status !== 'pending' && message.status !== 'error' && getActiveTtsProvider() && (
                       <button
                         onClick={() => {
                           if (speakingMessageId === message.id) {

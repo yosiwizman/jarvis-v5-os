@@ -19,6 +19,8 @@ export type ModelSettings = {
   outputFormat?: 'glb' | 'obj' | 'usdz';
 };
 
+export type TtsProvider = 'none' | 'elevenlabs' | 'azure';
+
 export type TextChatSettings = {
   model?: string;
   initialPrompt?: string;
@@ -28,6 +30,7 @@ export type TextChatSettings = {
   useWebSearch?: boolean;     // Allow web search for answers
   useLocalLlm?: boolean;      // Master toggle for local LLM
   localLlmPrimary?: boolean;  // If true, prefer local; else local is fallback
+  ttsProvider?: TtsProvider;  // TTS provider selection (default 'none' or falls back to 'elevenlabs' if configured)
 };
 
 export type ImageGenerationSettings = {
@@ -85,7 +88,8 @@ const defaultSettings: AppSettings = {
     maxOutputTokens: 800,
     useWebSearch: false,
     useLocalLlm: false,
-    localLlmPrimary: false  // Cloud is primary by default
+    localLlmPrimary: false,  // Cloud is primary by default
+    ttsProvider: 'elevenlabs'  // Default to elevenlabs for v5.5.0 compatibility
   },
   imageGeneration: {
     model: 'dall-e-3',
