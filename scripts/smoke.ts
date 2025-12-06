@@ -153,6 +153,13 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
+    check('Spotify API (unconfigured)', '/integrations/spotify/search', {
+      method: 'POST',
+      body: { query: 'test' },
+      expectedStatus: 503,  // Expected: not configured
+      validateJson: true,
+      useApiBase: true,
+    }),
   ];
 
   const results = await Promise.all(checks);

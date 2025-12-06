@@ -324,6 +324,55 @@ fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
   }
 });
 
+// Spotify integration endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.post('/integrations/spotify/search', async (req, reply) => {
+  const body = req.body as { query?: string; limit?: number };
+  
+  if (!body.query || typeof body.query !== 'string' || !body.query.trim()) {
+    return reply.status(400).send({ ok: false, error: 'missing_query' });
+  }
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    fastify.log.error({ error }, 'Failed to load settings for Spotify');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const spotifyConfig = settings?.integrations?.spotify;
+  
+  // Check if configured
+  if (!spotifyConfig?.enabled || !spotifyConfig?.clientId || !spotifyConfig?.clientSecret) {
+    fastify.log.warn('Spotify not configured');
+    return reply.status(503).send({ ok: false, error: 'spotify_not_configured' });
+  }
+  
+  try {
+    // Import Spotify client dynamically
+    const { searchTracks } = await import('./clients/spotifyClient.js');
+    
+    const tracks = await searchTracks(
+      {
+        clientId: spotifyConfig.clientId,
+        clientSecret: spotifyConfig.clientSecret,
+        defaultMarket: spotifyConfig.defaultMarket
+      },
+      body.query,
+      body.limit ?? 10
+    );
+    
+    return reply.send({ ok: true, results: tracks });
+  } catch (error) {
+    fastify.log.error({ error }, 'Spotify search failed');
+    return reply.status(502).send({ ok: false, error: 'spotify_request_failed' });
+  }
+});
+
 // 3D Print token status endpoint (stub for now)
 fastify.get('/3dprint/token-status', async () => {
   // TODO: Implement real Bambu auth token check
