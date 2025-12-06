@@ -524,24 +524,86 @@ eventSource.onerror = () => {
 - **Snapshot Download:** Save current frame as JPEG
 - **Connection Logging:** Console logs for camera join/leave/frame events
 
-### Next Steps for v6.0 Completion
+### v6.0 Enhancements (Implemented)
 
-The notification system is now fully functional. Future enhancements could include:
+**Calendar Event Reminders:**
+- `POST /integrations/google-calendar/sync-reminders` endpoint
+- Fetches upcoming Google Calendar events (next 5 events)
+- Schedules `calendar_reminder` notifications 15 minutes before each event
+- Includes event name, ID, start time, and reminder minutes in payload
+- Logs sync results (events found, notifications scheduled)
+- Returns: `{ ok, eventsFound, scheduledCount, message }`
 
-1. **Integration Examples:**
-   - Calendar: Schedule event reminders when syncing Google Calendar events
-   - Printers: Fire alerts when print job completes or fails (already implemented for cameras)
-   - System: Alert on available updates or low disk space
+**Printer Job Completion Alerts:**
+- Auto-trigger `printer_alert` notifications on 3D model job completion/failure
+- Monitors `ModelJob` status changes in `updateJob()` function
+- Completion notification: job ID, prompt (truncated to 50 chars), status='completed'
+- Failure notification: job ID, error message (truncated), status='failed', error details
+- Prevents duplicate notifications (only fires on status transition)
+- Logs all printer notification scheduling attempts
 
-2. **Camera Enhancements:**
-   - Implement Wi-Fi configuration backend (ESP32/Raspberry Pi provisioning)
-   - Add motion detection alerts (integrate with camera_alert notifications)
-   - 3D camera feed placeholder integration (depth data visualization)
+**Motion Detection:**
+- Simple frame-to-frame comparison using base64 string length difference
+- Motion threshold: 5% change between consecutive frames
+- Cooldown: 30 seconds between motion alerts per camera (prevents spam)
+- Triggers `camera_alert` with action='motion_detected', timestamp, camera details
+- Stores `previousFrameBase64` and `lastMotionAlertTs` in camera directory
+- Logs motion detection events with camera ID and friendly name
+- Production note: Could be upgraded to proper image diff/computer vision libraries
 
-3. **Notification Improvements:**
-   - Add notification history/log viewer
-   - User preferences for notification types (enable/disable per type)
-   - Sound effects or vibration for critical alerts
+### Notification History & Preferences (Implemented)
+
+**Notification History API:**
+- `GET /api/notifications/history` endpoint with filtering and pagination
+- Query parameters: `?type=camera_alert&limit=50&offset=0`
+- Returns: `{ ok, notifications, total, limit, offset }`
+- Logs all access attempts with timestamp and filter details
+- Uses existing scheduler's `getFiredEvents()` - no additional storage needed
+- Sorts by `firedAt` descending (most recent first)
+
+**Notification History UI:**
+- `NotificationHistory.tsx` component (207 lines)
+- Displays past notifications with type icons, timestamps, payload summaries
+- Filter dropdown: All Types, Calendar, Printer, Camera, System, Integration
+- Relative timestamps (e.g., "2h ago", "3d ago") with fallback to absolute dates
+- "Delivered" status badge for all fired notifications
+- Empty state with type-specific messaging
+- Pagination support (50 per page, showing X of Y total)
+
+**User Preferences Backend:**
+- Extended `AppSettings` with `notificationPreferences?: NotificationPreferences`
+- Schema: `{ calendar_reminder, printer_alert, camera_alert, system_update, integration_error, custom }` (all boolean)
+- Defaults: All types enabled (true)
+- Persisted to server via `/api/settings` endpoint
+- Merged with defaults in settings loader (localStorage fallback)
+
+**User Preferences UI:**
+- `NotificationPreferences.tsx` component (70 lines)
+- Toggle switches for each notification type with icons and descriptions
+- Real-time updates via `updateSettings()` and `readSettings()`
+- Accessible toggle UI (focus rings, keyboard support)
+- Explanatory text: "Disabled notifications still logged in history"
+
+**Preference Filtering:**
+- `NotificationContext.tsx` updated to check preferences before displaying toasts
+- Filters incoming SSE notifications based on user preferences
+- Logs filtered notifications to console: `"Notification filtered by preferences: {type}"`
+- Default behavior: If preference not set, notification is shown (fail-open)
+- History API does NOT filter by preferences (all events returned regardless)
+
+### Future Enhancements (Optional)
+
+The notification system is now **fully complete** with history and preferences. Additional polish could include:
+
+3. **Advanced Motion Detection:**
+   - Upgrade to proper image diff libraries (e.g. pixelmatch, opencv)
+   - Region-of-interest (ROI) selection for motion detection zones
+   - Sensitivity tuning per camera
+
+4. **Additional Integrations:**
+   - System update notifications (low disk space, security updates)
+   - Smart home device alerts (temperature, humidity, door sensors)
+   - Reminder snooze functionality for calendar events
 
 ### Implementation Files
 
@@ -552,8 +614,10 @@ The notification system is now fully functional. Future enhancements could inclu
 - **Storage:** `apps/server/data/scheduled-events.json` (event persistence)
 
 **Frontend:**
-- **Context:** `apps/web/context/NotificationContext.tsx` (123 lines)
+- **Context:** `apps/web/context/NotificationContext.tsx` (with preference filtering)
 - **Toast Component:** `apps/web/components/NotificationToast.tsx` (131 lines)
+- **History Component:** `apps/web/components/NotificationHistory.tsx` (207 lines)
+- **Preferences Component:** `apps/web/components/NotificationPreferences.tsx` (70 lines)
 - **Camera Settings:** `apps/web/components/CameraSettings.tsx` (100 lines)
 - **Root Integration:** `apps/web/app/layout.tsx` (NotificationProvider + NotificationToast)
 

@@ -40,12 +40,22 @@ export type ImageGenerationSettings = {
   partialImages?: 0 | 1 | 2 | 3;
 };
 
+export type NotificationPreferences = {
+  calendar_reminder?: boolean;
+  printer_alert?: boolean;
+  camera_alert?: boolean;
+  system_update?: boolean;
+  integration_error?: boolean;
+  custom?: boolean;
+};
+
 export type AppSettings = {
   jarvis: JarvisSettings;
   models: ModelSettings;
   textChat: TextChatSettings;
   imageGeneration: ImageGenerationSettings;
   integrations: import('./integrations').IntegrationSettings;
+  notificationPreferences?: NotificationPreferences;
   useServerProxy?: boolean;
   // Legacy field for backward compat during migration
   weather?: {
@@ -98,6 +108,14 @@ const defaultSettings: AppSettings = {
     partialImages: 0
   },
   integrations: require('./integrations').defaultIntegrationSettings,
+  notificationPreferences: {
+    calendar_reminder: true,
+    printer_alert: true,
+    camera_alert: true,
+    system_update: true,
+    integration_error: true,
+    custom: true
+  },
   useServerProxy: true
 };
 
@@ -128,7 +146,8 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
       models: { ...defaultSettings.models, ...(serverSettings?.models ?? {}) },
       textChat: { ...defaultSettings.textChat, ...(serverSettings?.textChat ?? {}) },
       imageGeneration: { ...defaultSettings.imageGeneration, ...(serverSettings?.imageGeneration ?? {}) },
-      integrations: { ...defaultSettings.integrations, ...(serverSettings?.integrations ?? {}) }
+      integrations: { ...defaultSettings.integrations, ...(serverSettings?.integrations ?? {}) },
+      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(serverSettings?.notificationPreferences ?? {}) }
     } satisfies AppSettings;
     
     // Cache in memory
@@ -158,7 +177,8 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
         models: { ...defaultSettings.models, ...(parsed?.models ?? {}) },
         textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
         imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
-        integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) }
+        integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) },
+        notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) }
       } satisfies AppSettings;
       
       settingsCache = merged;
@@ -196,7 +216,8 @@ export function readSettings(): AppSettings {
       models: { ...defaultSettings.models, ...(parsed?.models ?? {}) },
       textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
       imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
-      integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) }
+      integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) },
+      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) }
     } satisfies AppSettings;
   } catch (error) {
     console.warn('Failed to read settings', error);
