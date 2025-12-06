@@ -270,6 +270,60 @@ fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
   }
 });
 
+// Azure TTS integration endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
+  const body = req.body as { text?: string };
+  
+  if (!body.text || typeof body.text !== 'string' || !body.text.trim()) {
+    return reply.status(400).send({ ok: false, error: 'missing_text' });
+  }
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    fastify.log.error({ error }, 'Failed to load settings for Azure TTS');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const azureTtsConfig = settings?.integrations?.azureTTS;
+  
+  // Check if configured
+  if (!azureTtsConfig?.enabled || !azureTtsConfig?.apiKey || !azureTtsConfig?.region || !azureTtsConfig?.voiceName) {
+    fastify.log.warn('Azure TTS not configured');
+    return reply.status(503).send({ ok: false, error: 'azure_tts_not_configured' });
+  }
+  
+  try {
+    // Import Azure TTS client dynamically
+    const { synthesizeWithAzureTts } = await import('./clients/azureTtsClient.js');
+    
+    const audioBuffer = await synthesizeWithAzureTts(
+      body.text,
+      {
+        apiKey: azureTtsConfig.apiKey,
+        region: azureTtsConfig.region,
+        voiceName: azureTtsConfig.voiceName,
+        style: azureTtsConfig.style,
+        rate: azureTtsConfig.rate,
+        pitch: azureTtsConfig.pitch
+      }
+    );
+    
+    // Send audio response
+    reply.header('Content-Type', 'audio/mpeg');
+    reply.header('Cache-Control', 'no-store');
+    return reply.send(audioBuffer);
+  } catch (error) {
+    fastify.log.error({ error }, 'Azure TTS synthesis failed');
+    return reply.status(502).send({ ok: false, error: 'azure_tts_request_failed' });
+  }
+});
+
 // 3D Print token status endpoint (stub for now)
 fastify.get('/3dprint/token-status', async () => {
   // TODO: Implement real Bambu auth token check
