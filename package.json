@@ -7,17 +7,21 @@
   ],
   "scripts": {
     "start": "node apps/web/scripts/mkcert-dev.mjs && concurrently -n server,next,tls \"npm -w @jarvis/server run dev\" \"cd apps/web && node node_modules/next/dist/bin/next dev -p 3001 -H localhost\" \"cd apps/web && node dev-proxy.mjs\"",
+    "start:ci": "concurrently -k -s first -n server,next \"npm -w @jarvis/server run dev\" \"cd apps/web && node node_modules/next/dist/bin/next dev -p 3000 -H 127.0.0.1\"",
     "web": "node apps/web/scripts/mkcert-dev.mjs && concurrently -n next,tls \"cd apps/web && node node_modules/next/dist/bin/next dev -p 3001 -H localhost\" \"cd apps/web && node dev-proxy.mjs\"",
     "dev": "npm start",
     "build": "npm run build -ws --if-present",
     "lint": "npm run lint -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",
     "smoke": "tsx scripts/smoke.ts",
+    "smoke:ci": "JARVIS_SMOKE_BASE_URL=http://127.0.0.1:3000 tsx scripts/smoke.ts",
+    "ci:smoke": "concurrently -k -s first \"npm run start:ci\" \"wait-on http://127.0.0.1:3000 && npm run smoke:ci\"",
     "clean": "rimraf node_modules apps/*/node_modules packages/*/node_modules .next apps/*/.next"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "rimraf": "^6.0.1",
-    "turbo": "latest"
+    "turbo": "latest",
+    "wait-on": "^7.2.0"
   }
 }

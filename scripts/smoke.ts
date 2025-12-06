@@ -12,12 +12,12 @@
  *   - Base URL defaults to https://localhost:3000
  * 
  * Environment:
- *   JARVIS_BASE_URL - Override base URL (default: https://localhost:3000)
+ *   JARVIS_SMOKE_BASE_URL - Override base URL (default: https://localhost:3000)
  */
 
 import https from 'https';
 
-const BASE_URL = process.env.JARVIS_BASE_URL ?? 'https://localhost:3000';
+const BASE_URL = process.env.JARVIS_SMOKE_BASE_URL ?? 'https://localhost:3000';
 
 // Allow self-signed certificates for local dev
 const agent = new https.Agent({

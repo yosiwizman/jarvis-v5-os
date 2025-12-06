@@ -6,6 +6,7 @@ out
 .DS_Store
 dist
 .env
+*.tsbuildinfo
 infra/certs/*.pem
 !infra/certs/localhost.pem
 !infra/certs/localhost-key.pem
