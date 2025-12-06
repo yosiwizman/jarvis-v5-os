@@ -1,6 +1,6 @@
 # Jarvis Control Center
 
-> **Current Version:** Jarvis V5.7.0 (Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
+> **Current Version:** Jarvis V5.8.0 (Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
 
 ![Jarvis Voice Assistant](Screenshots/Jarvis.png)
 
@@ -8,6 +8,7 @@ A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js 
 
 ## Feature Highlights
 
+- **📧 Gmail Integration (skeleton):** Backend OAuth2 refresh-token wiring, connection test endpoint, and configuration card in Settings (no inbox UI yet)
 - **🎵 Spotify Integration:** Backend track search using Client Credentials Flow with full Settings configuration
 - **🎙️ Dual TTS: ElevenLabs + Azure Text-to-Speech** with selectable provider for high-quality voice synthesis
 - **🤖 Local LLM Integration:** Run AI models locally (Ollama, LM Studio) with intelligent cloud fallback
@@ -34,6 +35,7 @@ A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js 
 - **(Optional) ElevenLabs API key** (for TTS): [Sign up at ElevenLabs](https://elevenlabs.io)
 - **(Optional) Azure Speech resource** (region + API key) for Azure Text-to-Speech: [Azure Portal](https://portal.azure.com)
 - **(Optional) Spotify Developer app** (Client ID + Client Secret) for Spotify integration: [Spotify for Developers](https://developer.spotify.com/dashboard)
+- **(Optional) Gmail integration:** Google Cloud OAuth2 client (Client ID/Secret, refresh token) - manual OAuth flow required
 
 ### Installation & Running
 
@@ -69,8 +71,8 @@ Keys are stored on the server and shared across all connected devices automatica
 
 ### Documentation
 
-- **Latest Release Notes:** [JARVIS_V5_RELEASE_NOTES_v5.7.0.md](JARVIS_V5_RELEASE_NOTES_v5.7.0.md)
-- **Previous Release Notes:** [v5.6.0](JARVIS_V5_RELEASE_NOTES_v5.6.0.md) | [v5.5.0](JARVIS_V5_RELEASE_NOTES_v5.5.0.md) | [v5.4.0](JARVIS_V5_RELEASE_NOTES_v5.4.0.md)
+- **Latest Release Notes:** [JARVIS_V5_RELEASE_NOTES_v5.8.0.md](JARVIS_V5_RELEASE_NOTES_v5.8.0.md)
+- **Previous Release Notes:** [v5.7.0](JARVIS_V5_RELEASE_NOTES_v5.7.0.md) | [v5.6.0](JARVIS_V5_RELEASE_NOTES_v5.6.0.md) | [v5.5.0](JARVIS_V5_RELEASE_NOTES_v5.5.0.md) | [v5.4.0](JARVIS_V5_RELEASE_NOTES_v5.4.0.md)
 - **Development Workflow:** [DEV_WORKFLOW.md](DEV_WORKFLOW.md) - Branching, CI, and release process
 - **Test Plan:** [JARVIS_V5_TEST_PLAN.md](JARVIS_V5_TEST_PLAN.md)
 - **Local LLM Setup:** [LOCAL_LLM_INTEGRATION.md](LOCAL_LLM_INTEGRATION.md)

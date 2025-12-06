@@ -1,14 +1,14 @@
-# Jarvis V5 OS – Test Plan (v5.7.0)
+# Jarvis V5 OS – Test Plan (v5.8.0)
 
 **For:** Mr. W  
-**Version:** v5.7.0
+**Version:** v5.8.0
 **Date:** 2025-12-06
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V5 OS version 5.7.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, Azure TTS integration with multi-provider selection works correctly, and the new Spotify integration (backend + config) works properly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V5 OS version 5.8.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, Azure TTS integration with multi-provider selection works correctly, Spotify integration (backend + config) works, and the new Gmail integration skeleton (backend + config) works properly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -806,6 +806,180 @@ If you want to test with real Spotify API:
 
 ---
 
+## Gmail Integration Tests (v5.8.0 New Feature)
+
+This tests the new Gmail integration skeleton with OAuth2 refresh token backend:
+
+### Prerequisites (Optional)
+
+If you want to test with real Gmail API:
+1. Create OAuth2 Client in Google Cloud Console
+2. Enable Gmail API for your project
+3. Obtain refresh token via OAuth2 Playground or custom script
+4. **Note:** OAuth2 wizard UI is NOT implemented; manual token entry required
+
+**Skip the functional test if you don't have Gmail credentials** – you can still test the UI configuration.
+
+### Settings UI Test – Gmail Card
+
+1. **Navigate to Settings → Integrations**
+   - [ ] Go to https://localhost:3000/settings
+   - [ ] Scroll to the **Integrations** section
+   - [ ] Find the **Gmail** card
+
+2. **Check Initial State**
+   - [ ] The card shows **"Not connected"** badge (gray)
+   - [ ] The **Enable** checkbox is unchecked
+   - [ ] **No "Coming soon" badge** should appear (that was removed in v5.8.0)
+
+3. **Enable and Configure**
+   - [ ] Check the **Enable** checkbox
+   - [ ] Configuration fields appear below
+   - [ ] **Client ID** field is visible (text input)
+   - [ ] **Client Secret** field is visible (password-masked)
+   - [ ] **Redirect URI** field is visible (text input, optional)
+   - [ ] **User Email** field is visible (text input)
+   - [ ] **Refresh Token** field is visible (password-masked)
+
+4. **Fill in Configuration** (if you have credentials)
+   - [ ] Client ID: Paste your Google OAuth2 Client ID
+   - [ ] Client Secret: Paste your Client Secret
+   - [ ] Redirect URI: Enter if needed (optional)
+   - [ ] User Email: Enter Gmail account (e.g., `yourname@gmail.com`)
+   - [ ] Refresh Token: Paste refresh token from OAuth flow
+   - [ ] The status badge changes to **"Connected"** (green)
+
+5. **Test Without Credentials** (default state)
+   - [ ] Leave fields empty or enter dummy values
+   - [ ] Status badge remains **"Not connected"** (gray)
+   - [ ] No crashes or errors
+
+6. **Refresh and Verify Persistence**
+   - [ ] Press `F5` to refresh the page
+   - [ ] Go back to Settings → Integrations → Gmail
+   - [ ] Verify **Enable** is still checked (if you enabled it)
+   - [ ] Verify Client ID, Client Secret (asterisks), Redirect URI, Email, Token persisted
+   - [ ] Verify status badge still shows "Connected" (if configured with real credentials)
+
+**Expected Result:** Configuration persists across page refreshes.
+
+### Backend Endpoint Test (Unconfigured)
+
+1. **Test Unconfigured Endpoint** (before entering credentials)
+   - [ ] Open Browser DevTools (F12) → Console tab
+   - [ ] Manually test endpoint using Console:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/gmail/test', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({})
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **503** with JSON:
+     ```json
+     { "ok": false, "error": "gmail_not_configured" }
+     ```
+   - [ ] Page should **NOT crash**
+
+### Functional Test (Only if Gmail is Configured)
+
+**Skip this if you don't have Gmail OAuth2 credentials.**
+
+1. **Test Connection**
+   - [ ] Configure Gmail in Settings (Client ID, Secret, Email, Token)
+   - [ ] Verify status shows "Connected" (green)
+   - [ ] Open Browser DevTools (F12) → Console tab
+   - [ ] Test connection:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/gmail/test', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({})
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **200** with JSON:
+     ```json
+     {
+       "ok": true,
+       "messageCount": 5,
+       "messages": [
+         {
+           "id": "...",
+           "threadId": "...",
+           "snippet": "...",
+           "subject": "...",
+           "from": "...",
+           "date": "..."
+         }
+       ]
+     }
+     ```
+   - [ ] Verify messages contain subject, from, date fields
+
+2. **Test Error Handling (Bad Token)** (optional destructive test)
+   - [ ] Go to Settings → Gmail
+   - [ ] Change Refresh Token to invalid value (e.g., `invalid-token-123`)
+   - [ ] Try connection test from Console
+   - [ ] **Expected:** Status **502** with error (e.g., `token_exchange_failed`)
+   - [ ] Page continues to work (no crash)
+   - [ ] Restore correct token after test
+
+**Expected Result:** Gmail test endpoint returns message summaries when configured; graceful errors when misconfigured.
+
+### Current Limitations (v5.8.0)
+
+1. **No OAuth Wizard** (documented behavior)
+   - [ ] No "Connect with Google" button in Settings
+   - [ ] User must manually obtain refresh token via external tools
+
+2. **No Inbox UI** (documented behavior)
+   - [ ] Go to https://localhost:3000/chat
+   - [ ] **Expected:** No Gmail inbox, email reader, or message UI visible (backend-only in v5.8.0)
+   - [ ] Chat works normally for text conversations
+
+3. **Backend Test Only**
+   - [ ] Gmail integration is currently API-only
+   - [ ] User-facing email management UI will come in future versions (v5.8.x or v5.9.0)
+
+**Expected Result:** Gmail is backend skeleton only in v5.8.0; no user-facing email UI yet.
+
+### Regression Test (Other Integrations)
+
+1. **Verify Spotify Still Works**
+   - [ ] Go to Settings → Integrations → Spotify
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+2. **Verify Azure TTS Still Works**
+   - [ ] Go to Settings → Integrations → Azure TTS
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+3. **Verify ElevenLabs Still Works**
+   - [ ] Go to Settings → Integrations → ElevenLabs
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+4. **Verify Local LLM Still Works**
+   - [ ] Go to Settings → Integrations → Local LLM
+   - [ ] Verify configuration is still present
+   - [ ] Verify connection status badge still works
+
+5. **Verify Web Search Still Works**
+   - [ ] Go to Settings → Integrations → Web Search
+   - [ ] Verify configuration is still present
+   - [ ] Verify connection status badge still works
+
+6. **Verify Chat Works Without Gmail**
+   - [ ] Disable Gmail (or leave unconfigured)
+   - [ ] Go to Chat
+   - [ ] Send a message
+   - [ ] **Expected:** Chat works normally (Gmail is purely additive)
+
+**Expected Result:** Gmail is purely additive; all previous features work unchanged.
+
+---
+
 ## 3D, Camera & Security Sanity Checks
 
 Quick checks to ensure specialized pages don't crash:
@@ -901,9 +1075,11 @@ Before you finish, make sure you've tested:
 - [ ] Backend API returns 200 status codes for key endpoints
 - [ ] Spotify integration UI works and persists configuration
 - [ ] Spotify search endpoint returns 503 when unconfigured (expected behavior)
-- [ ] Smoke tests: 11/11 checks pass (5 pages + 6 APIs including Spotify)
+- [ ] Gmail integration UI works and persists configuration
+- [ ] Gmail test endpoint returns 503 when unconfigured (expected behavior)
+- [ ] Smoke tests: 12/12 checks pass (5 pages + 7 APIs including Spotify and Gmail)
 
-If all checkboxes are marked and no major issues were found, **v5.7.0 is ready for deployment!**
+If all checkboxes are marked and no major issues were found, **v5.8.0 is ready for deployment!**
 
 ---
 
