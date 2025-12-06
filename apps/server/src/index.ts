@@ -500,141 +500,254 @@ fastify.post('/openai/text-chat', async (req, reply) => {
   const verbosity = settings?.verbosity;
   const maxOutputTokens = settings?.maxOutputTokens;
 
-  let apiKey: string;
+  // Load server settings to check for local LLM configuration
+  let serverSettings: any = null;
   try {
-    apiKey = getOpenAiApiKey();
+    const settingsPath = path.join(DATA_DIR, 'settings.json');
+    if (existsSync(settingsPath)) {
+      const raw = await readFile(settingsPath, 'utf-8');
+      serverSettings = JSON.parse(raw);
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
-    return reply.status(500).send({ error: message });
+    fastify.log.warn('Failed to load server settings for LLM routing');
   }
 
-  const payload: Record<string, any> = {
-    model: settings?.model?.trim() || 'gpt-5'
-  };
+  // Check if we should use local LLM
+  const useLocalLlm = serverSettings?.textChat?.useLocalLlm ?? false;
+  const localLlmPrimary = serverSettings?.textChat?.localLlmPrimary ?? false;
+  const localLlmConfig = serverSettings?.integrations?.localLLM;
+  const localLlmConnected =
+    localLlmConfig?.enabled &&
+    localLlmConfig?.baseUrl &&
+    localLlmConfig?.model;
+
+  // Determine routing strategy
+  const shouldTryLocal = useLocalLlm && localLlmConnected;
+  const shouldTryCloud = !useLocalLlm || !localLlmPrimary || !localLlmConnected;
+
+  let cloudApiKey: string | null = null;
+  if (shouldTryCloud) {
+    try {
+      cloudApiKey = getOpenAiApiKey();
+    } catch (error) {
+      if (!shouldTryLocal) {
+        const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
+        return reply.status(500).send({ error: message });
+      }
+      // If local is available, we can continue without cloud key
+    }
+  }
 
   const conversation = previousResponseId ? messages.slice(-1) : messages;
   if (!conversation.length) {
     return reply.status(400).send({ error: 'No messages supplied for chat request' });
   }
 
-  const inputMessages = conversation.map((message) => ({
-    role: message.role,
-    content: [
-      {
-        type: 'input_text',
-        text: message.content
-      }
-    ]
-  }));
-
-  if (!previousResponseId && trimmedInitialPrompt) {
-    payload.input = [
-      {
-        role: 'developer',
-        content: [
-          {
-            type: 'input_text',
-            text: trimmedInitialPrompt
-          }
-        ]
-      },
-      ...inputMessages
-    ];
-  } else {
-    payload.input = inputMessages;
-  }
-
-  if (reasoningEffort) {
-    payload.reasoning = { effort: reasoningEffort };
-  }
-  if (verbosity) {
-    payload.text = { verbosity };
-  }
-  if (maxOutputTokens) {
-    payload.max_output_tokens = maxOutputTokens;
-  }
-  if (previousResponseId) {
-    payload.previous_response_id = previousResponseId;
-  }
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-
-  let upstream: globalThis.Response;
-  try {
-    upstream = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+  // LOCAL LLM PATH (primary or fallback)
+  if (shouldTryLocal && localLlmPrimary) {
+    // Try local LLM first
+    const { callLocalLlm } = await import('./clients/localLlmClient.js');
+    const localMessages = conversation.map(m => ({
+      role: m.role as 'system' | 'user' | 'assistant',
+      content: m.content
+    }));
+    const localResult = await callLocalLlm({
+      messages: localMessages,
+      systemPrompt: trimmedInitialPrompt || undefined
     });
-  } catch (error) {
-    fastify.log.error({ error }, 'Failed to reach OpenAI Responses API');
-    return reply.status(502).send({ error: 'Failed to reach OpenAI Responses API' });
-  }
 
-  const raw = await upstream.text();
-  let openaiPayload: any = null;
-  if (raw) {
-    try {
-      openaiPayload = JSON.parse(raw);
-    } catch (error) {
-      openaiPayload = null;
-    }
-  }
-
-  if (!upstream.ok) {
-    const message =
-      openaiPayload?.error?.message ||
-      openaiPayload?.error ||
-      raw ||
-      'OpenAI text chat request failed';
-    fastify.log.error({ status: upstream.status, body: raw }, 'OpenAI text chat request failed');
-    return reply.status(upstream.status).send({ error: message });
-  }
-
-  // Check if response contains tool calls
-  const outputs = Array.isArray(openaiPayload?.output) ? openaiPayload.output : [];
-  const toolCalls: any[] = [];
-  
-  for (const item of outputs) {
-    if (!item || typeof item !== 'object') continue;
-    
-    // Check for function calls in the output
-    if (item.type === 'function_call' && item.name && item.call_id) {
-      toolCalls.push({
-        id: item.call_id,
-        type: 'function',
-        function: {
-          name: item.name,
-          arguments: item.arguments || '{}'
-        }
+    if (localResult.ok) {
+      fastify.log.info('[LocalLLM] Successfully used local model (primary)');
+      return reply.send({
+        message: localResult.message,
+        responseId: null,
+        source: 'local-llm'
       });
     }
+
+    // Local failed, fall back to cloud if configured
+    fastify.log.warn({ error: localResult.error }, '[LocalLLM] Local model failed, falling back to cloud');
+    if (!cloudApiKey) {
+      return reply.status(503).send({ error: 'Local LLM failed and cloud is not configured' });
+    }
   }
 
-  // If there are tool calls, return them to the client
-  if (toolCalls.length > 0) {
-    fastify.log.info({ toolCalls }, 'OpenAI response includes tool calls');
+  // CLOUD (OpenAI) PATH
+  if (cloudApiKey) {
+    const payload: Record<string, any> = {
+      model: settings?.model?.trim() || 'gpt-5'
+    };
+
+    const inputMessages = conversation.map((message) => ({
+      role: message.role,
+      content: [
+        {
+          type: 'input_text',
+          text: message.content
+        }
+      ]
+    }));
+
+    if (!previousResponseId && trimmedInitialPrompt) {
+      payload.input = [
+        {
+          role: 'developer',
+          content: [
+            {
+              type: 'input_text',
+              text: trimmedInitialPrompt
+            }
+          ]
+        },
+        ...inputMessages
+      ];
+    } else {
+      payload.input = inputMessages;
+    }
+
+    if (reasoningEffort) {
+      payload.reasoning = { effort: reasoningEffort };
+    }
+    if (verbosity) {
+      payload.text = { verbosity };
+    }
+    if (maxOutputTokens) {
+      payload.max_output_tokens = maxOutputTokens;
+    }
+    if (previousResponseId) {
+      payload.previous_response_id = previousResponseId;
+    }
+    if (tools && tools.length > 0) {
+      payload.tools = tools;
+    }
+
+    let upstream: globalThis.Response;
+    try {
+      upstream = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${cloudApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      fastify.log.error({ error }, 'Failed to reach OpenAI Responses API');
+      
+      // If cloud fails and local is available as fallback, try local
+      if (shouldTryLocal && !localLlmPrimary) {
+        fastify.log.warn('[LocalLLM] Cloud failed, trying local as fallback');
+        const { callLocalLlm } = await import('./clients/localLlmClient.js');
+        const localMessages = conversation.map(m => ({
+          role: m.role as 'system' | 'user' | 'assistant',
+          content: m.content
+        }));
+        const localResult = await callLocalLlm({
+          messages: localMessages,
+          systemPrompt: trimmedInitialPrompt || undefined
+        });
+
+        if (localResult.ok) {
+          fastify.log.info('[LocalLLM] Successfully used local model (fallback)');
+          return reply.send({
+            message: localResult.message,
+            responseId: null,
+            source: 'local-llm'
+          });
+        }
+      }
+
+      return reply.status(502).send({ error: 'Failed to reach OpenAI Responses API' });
+    }
+
+    const raw = await upstream.text();
+    let openaiPayload: any = null;
+    if (raw) {
+      try {
+        openaiPayload = JSON.parse(raw);
+      } catch (error) {
+        openaiPayload = null;
+      }
+    }
+
+    if (!upstream.ok) {
+      const message =
+        openaiPayload?.error?.message ||
+        openaiPayload?.error ||
+        raw ||
+        'OpenAI text chat request failed';
+      fastify.log.error({ status: upstream.status, body: raw }, 'OpenAI text chat request failed');
+      
+      // Try local LLM as fallback if cloud-primary mode
+      if (shouldTryLocal && !localLlmPrimary) {
+        fastify.log.warn('[LocalLLM] Cloud returned error, trying local as fallback');
+        const { callLocalLlm } = await import('./clients/localLlmClient.js');
+        const localMessages = conversation.map(m => ({
+          role: m.role as 'system' | 'user' | 'assistant',
+          content: m.content
+        }));
+        const localResult = await callLocalLlm({
+          messages: localMessages,
+          systemPrompt: trimmedInitialPrompt || undefined
+        });
+
+        if (localResult.ok) {
+          fastify.log.info('[LocalLLM] Successfully used local model (fallback after cloud error)');
+          return reply.send({
+            message: localResult.message,
+            responseId: null,
+            source: 'local-llm'
+          });
+        }
+      }
+      
+      return reply.status(upstream.status).send({ error: message });
+    }
+
+    // Check if response contains tool calls
+    const outputs = Array.isArray(openaiPayload?.output) ? openaiPayload.output : [];
+    const toolCalls: any[] = [];
+    
+    for (const item of outputs) {
+      if (!item || typeof item !== 'object') continue;
+      
+      // Check for function calls in the output
+      if (item.type === 'function_call' && item.name && item.call_id) {
+        toolCalls.push({
+          id: item.call_id,
+          type: 'function',
+          function: {
+            name: item.name,
+            arguments: item.arguments || '{}'
+          }
+        });
+      }
+    }
+
+    // If there are tool calls, return them to the client
+    if (toolCalls.length > 0) {
+      fastify.log.info({ toolCalls }, 'OpenAI response includes tool calls');
+      return reply.send({
+        toolCalls,
+        responseId: openaiPayload?.id ?? null
+      });
+    }
+
+    // Otherwise, extract and return the text
+    const text = extractOutputText(openaiPayload);
+    if (!text) {
+      fastify.log.error({ body: openaiPayload }, 'OpenAI response missing text output');
+      return reply.status(502).send({ error: 'OpenAI response did not include text output' });
+    }
+
     return reply.send({
-      toolCalls,
+      message: text.trim(),
       responseId: openaiPayload?.id ?? null
     });
   }
 
-  // Otherwise, extract and return the text
-  const text = extractOutputText(openaiPayload);
-  if (!text) {
-    fastify.log.error({ body: openaiPayload }, 'OpenAI response missing text output');
-    return reply.status(502).send({ error: 'OpenAI response did not include text output' });
-  }
-
-  return reply.send({
-    message: text.trim(),
-    responseId: openaiPayload?.id ?? null
-  });
+  // If we reach here, neither local nor cloud is available
+  return reply.status(503).send({ error: 'No LLM backend configured' });
 });
 
 const ToolResultSchema = z.object({

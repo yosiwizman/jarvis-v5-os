@@ -724,6 +724,41 @@ export default function SettingsPage() {
               </p>
             </div>
           </label>
+          <label className="flex items-center gap-3 md:col-span-2">
+            <input
+              type="checkbox"
+              checked={!!chat.useLocalLlm}
+              onChange={(event) => updateTextChat('useLocalLlm', event.target.checked)}
+            />
+            <div>
+              <div className="text-sm text-white/70">Use Local LLM when available</div>
+              <p className="text-xs text-white/40 mt-1">
+                When enabled and Local LLM is connected, Jarvis will use the local model for text chat (with optional web search augmentation).
+              </p>
+            </div>
+          </label>
+          {chat.useLocalLlm && (
+            <div className="md:col-span-2 pl-8 space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="llm-priority"
+                  checked={!!chat.localLlmPrimary}
+                  onChange={() => updateTextChat('localLlmPrimary', true)}
+                />
+                <span className="text-white/70">Local LLM as primary, cloud as fallback</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="llm-priority"
+                  checked={!chat.localLlmPrimary}
+                  onChange={() => updateTextChat('localLlmPrimary', false)}
+                />
+                <span className="text-white/70">Cloud as primary, local as fallback</span>
+              </label>
+            </div>
+          )}
         </div>
       </section>
 
@@ -1106,13 +1141,27 @@ export default function SettingsPage() {
           </div>
 
           {/* Local LLM Card */}
-          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('localLLM', settings?.integrations?.localLLM)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{integrationMetadata.localLLM.name}</div>
                 <div className="text-xs text-white/50 mt-1">{integrationMetadata.localLLM.description}</div>
               </div>
-              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('localLLM', settings?.integrations?.localLLM)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('localLLM', settings?.integrations?.localLLM) ? 'Connected' : 'Not connected'}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!settings?.integrations?.localLLM?.enabled}
@@ -1122,18 +1171,50 @@ export default function SettingsPage() {
             {settings?.integrations?.localLLM?.enabled && (
               <div className="space-y-3 pt-2 border-t border-white/10">
                 <label className="space-y-1">
+                  <div className="text-xs text-white/60">Provider</div>
+                  <select className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.localLLM?.provider ?? 'ollama'}
+                    onChange={(e) => { updateIntegration('localLLM', { provider: e.target.value as 'ollama' | 'custom-http' }); setSettings(readSettings()); }}>
+                    <option className="bg-[#0b0f14]" value="ollama">Ollama (local HTTP)</option>
+                    <option className="bg-[#0b0f14]" value="custom-http">Custom HTTP API</option>
+                  </select>
+                </label>
+                <label className="space-y-1">
                   <div className="text-xs text-white/60">Base URL</div>
                   <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
                     value={settings?.integrations?.localLLM?.baseUrl ?? ''}
                     onChange={(e) => { updateIntegration('localLLM', { baseUrl: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="http://localhost:11434" />
+                    placeholder="http://127.0.0.1:11434" />
                 </label>
                 <label className="space-y-1">
-                  <div className="text-xs text-white/60">Model Name</div>
+                  <div className="text-xs text-white/60">Model</div>
                   <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.localLLM?.modelName ?? ''}
-                    onChange={(e) => { updateIntegration('localLLM', { modelName: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="llama2" />
+                    value={settings?.integrations?.localLLM?.model ?? ''}
+                    onChange={(e) => { updateIntegration('localLLM', { model: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="llama3.1" />
+                </label>
+                {settings?.integrations?.localLLM?.provider === 'custom-http' && (
+                  <label className="space-y-1">
+                    <div className="text-xs text-white/60">API Key (optional)</div>
+                    <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                      value={settings?.integrations?.localLLM?.apiKey ?? ''}
+                      onChange={(e) => { updateIntegration('localLLM', { apiKey: e.target.value }); setSettings(readSettings()); }}
+                      placeholder="API key for custom HTTP" />
+                  </label>
+                )}
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Temperature (0-1)</div>
+                  <input type="number" min="0" max="1" step="0.1" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.localLLM?.temperature ?? 0.7}
+                    onChange={(e) => { updateIntegration('localLLM', { temperature: parseFloat(e.target.value) || 0.7 }); setSettings(readSettings()); }}
+                    placeholder="0.7" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Max Tokens (optional)</div>
+                  <input type="number" min="1" step="1" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.localLLM?.maxTokens ?? ''}
+                    onChange={(e) => { updateIntegration('localLLM', { maxTokens: e.target.value ? parseInt(e.target.value) : null }); setSettings(readSettings()); }}
+                    placeholder="Leave empty for model default" />
                 </label>
               </div>
             )}

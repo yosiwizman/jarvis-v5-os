@@ -43,7 +43,7 @@ This repo uses a simple and clear versioning approach:
 
 ### What are version tags?
 
-- **Version tags** (like `v5.0.0`, `v5.1.0`, `v5.2.0`, `v5.3.0`) are **frozen restore points**.
+- **Version tags** (like `v5.0.0`, `v5.1.0`, `v5.2.0`, `v5.3.0`, `v5.4.0`) are **frozen restore points**.
 - Each tag represents a specific, stable state of the codebase that has been tested and confirmed working.
 - Tags never change. Once created, a tag like `v5.0.0` always points to the exact same code.
 

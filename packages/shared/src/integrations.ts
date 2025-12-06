@@ -26,8 +26,12 @@ export interface WebSearchIntegrationConfig {
 
 export interface LocalLLMIntegrationConfig {
   enabled: boolean;
-  baseUrl?: string;        // e.g. "http://localhost:11434"
-  modelName?: string;
+  provider: 'ollama' | 'custom-http';
+  baseUrl: string | null;      // e.g. "http://127.0.0.1:11434"
+  apiKey: string | null;       // optional, used only for custom-http
+  model: string | null;        // e.g. "llama3.1"
+  temperature: number | null;  // e.g. 0.7
+  maxTokens: number | null;    // optional
 }
 
 export interface ElevenLabsIntegrationConfig {
@@ -86,8 +90,12 @@ export const defaultIntegrationSettings: IntegrationSettings = {
   },
   localLLM: {
     enabled: false,
-    baseUrl: '',
-    modelName: ''
+    provider: 'ollama',
+    baseUrl: 'http://127.0.0.1:11434',
+    apiKey: null,
+    model: 'llama3.1',
+    temperature: 0.7,
+    maxTokens: null
   },
   elevenLabs: {
     enabled: false,
@@ -143,7 +151,7 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
     name: 'Local LLM',
     description: 'Connect your local model server (Ollama, LM Studio, etc.)',
     requiresApiKey: false,
-    comingSoon: true
+    comingSoon: false
   },
   elevenLabs: {
     id: 'elevenLabs',
@@ -197,8 +205,10 @@ export function isIntegrationConnected(
       const wsConfig = config as WebSearchIntegrationConfig;
       return !!(wsConfig.baseUrl && wsConfig.apiKey);
     }
-    case 'localLLM':
-      return !!(config as LocalLLMIntegrationConfig).baseUrl;
+    case 'localLLM': {
+      const llmConfig = config as LocalLLMIntegrationConfig;
+      return !!(llmConfig.baseUrl && llmConfig.model);
+    }
     case 'elevenLabs':
       return !!(config as ElevenLabsIntegrationConfig).apiKey;
     case 'azureTTS':

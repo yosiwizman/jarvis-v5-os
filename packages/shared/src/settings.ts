@@ -25,7 +25,9 @@ export type TextChatSettings = {
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
   verbosity?: 'low' | 'medium' | 'high';
   maxOutputTokens?: number;
-  useWebSearch?: boolean;  // Allow web search for answers
+  useWebSearch?: boolean;     // Allow web search for answers
+  useLocalLlm?: boolean;      // Master toggle for local LLM
+  localLlmPrimary?: boolean;  // If true, prefer local; else local is fallback
 };
 
 export type ImageGenerationSettings = {
@@ -81,7 +83,9 @@ const defaultSettings: AppSettings = {
     reasoningEffort: 'low',
     verbosity: 'medium',
     maxOutputTokens: 800,
-    useWebSearch: false
+    useWebSearch: false,
+    useLocalLlm: false,
+    localLlmPrimary: false  // Cloud is primary by default
   },
   imageGeneration: {
     model: 'dall-e-3',
