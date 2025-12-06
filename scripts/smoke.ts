@@ -18,6 +18,7 @@
 import https from 'https';
 
 const BASE_URL = process.env.JARVIS_SMOKE_BASE_URL ?? 'https://localhost:3000';
+const API_BASE_URL = process.env.JARVIS_SMOKE_API_URL ?? BASE_URL;
 
 // Allow self-signed certificates for local dev
 const agent = new https.Agent({
@@ -41,6 +42,7 @@ async function check(
     assertOkField?: boolean;
     method?: 'GET' | 'POST';
     body?: any;
+    useApiBase?: boolean;
   } = {}
 ): Promise<CheckResult> {
   const {
@@ -48,9 +50,10 @@ async function check(
     validateJson = false,
     assertOkField = false,
     method = 'GET',
-    body = undefined
+    body = undefined,
+    useApiBase = false
   } = options;
-  const url = `${BASE_URL}${path}`;
+  const url = `${useApiBase ? API_BASE_URL : BASE_URL}${path}`;
 
   try {
     const response = await fetch(url, {
@@ -119,20 +122,22 @@ async function runSmokeTests(): Promise<void> {
     check('Menu page', '/menu'),
     check('Holomat page', '/holomat'),
 
-    // API endpoints
-    check('System metrics API', '/api/system/metrics', {
+    // API endpoints (use API_BASE_URL in CI mode)
+    check('System metrics API', '/system/metrics', {
+      validateJson: true,
+      useApiBase: true,
+    }),
+    check('3D print token status API', '/3dprint/token-status', {
       validateJson: true,
       assertOkField: true,
+      useApiBase: true,
     }),
-    check('3D print token status API', '/api/3dprint/token-status', {
-      validateJson: true,
-      assertOkField: true,
-    }),
-    check('Web search API (unconfigured)', '/api/integrations/web-search', {
+    check('Web search API (unconfigured)', '/integrations/web-search', {
       method: 'POST',
       body: { query: 'test query' },
       expectedStatus: 503,  // Expected: not configured
       validateJson: true,
+      useApiBase: true,
     }),
   ];
 
