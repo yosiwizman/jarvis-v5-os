@@ -1221,13 +1221,27 @@ export default function SettingsPage() {
           </div>
 
           {/* ElevenLabs Card */}
-          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('elevenLabs', settings?.integrations?.elevenLabs)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{integrationMetadata.elevenLabs.name}</div>
                 <div className="text-xs text-white/50 mt-1">{integrationMetadata.elevenLabs.description}</div>
               </div>
-              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('elevenLabs', settings?.integrations?.elevenLabs)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('elevenLabs', settings?.integrations?.elevenLabs) ? 'Connected' : 'Not connected'}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!settings?.integrations?.elevenLabs?.enabled}
@@ -1241,8 +1255,52 @@ export default function SettingsPage() {
                   <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
                     value={settings?.integrations?.elevenLabs?.apiKey ?? ''}
                     onChange={(e) => { updateIntegration('elevenLabs', { apiKey: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="ElevenLabs API key" />
+                    placeholder="eleven-..." />
                 </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Voice ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.elevenLabs?.voiceId ?? ''}
+                    onChange={(e) => { updateIntegration('elevenLabs', { voiceId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="your-voice-id" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Model ID (optional)</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.elevenLabs?.modelId ?? ''}
+                    onChange={(e) => { updateIntegration('elevenLabs', { modelId: e.target.value || null }); setSettings(readSettings()); }}
+                    placeholder="eleven_multilingual_v2" />
+                  <div className="text-xs text-white/40">Default: eleven_multilingual_v2</div>
+                </label>
+                <details className="space-y-3">
+                  <summary className="text-xs text-white/60 cursor-pointer">Advanced Settings</summary>
+                  <div className="space-y-3 pt-2">
+                    <label className="space-y-1">
+                      <div className="text-xs text-white/60">Stability (0-1)</div>
+                      <input type="number" min="0" max="1" step="0.1" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                        value={settings?.integrations?.elevenLabs?.stability ?? ''}
+                        onChange={(e) => { updateIntegration('elevenLabs', { stability: e.target.value ? parseFloat(e.target.value) : null }); setSettings(readSettings()); }}
+                        placeholder="0.5" />
+                      <div className="text-xs text-white/40">Default: 0.5</div>
+                    </label>
+                    <label className="space-y-1">
+                      <div className="text-xs text-white/60">Similarity Boost (0-1)</div>
+                      <input type="number" min="0" max="1" step="0.1" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                        value={settings?.integrations?.elevenLabs?.similarityBoost ?? ''}
+                        onChange={(e) => { updateIntegration('elevenLabs', { similarityBoost: e.target.value ? parseFloat(e.target.value) : null }); setSettings(readSettings()); }}
+                        placeholder="0.75" />
+                      <div className="text-xs text-white/40">Default: 0.75</div>
+                    </label>
+                    <label className="space-y-1">
+                      <div className="text-xs text-white/60">Style (0-1)</div>
+                      <input type="number" min="0" max="1" step="0.1" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                        value={settings?.integrations?.elevenLabs?.style ?? ''}
+                        onChange={(e) => { updateIntegration('elevenLabs', { style: e.target.value ? parseFloat(e.target.value) : null }); setSettings(readSettings()); }}
+                        placeholder="0.0" />
+                      <div className="text-xs text-white/40">Default: 0.0 (only supported by some models)</div>
+                    </label>
+                  </div>
+                </details>
               </div>
             )}
           </div>

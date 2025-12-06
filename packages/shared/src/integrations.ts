@@ -36,8 +36,12 @@ export interface LocalLLMIntegrationConfig {
 
 export interface ElevenLabsIntegrationConfig {
   enabled: boolean;
-  apiKey?: string;
-  defaultVoiceId?: string;
+  apiKey: string | null;
+  voiceId: string | null;        // target voice
+  modelId: string | null;        // e.g. "eleven_multilingual_v2"
+  stability: number | null;      // optional voice setting
+  similarityBoost: number | null;
+  style: number | null;          // optional style intensity
 }
 
 export interface AzureTTSIntegrationConfig {
@@ -99,8 +103,12 @@ export const defaultIntegrationSettings: IntegrationSettings = {
   },
   elevenLabs: {
     enabled: false,
-    apiKey: '',
-    defaultVoiceId: ''
+    apiKey: null,
+    voiceId: null,
+    modelId: 'eleven_multilingual_v2',
+    stability: null,
+    similarityBoost: null,
+    style: null
   },
   azureTTS: {
     enabled: false,
@@ -158,7 +166,7 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
     name: 'ElevenLabs',
     description: 'High-quality neural voice generation',
     requiresApiKey: true,
-    comingSoon: true
+    comingSoon: false
   },
   azureTTS: {
     id: 'azureTTS',
@@ -209,8 +217,10 @@ export function isIntegrationConnected(
       const llmConfig = config as LocalLLMIntegrationConfig;
       return !!(llmConfig.baseUrl && llmConfig.model);
     }
-    case 'elevenLabs':
-      return !!(config as ElevenLabsIntegrationConfig).apiKey;
+    case 'elevenLabs': {
+      const elConfig = config as ElevenLabsIntegrationConfig;
+      return !!(elConfig.apiKey && elConfig.voiceId);
+    }
     case 'azureTTS':
       return !!(config as AzureTTSIntegrationConfig).apiKey;
     case 'spotify':

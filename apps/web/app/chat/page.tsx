@@ -47,8 +47,10 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [chatSettings, setChatSettings] = useState<TextChatSettings>(() => readSettings().textChat);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
@@ -707,6 +709,72 @@ export default function ChatPage() {
     setMessages([]);
     setResponseId(null);
     setError(null);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setSpeakingMessageId(null);
+  }, []);
+
+  const speakMessage = useCallback(async (messageId: string, text: string) => {
+    const settings = readSettings();
+    const elevenLabsConfig = settings.integrations?.elevenLabs;
+
+    if (!isIntegrationConnected('elevenLabs', elevenLabsConfig)) {
+      setError('ElevenLabs is not configured. Please enable and configure it in Settings.');
+      return;
+    }
+
+    try {
+      setSpeakingMessageId(messageId);
+
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      const response = await fetch(buildServerUrl('/integrations/elevenlabs/tts'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'TTS request failed' }));
+        throw new Error(errorData.error || `TTS failed: ${response.status}`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setSpeakingMessageId(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setSpeakingMessageId(null);
+        setError('Failed to play audio.');
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('Error speaking message:', err);
+      setSpeakingMessageId(null);
+      setError(err instanceof Error ? err.message : 'Failed to speak message.');
+    }
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setSpeakingMessageId(null);
   }, []);
 
   const disableSend = isSending || !input.trim();
@@ -835,6 +903,28 @@ export default function ChatPage() {
                         </>
                       )}
                     </div>
+                    {/* Speak button for assistant messages */}
+                    {!isUser && !isFunction && message.content && message.status !== 'pending' && message.status !== 'error' && isIntegrationConnected('elevenLabs', readSettings().integrations?.elevenLabs) && (
+                      <button
+                        onClick={() => {
+                          if (speakingMessageId === message.id) {
+                            stopSpeaking();
+                          } else {
+                            void speakMessage(message.id, message.content);
+                          }
+                        }}
+                        disabled={speakingMessageId !== null && speakingMessageId !== message.id}
+                        className={
+                          `text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
+                            speakingMessageId === message.id
+                              ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text'
+                              : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`
+                        }
+                      >
+                        {speakingMessageId === message.id ? '⏹ Stop' : '🔊 Speak answer'}
+                      </button>
+                    )}
                     {message.status === 'error' ? (
                       <span className="text-xs text-rose-200">An error occurred.</span>
                     ) : null}
