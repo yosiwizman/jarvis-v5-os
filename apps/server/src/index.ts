@@ -429,6 +429,56 @@ fastify.post('/integrations/gmail/test', async (req, reply) => {
   }
 });
 
+// Google Calendar integration endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.post('/integrations/google-calendar/test', async (req, reply) => {
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    fastify.log.error({ error }, 'Failed to load settings for Google Calendar');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const calendarConfig = settings?.integrations?.googleCalendar;
+  
+  // Check if configured
+  if (
+    !calendarConfig?.enabled ||
+    !calendarConfig?.clientId ||
+    !calendarConfig?.clientSecret ||
+    !calendarConfig?.refreshToken ||
+    !calendarConfig?.calendarId
+  ) {
+    fastify.log.warn('Google Calendar not configured');
+    return reply.status(503).send({ ok: false, error: 'google_calendar_not_configured' });
+  }
+  
+  try {
+    // Import Google Calendar client dynamically
+    const { testGoogleCalendarConnection } = await import('./clients/googleCalendarClient.js');
+    
+    const result = await testGoogleCalendarConnection({
+      clientId: calendarConfig.clientId,
+      clientSecret: calendarConfig.clientSecret,
+      refreshToken: calendarConfig.refreshToken,
+      calendarId: calendarConfig.calendarId
+    });
+    
+    if (result.ok) {
+      return reply.send(result);
+    } else {
+      return reply.status(502).send(result);
+    }
+  } catch (error) {
+    fastify.log.error({ error }, 'Google Calendar connection test failed');
+    return reply.status(502).send({ ok: false, error: 'google_calendar_test_failed' });
+  }
+});
+
 // 3D Print token status endpoint (stub for now)
 fastify.get('/3dprint/token-status', async () => {
   // TODO: Implement real Bambu auth token check

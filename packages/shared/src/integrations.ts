@@ -72,6 +72,11 @@ export interface GmailIntegrationConfig {
 
 export interface GoogleCalendarIntegrationConfig {
   enabled: boolean;
+  clientId: string | null;
+  clientSecret: string | null;
+  redirectUri: string | null;   // where Google will redirect after consent
+  refreshToken: string | null;  // long-lived; obtained via manual flow
+  calendarId: string | null;    // e.g. "primary" or a specific calendar ID
 }
 
 // Master Integration Settings
@@ -143,7 +148,12 @@ export const defaultIntegrationSettings: IntegrationSettings = {
     userEmail: null
   },
   googleCalendar: {
-    enabled: false
+    enabled: false,
+    clientId: null,
+    clientSecret: null,
+    redirectUri: null,
+    refreshToken: null,
+    calendarId: 'primary'
   }
 };
 
@@ -210,9 +220,9 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
   googleCalendar: {
     id: 'googleCalendar',
     name: 'Google Calendar',
-    description: 'Future calendar and scheduling',
-    requiresApiKey: false,
-    comingSoon: true
+    description: 'Connect Google Calendar via OAuth2 (refresh token). Backend test endpoint available; calendar UI coming later.',
+    requiresApiKey: true,
+    comingSoon: false
   }
 };
 
@@ -256,8 +266,15 @@ export function isIntegrationConnected(
         gmailConfig.userEmail
       );
     }
-    case 'googleCalendar':
-      return config.enabled; // No extra requirements yet
+    case 'googleCalendar': {
+      const calConfig = config as GoogleCalendarIntegrationConfig;
+      return !!(
+        calConfig.clientId &&
+        calConfig.clientSecret &&
+        calConfig.refreshToken &&
+        calConfig.calendarId
+      );
+    }
     default:
       return false;
   }

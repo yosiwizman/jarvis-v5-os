@@ -1540,19 +1540,75 @@ export default function SettingsPage() {
           </div>
 
           {/* Google Calendar Card */}
-          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('googleCalendar', settings?.integrations?.googleCalendar)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{integrationMetadata.googleCalendar.name}</div>
                 <div className="text-xs text-white/50 mt-1">{integrationMetadata.googleCalendar.description}</div>
               </div>
-              <div className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-400">Coming soon</div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('googleCalendar', settings?.integrations?.googleCalendar)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('googleCalendar', settings?.integrations?.googleCalendar) ? 'Connected' : 'Not connected'}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!settings?.integrations?.googleCalendar?.enabled}
                 onChange={(e) => { updateIntegration('googleCalendar', { enabled: e.target.checked }); setSettings(readSettings()); }} />
               Enable
             </label>
+            {settings?.integrations?.googleCalendar?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.googleCalendar?.clientId ?? ''}
+                    onChange={(e) => { updateIntegration('googleCalendar', { clientId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="your-google-client-id.apps.googleusercontent.com" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client Secret</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.googleCalendar?.clientSecret ?? ''}
+                    onChange={(e) => { updateIntegration('googleCalendar', { clientSecret: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="********" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Redirect URI (optional)</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.googleCalendar?.redirectUri ?? ''}
+                    onChange={(e) => { updateIntegration('googleCalendar', { redirectUri: e.target.value || null }); setSettings(readSettings()); }}
+                    placeholder="http://localhost:3000/oauth/callback" />
+                  <div className="text-xs text-white/40">Used during OAuth consent flow</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Calendar ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.googleCalendar?.calendarId ?? ''}
+                    onChange={(e) => { updateIntegration('googleCalendar', { calendarId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="primary" />
+                  <div className="text-xs text-white/40">Use 'primary' for your main calendar or a specific calendar ID</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Refresh Token</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.googleCalendar?.refreshToken ?? ''}
+                    onChange={(e) => { updateIntegration('googleCalendar', { refreshToken: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="Paste refresh token from OAuth flow" />
+                  <div className="text-xs text-white/40">Obtain via manual OAuth2 consent flow (see docs)</div>
+                </label>
+              </div>
+            )}
           </div>
         </div>
       </section>
