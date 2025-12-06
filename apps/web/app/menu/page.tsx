@@ -17,10 +17,10 @@ export default function MenuPage() {
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => (
-        <Link key={card.href} href={card.href as any} className="card p-6 hover:border-white/20 transition block">
-          <div className="text-lg font-semibold">{card.title}</div>
+        <Link key={card.href} href={card.href as any} className="card p-6 hover:border-[color:rgb(var(--jarvis-accent)_/_0.3)] transition block group">
+          <div className="text-lg font-semibold group-hover:jarvis-accent-text transition">{card.title}</div>
           <div className="mt-2 text-white/60">{card.desc}</div>
-          <div className="mt-4 text-sky-300">Go →</div>
+          <div className="mt-4 jarvis-accent-text font-medium">Go →</div>
         </Link>
       ))}
     </div>

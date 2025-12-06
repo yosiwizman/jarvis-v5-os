@@ -684,7 +684,7 @@ export default function ChatPage() {
           <p className="text-sm text-white/60">
             Using {activeModel} • reasoning: {activeReasoning} • verbosity: {activeVerbosity}
           </p>
-          <p className="text-xs text-cyan-400 mt-1">
+          <p className="text-xs jarvis-accent-text mt-1">
             ✨ Function calling enabled - I can create images, generate 3D models, navigate pages, and more!
           </p>
         </div>
@@ -709,7 +709,7 @@ export default function ChatPage() {
                   Start a conversation with Jarvis's GPT-5 text assistant with function calling.
                 </p>
                 <div className="text-xs text-left space-y-2 p-4 bg-white/5 rounded-xl">
-                  <p className="text-cyan-400 font-semibold">Try asking me to:</p>
+                  <p className="jarvis-accent-text font-semibold">Try asking me to:</p>
                   <ul className="space-y-1 text-white/70">
                     <li>• Create an image of a futuristic city</li>
                     <li>• Generate a 3D model of a hammer</li>
@@ -728,14 +728,14 @@ export default function ChatPage() {
               
               let bubbleClass = '';
               if (isUser) {
-                bubbleClass = 'bg-sky-500/80 text-white border border-sky-400/40 shadow-sky-900/20';
+                bubbleClass = 'bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white border border-[color:rgb(var(--jarvis-accent)_/_0.4)]';
               } else if (isFunction) {
                 if (message.status === 'executing') {
-                  bubbleClass = 'bg-cyan-500/20 text-cyan-100 border border-cyan-500/40 animate-pulse';
+                  bubbleClass = 'bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text border border-[color:rgb(var(--jarvis-accent)_/_0.4)] animate-pulse';
                 } else if (message.status === 'error') {
                   bubbleClass = 'bg-rose-500/10 text-rose-100 border border-rose-500/40';
                 } else {
-                  bubbleClass = 'bg-cyan-500/10 text-cyan-100 border border-cyan-500/30';
+                  bubbleClass = 'bg-[color:rgb(var(--jarvis-accent)_/_0.1)] jarvis-accent-text border border-[color:rgb(var(--jarvis-accent)_/_0.3)]';
                 }
               } else {
                 if (message.status === 'error') {
@@ -757,7 +757,7 @@ export default function ChatPage() {
                   >
                     <span
                       className={`text-xs uppercase tracking-wide ${
-                        isUser ? 'text-sky-200' : isFunction ? 'text-cyan-300' : 'text-white/50'
+                        isUser ? 'jarvis-accent-text opacity-80' : isFunction ? 'jarvis-accent-text' : 'text-white/50'
                       }`}
                     >
                       {isUser ? 'You' : isFunction ? '⚙️ Function' : 'Jarvis'}
@@ -778,7 +778,7 @@ export default function ChatPage() {
                               <img
                                 src={message.imageUrl}
                                 alt="Generated content"
-                                className="max-w-full rounded-lg border border-cyan-500/30"
+                                className="max-w-full rounded-lg border border-[color:rgb(var(--jarvis-accent)_/_0.3)]"
                               />
                             </div>
                           )}
@@ -817,13 +817,13 @@ export default function ChatPage() {
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me to create images, generate 3D models, or anything else… (Shift + Enter for a new line)"
-                className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400/40"
+                className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-[color:rgb(var(--jarvis-accent))] focus:outline-none focus:ring-1 focus:ring-[color:rgb(var(--jarvis-accent)_/_0.4)]"
                 disabled={isSending}
               />
             </div>
             <div className="flex gap-2 md:w-auto">
               <button
-                className="btn flex items-center gap-2 border-sky-500/40 bg-sky-500/80 px-5 py-2 text-sm font-medium text-white hover:bg-sky-500/70"
+                className="btn flex items-center gap-2 border-[color:rgb(var(--jarvis-accent)_/_0.4)] bg-[color:rgb(var(--jarvis-accent)_/_0.8)] px-5 py-2 text-sm font-medium text-white hover:bg-[color:rgb(var(--jarvis-accent))]"
                 type="submit"
                 disabled={disableSend}
               >

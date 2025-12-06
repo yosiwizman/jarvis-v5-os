@@ -6,7 +6,6 @@ out
 .DS_Store
 dist
 .env
-start.log
 infra/certs/*.pem
 !infra/certs/localhost.pem
 !infra/certs/localhost-key.pem

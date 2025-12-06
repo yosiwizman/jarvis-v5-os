@@ -8,7 +8,7 @@ import { readFile, writeFile, rm } from 'fs/promises';
 import path from 'path';
 import { setTimeout as delay } from 'timers/promises';
 import { z } from 'zod';
-import type { ModelJob, ModelJobOutputs } from '@shared/types';
+import type { ModelJob, ModelJobOutputs } from '@shared/core';
 import { registerKeyRoutes } from './routes/keys.routes';
 import { register3DPrintRoutes } from './routes/3dprint.routes';
 import { readSecrets } from './storage/secretStore';
@@ -114,6 +114,97 @@ fastify.get('/config', async () => ({
     ]
   }
 }));
+
+// System metrics endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.get('/system/metrics', async () => {
+  const os = await import('os');
+  
+  // Calculate CPU load average (1 minute)
+  const loadAvg = os.loadavg()[0] ?? 0;
+  const cpuCount = os.cpus().length;
+  const cpuLoadPct = Math.min(100, Math.round((loadAvg / cpuCount) * 100));
+  
+  // Calculate memory usage
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+  const memoryUsedPct = Math.round((usedMem / totalMem) * 100);
+  
+  return {
+    cpuLoad: cpuLoadPct,
+    memoryUsedPct,
+    memoryUsedGB: Number((usedMem / (1024 ** 3)).toFixed(2)),
+    memoryTotalGB: Number((totalMem / (1024 ** 3)).toFixed(2)),
+    timestamp: new Date().toISOString(),
+    uptime: os.uptime()
+  };
+});
+
+// Weather integration endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.get('/integrations/weather', async (req, reply) => {
+  const { location } = req.query as { location?: string };
+  
+  // Read API key from environment
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  if (!apiKey) {
+    fastify.log.warn('Weather API key not configured');
+    return reply.status(503).send({ error: 'Weather API key not configured' });
+  }
+  
+  // Use provided location or default
+  const cityQuery = location || 'Miami,US';
+  
+  try {
+    fastify.log.info({ location: cityQuery }, 'Fetching weather data');
+    
+    // Call OpenWeather API
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityQuery)}&appid=${apiKey}&units=metric`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      fastify.log.error({ status: response.status, error: errorText }, 'OpenWeather API error');
+      return reply.status(response.status).send({ error: 'Failed to fetch weather data' });
+    }
+    
+    const data = await response.json() as any;
+    
+    // Map to clean response format
+    const weatherResponse = {
+      location: data.name && data.sys?.country ? `${data.name}, ${data.sys.country}` : data.name || cityQuery,
+      temperatureC: Math.round(data.main?.temp ?? 0),
+      temperatureF: Math.round((data.main?.temp ?? 0) * 9 / 5 + 32),
+      condition: data.weather?.[0]?.main || 'Unknown',
+      description: data.weather?.[0]?.description || '',
+      iconCode: data.weather?.[0]?.icon || '01d',
+      humidity: data.main?.humidity ?? 0,
+      windKph: Math.round((data.wind?.speed ?? 0) * 3.6), // m/s to km/h
+      updatedAt: new Date().toISOString()
+    };
+    
+    fastify.log.info({ location: weatherResponse.location, temp: weatherResponse.temperatureC }, 'Weather data fetched');
+    
+    return weatherResponse;
+  } catch (error) {
+    fastify.log.error({ error, location: cityQuery }, 'Failed to fetch weather');
+    return reply.status(500).send({ error: 'Failed to fetch weather data' });
+  }
+});
+
+// 3D Print token status endpoint (stub for now)
+fastify.get('/3dprint/token-status', async () => {
+  // TODO: Implement real Bambu auth token check
+  // For now, return a stub response so UI doesn't error
+  // Response shape matches TokenStatusResponse type from @shared/3dprint
+  return {
+    ok: true,
+    loggedIn: false,
+    connected: false,
+    provider: 'bambu',
+    hasToken: false,
+    error: null
+  };
+});
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 if (!existsSync(DATA_DIR)) {
