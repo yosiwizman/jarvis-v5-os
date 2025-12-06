@@ -139,6 +139,13 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
+    check('ElevenLabs TTS API (unconfigured)', '/integrations/elevenlabs/tts', {
+      method: 'POST',
+      body: { text: 'Hello from smoke tests' },
+      expectedStatus: 503,  // Expected: not configured
+      validateJson: true,
+      useApiBase: true,
+    }),
   ];
 
   const results = await Promise.all(checks);

@@ -218,6 +218,58 @@ fastify.post('/integrations/web-search', async (req, reply) => {
   return result;
 });
 
+// ElevenLabs TTS integration endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
+  const body = req.body as { text?: string };
+  
+  if (!body.text || typeof body.text !== 'string' || !body.text.trim()) {
+    return reply.status(400).send({ ok: false, error: 'missing_text' });
+  }
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    fastify.log.error({ error }, 'Failed to load settings for ElevenLabs');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const elevenLabsConfig = settings?.integrations?.elevenLabs;
+  
+  // Check if configured
+  if (!elevenLabsConfig?.enabled || !elevenLabsConfig?.apiKey || !elevenLabsConfig?.voiceId) {
+    fastify.log.warn('ElevenLabs TTS not configured');
+    return reply.status(503).send({ ok: false, error: 'elevenlabs_not_configured' });
+  }
+  
+  try {
+    // Import ElevenLabs client dynamically
+    const { synthesizeWithElevenLabs } = await import('./clients/elevenLabsClient.js');
+    
+    const audioBuffer = await synthesizeWithElevenLabs({
+      text: body.text,
+      apiKey: elevenLabsConfig.apiKey,
+      voiceId: elevenLabsConfig.voiceId,
+      modelId: elevenLabsConfig.modelId,
+      stability: elevenLabsConfig.stability,
+      similarityBoost: elevenLabsConfig.similarityBoost,
+      style: elevenLabsConfig.style
+    });
+    
+    // Send audio response
+    reply.header('Content-Type', 'audio/mpeg');
+    reply.header('Cache-Control', 'no-store');
+    return reply.send(audioBuffer);
+  } catch (error) {
+    fastify.log.error({ error }, 'ElevenLabs TTS synthesis failed');
+    return reply.status(502).send({ ok: false, error: 'elevenlabs_request_failed' });
+  }
+});
+
 // 3D Print token status endpoint (stub for now)
 fastify.get('/3dprint/token-status', async () => {
   // TODO: Implement real Bambu auth token check
