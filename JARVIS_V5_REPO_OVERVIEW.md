@@ -43,7 +43,7 @@ This repo uses a simple and clear versioning approach:
 
 ### What are version tags?
 
-- **Version tags** (like `v5.0.0`, `v5.1.0`, `v5.2.0`, `v5.3.0`, `v5.4.0`) are **frozen restore points**.
+- **Version tags** (like `v5.0.0`, `v5.1.0`, `v5.2.0`, `v5.3.0`, `v5.4.0`, `v5.5.0`) are **frozen restore points**.
 - Each tag represents a specific, stable state of the codebase that has been tested and confirmed working.
 - Tags never change. Once created, a tag like `v5.0.0` always points to the exact same code.
 
@@ -67,6 +67,20 @@ This repo uses a simple and clear versioning approach:
 - ✅ **Architecture documentation** (`JARVIS_V5_ARCHITECTURE.md`) committed and pushed
 
 This is your **"last known good"** state. If anything goes wrong in future development, you can always return to `v5.0.0`.
+
+---
+
+## Version History
+
+Here's a summary of each major version released:
+
+- **v5.0.0** (June 2025) – Initial baseline: Holomat, Jarvis UI, 3D tools, camera/security, local HTTPS
+- **v5.2.0** (November 2025) – Theming system, HUD with live metrics, Weather integration, Integrations cockpit
+- **v5.3.0** (November 2025) – Web Search integration (Tavily, SerpAPI support)
+- **v5.4.0** (December 2025) – Local LLM integration (Ollama, custom HTTP, intelligent routing with fallback)
+- **v5.5.0** (December 2025) – ElevenLabs TTS integration (voice playback for assistant messages)
+
+For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md` files in the repository root.
 
 ---
 

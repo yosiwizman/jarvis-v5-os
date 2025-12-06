@@ -1,14 +1,14 @@
-# Jarvis V5 OS – Test Plan (v5.4.0)
+# Jarvis V5 OS – Test Plan (v5.5.0)
 
 **For:** Mr. W  
-**Version:** v5.4.0
+**Version:** v5.5.0
 **Date:** 2025-12-06
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V5 OS version 5.4.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, and the new Local LLM integration functions properly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V5 OS version 5.5.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, and the new ElevenLabs text-to-speech integration works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -290,6 +290,157 @@ If you want to test with a real local LLM:
 
 ---
 
+## ElevenLabs Text-to-Speech Integration Tests (v5.5.0 New Feature)
+
+This tests the new ElevenLabs TTS integration that allows assistant messages to be spoken aloud with high-quality voices:
+
+### Prerequisites (Optional)
+
+If you want to test with real TTS audio:
+1. Sign up for an ElevenLabs account at https://elevenlabs.io
+2. Generate an API key from your dashboard
+3. Copy a Voice ID from the ElevenLabs dashboard (e.g., Rachel voice)
+
+**Skip the functional test if you don't have ElevenLabs credentials** – you can still test the UI configuration.
+
+### Settings UI Test
+
+1. **Navigate to Settings → Integrations**
+   - [ ] Go to https://localhost:3000/settings
+   - [ ] Scroll to the **Integrations** section
+   - [ ] Find the **ElevenLabs** card
+
+2. **Check Initial State**
+   - [ ] The card shows **"Not connected"** badge (gray)
+   - [ ] The **Enable** checkbox is unchecked
+   - [ ] **No "Coming soon" badge** should appear (that was v5.4.0)
+
+3. **Enable and Configure**
+   - [ ] Check the **Enable** checkbox
+   - [ ] Configuration fields appear below
+   - [ ] **API Key** field is visible (password-masked)
+   - [ ] **Voice ID** field is visible
+   - [ ] **Model ID** field is visible (with default placeholder text)
+   - [ ] **Advanced Settings** collapsible section is visible
+
+4. **Fill in Configuration** (if you have credentials)
+   - [ ] API Key: Paste your ElevenLabs API key
+   - [ ] Voice ID: Paste your Voice ID (e.g., `21m00Tcm4TlvDq8ikWAM`)
+   - [ ] Model ID: Leave blank (or enter `eleven_multilingual_v2`)
+   - [ ] The status badge changes to **"Connected"** (green)
+
+5. **Test Advanced Settings**
+   - [ ] Click **"Advanced Settings"** to expand
+   - [ ] **Stability** field appears (number input 0-1)
+   - [ ] **Similarity Boost** field appears (number input 0-1)
+   - [ ] **Style** field appears (number input 0-1)
+   - [ ] Enter values like `0.5`, `0.75`, `0.0` respectively
+
+6. **Refresh and Verify Persistence**
+   - [ ] Press `F5` to refresh the page
+   - [ ] Go back to Settings → Integrations → ElevenLabs
+   - [ ] Verify **Enable** is still checked
+   - [ ] Verify API Key field shows asterisks (password-masked)
+   - [ ] Verify Voice ID is still filled
+   - [ ] Verify status badge still shows "Connected" (if configured)
+   - [ ] Expand Advanced Settings
+   - [ ] Verify Stability, Similarity Boost, Style values persisted
+
+**Expected Result:** Configuration persists across page refreshes.
+
+### Backend Endpoint Test (Unconfigured)
+
+1. **Test Unconfigured Endpoint** (before entering credentials)
+   - [ ] Open Browser DevTools (F12) → Network tab
+   - [ ] Manually test endpoint using Console tab:
+     ```javascript
+     fetch('https://localhost:3000/integrations/elevenlabs/tts', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ text: 'Test' })
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **503** with JSON `{ error: "elevenlabs_not_configured" }`
+   - [ ] Page should **NOT crash**
+
+### Chat UI Test (Visual)
+
+1. **Test Button Visibility (Not Configured)**
+   - [ ] Go to https://localhost:3000/chat
+   - [ ] Send a message (any message)
+   - [ ] Wait for assistant response
+   - [ ] **Expected:** NO "🔊 Speak answer" button appears (because ElevenLabs is not configured)
+
+2. **Test Button Visibility (Configured)** (skip if no credentials)
+   - [ ] Configure ElevenLabs in Settings (steps above)
+   - [ ] Verify status shows "Connected" (green)
+   - [ ] Go to https://localhost:3000/chat
+   - [ ] Send a message: **"Say hello in one sentence"**
+   - [ ] Wait for assistant response
+   - [ ] **Expected:** "🔊 Speak answer" button appears below the assistant message
+   - [ ] Button has small text, rounded style, with speaker emoji
+
+### Functional Test (Only if ElevenLabs is Configured)
+
+**Skip this if you don't have ElevenLabs credentials.**
+
+1. **Test TTS Playback**
+   - [ ] In Chat, send a message: **"Explain quantum computing in one sentence"**
+   - [ ] Wait for assistant response
+   - [ ] Click **"🔊 Speak answer"** button
+   - [ ] **Expected:** Audio plays immediately (assistant message spoken aloud)
+   - [ ] Button changes to **"⏹ Stop"** while audio is playing
+   - [ ] Other "Speak answer" buttons on other messages are **disabled/grayed out**
+   - [ ] Audio finishes playing → button returns to "🔊 Speak answer"
+
+2. **Test Stop Button**
+   - [ ] Send another message and get response
+   - [ ] Click **"🔊 Speak answer"**
+   - [ ] While audio is playing, click **"⏹ Stop"**
+   - [ ] **Expected:** Audio stops immediately
+   - [ ] Button returns to "🔊 Speak answer"
+
+3. **Test Multiple Messages**
+   - [ ] Send 2-3 messages to get multiple assistant responses
+   - [ ] Each response should have its own **"🔊 Speak answer"** button
+   - [ ] Click button on the **second** message
+   - [ ] **Expected:** Only that message is spoken
+   - [ ] After audio finishes, click button on a **different** message
+   - [ ] **Expected:** New audio plays correctly
+
+4. **Test Error Handling (Bad API Key)** (optional destructive test)
+   - [ ] Go to Settings → ElevenLabs
+   - [ ] Change API Key to `sk-invalid123`
+   - [ ] Go back to Chat
+   - [ ] Try clicking "🔊 Speak answer"
+   - [ ] **Expected:** Error message appears in chat UI (e.g., "TTS failed: 502")
+   - [ ] Chat continues to work (no crash)
+   - [ ] Restore correct API key after test
+
+**Expected Result:** TTS plays audio correctly when configured; graceful error messages when misconfigured.
+
+### Regression Test (Other Integrations)
+
+1. **Verify Local LLM Still Works**
+   - [ ] Go to Settings → Integrations → Local LLM
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+2. **Verify Web Search Still Works**
+   - [ ] Go to Settings → Integrations → Web Search
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+3. **Verify Chat Still Works Without TTS**
+   - [ ] Disable ElevenLabs in Settings (uncheck Enable)
+   - [ ] Go to Chat
+   - [ ] Send a message
+   - [ ] **Expected:** Chat works normally, just no "Speak answer" button
+
+**Expected Result:** ElevenLabs is purely additive; disabling it does not break existing features.
+
+---
+
 ## 3D, Camera & Security Sanity Checks
 
 Quick checks to ensure specialized pages don't crash:
@@ -377,9 +528,12 @@ Before you finish, make sure you've tested:
 - [ ] Theme (Light/Dark) switches and persists after refresh
 - [ ] Settings save and persist after refresh
 - [ ] Chat/Jarvis either works with AI OR shows clear error message
+- [ ] Local LLM integration UI works and persists configuration
+- [ ] ElevenLabs TTS integration UI works and persists configuration
+- [ ] "Speak answer" button appears/disappears based on ElevenLabs connection status
 - [ ] Backend API returns 200 status codes for key endpoints
 
-If all checkboxes are marked and no major issues were found, **v5.1.0 is ready for deployment!**
+If all checkboxes are marked and no major issues were found, **v5.5.0 is ready for deployment!**
 
 ---
 

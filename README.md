@@ -1,6 +1,6 @@
 # Jarvis Control Center
 
-> **Current Version:** Jarvis V5.4.0 (Local LLM + Web Search + Weather + HUD + Theming)
+> **Current Version:** Jarvis V5.5.0 (ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
 
 ![Jarvis Voice Assistant](Screenshots/Jarvis.png)
 
@@ -8,6 +8,7 @@ A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js 
 
 ## Feature Highlights
 
+- **🔊 ElevenLabs Text-to-Speech:** Speak assistant responses aloud with high-quality voices directly from the Chat UI
 - **🤖 Local LLM Integration:** Run AI models locally (Ollama, LM Studio) with intelligent cloud fallback
 - **🔍 Web Search:** Integrate real-time search results into chat responses (Tavily, SerpAPI)
 - **🌤️ Weather Integration:** Live weather data with OpenWeather API
@@ -29,6 +30,7 @@ A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js 
 - **mkcert** (for HTTPS certificates): [Installation guide](https://github.com/FiloSottile/mkcert#installation)
 - **OpenAI API key** (for cloud features): [Get API key](https://platform.openai.com/api-keys)
 - **(Optional) Ollama** (for local LLM): [Install Ollama](https://ollama.com)
+- **(Optional) ElevenLabs API key** (for TTS): [Sign up at ElevenLabs](https://elevenlabs.io)
 
 ### Installation & Running
 
@@ -64,7 +66,8 @@ Keys are stored on the server and shared across all connected devices automatica
 
 ### Documentation
 
-- **Full Release Notes:** [JARVIS_V5_RELEASE_NOTES_v5.4.0.md](JARVIS_V5_RELEASE_NOTES_v5.4.0.md)
+- **Latest Release Notes:** [JARVIS_V5_RELEASE_NOTES_v5.5.0.md](JARVIS_V5_RELEASE_NOTES_v5.5.0.md)
+- **Previous Release Notes:** [v5.4.0](JARVIS_V5_RELEASE_NOTES_v5.4.0.md)
 - **Development Workflow:** [DEV_WORKFLOW.md](DEV_WORKFLOW.md) - Branching, CI, and release process
 - **Test Plan:** [JARVIS_V5_TEST_PLAN.md](JARVIS_V5_TEST_PLAN.md)
 - **Local LLM Setup:** [LOCAL_LLM_INTEGRATION.md](LOCAL_LLM_INTEGRATION.md)
