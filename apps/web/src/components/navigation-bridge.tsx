@@ -13,7 +13,7 @@ export function NavigationBridge() {
 
     const handler = (payload: { path?: string }) => {
       if (payload?.path) {
-        router.push(payload.path);
+        router.push(payload.path as any);
       }
     };
 

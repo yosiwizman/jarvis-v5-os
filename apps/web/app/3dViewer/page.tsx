@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -10,7 +12,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 
-export default function ViewerPage() {
+function ViewerPageContent() {
   const searchParams = useSearchParams();
   const modelUrl = searchParams.get('modelUrl');
   const thumbUrlParam = searchParams.get('thumb');
@@ -341,7 +343,7 @@ export default function ViewerPage() {
     }
     try {
       const exporter = new STLExporter();
-      const result = exporter.parse(model, { binary: true }) as ArrayBuffer;
+      const result = exporter.parse(model, { binary: true }) as unknown as ArrayBuffer;
       const blob = new Blob([result], { type: 'model/stl' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -447,5 +449,22 @@ export default function ViewerPage() {
         </aside>
       </div>
     </div>
+  );
+}
+
+export default function ViewerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="text-center">
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            <p className="text-white/60">Loading viewer...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ViewerPageContent />
+    </Suspense>
   );
 }

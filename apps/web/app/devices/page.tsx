@@ -33,6 +33,7 @@ export default function DevicesPage() {
 
   useEffect(() => {
     const socket = getCameraSocket();
+    if (!socket) return;
 
     // Update debug info on connection
     const updateDebugInfo = () => {
@@ -112,6 +113,7 @@ export default function DevicesPage() {
     if (!selectedDevice) return;
 
     const socket = getCameraSocket();
+    if (!socket) return;
     
     // Send command via appropriate event
     if (command === 'openApp') {
@@ -487,10 +489,12 @@ export default function DevicesPage() {
                         if (confirm('Close all apps on device?')) {
                           // Send command to close all apps
                           const socket = getCameraSocket();
-                          socket.emit('holomat:command', {
-                            deviceId: selectedDevice,
-                            command: 'closeAllApps'
-                          });
+                          if (socket) {
+                            socket.emit('holomat:command', {
+                              deviceId: selectedDevice,
+                              command: 'closeAllApps'
+                            });
+                          }
                         }
                       }}
                       className="w-full bg-red-600 hover:bg-red-700 p-3 rounded transition-colors"

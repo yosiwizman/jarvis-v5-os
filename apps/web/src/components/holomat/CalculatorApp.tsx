@@ -84,7 +84,7 @@ export function CalculatorApp({ onClose }: CalculatorAppProps) {
     return (
       <button
         onClick={onClick}
-        className={`relative p-4 rounded-lg border-2 backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold text-xl ${variants[variant]} ${className}`}
+        className={`relative p-4 rounded-lg border-2 backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 font-bold text-xl ${variants[variant as keyof typeof variants]} ${className}`}
         style={{
           boxShadow: '0 0 20px rgba(34,211,238,0.3)',
         }}

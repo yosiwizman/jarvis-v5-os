@@ -112,7 +112,7 @@ export default function ChatPage() {
     try {
       console.log('🎨 Starting image generation:', prompt);
       
-      const imageSettings = chatSettings.imageGeneration || readSettings().imageGeneration || {
+      const imageSettings = (chatSettings as any).imageGeneration || (readSettings() as any).imageGeneration || {
         model: 'dall-e-3',
         size: '1024x1024',
         quality: 'high',
@@ -252,7 +252,7 @@ export default function ChatPage() {
     const { page } = args;
     
     setTimeout(() => {
-      router.push(page);
+      router.push(page as any);
     }, 1000);
     
     const pageName = page.split('/').pop() || 'page';
@@ -423,7 +423,7 @@ export default function ChatPage() {
   }
 
   // Handle tool calls from the API
-  async function handleToolCalls(toolCalls: ToolCall[], currentResponseId: string) {
+  async function handleToolCalls(toolCalls: ToolCall[], currentResponseId: string): Promise<any> {
     console.log('🔧 Handling tool calls:', toolCalls);
     
     // Add function execution messages
@@ -488,7 +488,7 @@ export default function ChatPage() {
     return submitToolResults(currentResponseId, toolResults);
   }
 
-  async function submitToolResults(currentResponseId: string, toolResults: Array<{ toolCallId: string; output: string }>) {
+  async function submitToolResults(currentResponseId: string, toolResults: Array<{ toolCallId: string; output: string }>): Promise<any> {
     const latestSettings = readSettings().textChat;
     
     // Parse all tool results to extract meaningful messages

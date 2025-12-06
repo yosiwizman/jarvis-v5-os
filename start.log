@@ -240,3 +240,8 @@ Generated dev cert for IP 169.254.83.107: C:\Users\yosiw\Desktop\Jarvis-main\app
 [tls] cd apps/web && node dev-proxy.mjs exited with code 4294967295
 [next] [?25h
 [next] cd apps/web && node node_modules/next/dist/bin/next dev -p 3001 -H localhost exited with code 0
+[server] 6:39:47 PM [tsx] change in ./src\routes\3dprint.routes.ts Rerunning...
+c{"level":30,"time":1764977988077,"pid":49056,"hostname":"Ai-Factory-1","keyPath":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\infra\\certs\\localhost-key.pem","certPath":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\infra\\certs\\localhost.pem","msg":"Loaded TLS certificates"}
+[server] {"level":30,"time":1764977988104,"pid":49056,"hostname":"Ai-Factory-1","msg":"Server listening at https://0.0.0.0:1234"}
+[server] {"level":40,"time":1764977988104,"pid":49056,"hostname":"Ai-Factory-1","msg":"HTTPS & Socket.IO up on https://localhost:1234"}
+[server] {"level":30,"time":1764977988105,"pid":49056,"hostname":"Ai-Factory-1","msg":"No valid Bambu token found, skipping Cloud MQTT"}

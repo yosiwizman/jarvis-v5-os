@@ -343,7 +343,7 @@ async function handleCaptureImages(args: { tag?: string | null }) {
 async function handleAnalyzeCameraView(args: { camera_id?: string | null; question?: string | null }, context: ExecutionContext) {
   return await handleCameraAnalysis(
     args,
-    context.dataChannel,
+    context.dataChannel ?? null,
     (imageUrl, caption) => {
       context.setDisplayContent?.({ type: 'image', url: imageUrl });
     }

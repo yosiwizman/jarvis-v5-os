@@ -266,7 +266,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
         // Log what Bambu actually returned
         fastify.log.info({ authData }, 'Bambu Labs auth response data');
       } catch (e) {
-        fastify.log.error('Failed to parse login response:', e);
+        fastify.log.error({ err: e }, 'Failed to parse login response');
         return reply.status(500).send({ error: 'Invalid login response' });
       }
 
@@ -285,7 +285,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
           await connectMqttCloudClients(fastify.log);
           fastify.log.info('Cloud MQTT client started after login');
         } catch (e) {
-          fastify.log.error('Error starting Cloud MQTT after login:', e);
+          fastify.log.error({ err: e }, 'Error starting Cloud MQTT after login');
         }
 
         return reply.send({ success: true });
@@ -333,7 +333,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
         error: authData.message || authData.error || 'Login failed - invalid credentials' 
       });
     } catch (err) {
-      fastify.log.error('Error during login:', err);
+      fastify.log.error({ err }, 'Error during login');
       return reply.status(500).send({ error: 'Login error' });
     }
   });
@@ -382,12 +382,12 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
         await connectMqttCloudClients(fastify.log);
         fastify.log.info('Cloud MQTT client started after verification');
       } catch (e) {
-        fastify.log.error('Error starting Cloud MQTT after verification:', e);
+        fastify.log.error({ err: e }, 'Error starting Cloud MQTT after verification');
       }
 
       reply.send({ success: true });
     } catch (err) {
-      fastify.log.error('Error during verification:', err);
+      fastify.log.error({ err }, 'Error during verification');
       reply.status(500).send({ error: 'Verification failed' });
     }
   });
@@ -459,7 +459,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
       const data = await res.json();
       reply.send(data.hits || []);
     } catch (e) {
-      fastify.log.error('Error fetching tasks:', e);
+      fastify.log.error({ err: e }, 'Error fetching tasks');
       reply.send([]);
     }
   });

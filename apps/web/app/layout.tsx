@@ -4,6 +4,7 @@ import './globals.css';
 import Link from 'next/link';
 import { NavigationBridge } from '@/components/navigation-bridge';
 import { JarvisAssistant, JarvisIcon } from '@/components/JarvisAssistant';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
@@ -27,9 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const showFloatingJarvis = pathname !== '/jarvis';
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen relative">
-        <aside className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'} w-[260px]`}>
+        <ThemeProvider>
+          <aside className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'} w-[260px]`}>
           <div className="flex items-center justify-between mb-4">
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -101,13 +103,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         
-        {/* Global Jarvis Assistant */}
-        {showFloatingJarvis && (
-          <>
-            <JarvisIcon onClick={() => setIsJarvisOpen(true)} />
-            <JarvisAssistant isOpen={isJarvisOpen} onClose={() => setIsJarvisOpen(false)} />
-          </>
-        )}
+          {/* Global Jarvis Assistant */}
+          {showFloatingJarvis && (
+            <>
+              <JarvisIcon onClick={() => setIsJarvisOpen(true)} />
+              <JarvisAssistant isOpen={isJarvisOpen} onClose={() => setIsJarvisOpen(false)} />
+            </>
+          )}
+        </ThemeProvider>
       </body>
     </html>
   );

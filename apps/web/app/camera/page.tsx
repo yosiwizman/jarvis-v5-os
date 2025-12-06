@@ -155,8 +155,8 @@ export default function CameraPage() {
 
     let cancelled = false;
     let stream: MediaStream | null = null;
-    let frameTimer: ReturnType<typeof setInterval> | null = null;
-    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+    let frameTimer: number | null = null;
+    let heartbeatTimer: number | null = null;
 
     // Handle socket reconnection - re-announce camera when connection is restored
     const handleConnect = () => {

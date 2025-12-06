@@ -516,7 +516,7 @@ export default function JarvisPage() {
 
   function handleNavigate(args: { page: string }) {
     const { page } = args;
-    router.push(page);
+    router.push(page as any);
     
     const pageName = page.split('/').pop() || 'page';
     return {

@@ -12,12 +12,14 @@ import {
 } from '@shared/settings';
 import { buildServerUrl } from '@/lib/api';
 import { getRootSocket } from '@/lib/socket';
+import { useTheme } from '@/context/ThemeContext';
 
 type KeyName = 'openai' | 'meshy';
 type KeyMetaState = Record<KeyName, { present: boolean }>;
 type FeedbackState = Partial<Record<KeyName, { type: 'success' | 'error'; message: string }>>;
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [keysMeta, setKeysMeta] = useState<KeyMetaState | null>(null);
   const [pendingKeys, setPendingKeys] = useState<Record<KeyName, string>>({ openai: '', meshy: '' });
@@ -314,6 +316,40 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Settings</h1>
+
+      {/* Appearance / Theme Section */}
+      <section className="card p-6 space-y-4">
+        <header className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-semibold">Appearance</div>
+            <div className="text-white/60 text-sm">Choose your interface theme for Jarvis and Holomat</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTheme('light')}
+              className={`px-4 py-2 text-sm rounded-lg border transition-all ${
+                theme === 'light'
+                  ? 'bg-white text-slate-900 border-white shadow-lg'
+                  : 'bg-transparent text-white/70 border-white/20 hover:border-white/40'
+              }`}
+            >
+              ☀️ Light
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme('dark')}
+              className={`px-4 py-2 text-sm rounded-lg border transition-all ${
+                theme === 'dark'
+                  ? 'bg-white text-slate-900 border-white shadow-lg'
+                  : 'bg-transparent text-white/70 border-white/20 hover:border-white/40'
+              }`}
+            >
+              🌙 Dark
+            </button>
+          </div>
+        </header>
+      </section>
 
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">

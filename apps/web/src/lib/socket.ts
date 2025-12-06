@@ -2,6 +2,7 @@ import { io, type Socket } from 'socket.io-client';
 
 type RootEvents = {
   'ui:navigate': (payload: { path?: string }) => void;
+  'keys:update': (meta: any) => void;
 };
 
 export type CameraPresence = {
@@ -36,6 +37,7 @@ type CamerasServerToClientEvents = {
   'publisher-answer': (payload: { room?: string; sdp: SessionDescription }) => void;
   ice: (payload: IceCandidatePayload) => void;
   'scan:trigger': () => void;
+  'android:status': (payload: any) => void;
 };
 
 type CamerasClientToServerEvents = {
@@ -53,6 +55,9 @@ type CamerasClientToServerEvents = {
   'publisher-answer': (payload: { room: string; sdp: SessionDescription }) => void;
   ice: (payload: { room: string; candidate: RTCIceCandidateInit | null }) => void;
   'scan:trigger': () => void;
+  'holomat:openApp': (payload: { appName: string }) => void;
+  'holomat:openModel': (payload: { modelUrl: string; modelName?: string }) => void;
+  'holomat:command': (payload: any) => void;
 };
 
 /**
@@ -61,7 +66,7 @@ type CamerasClientToServerEvents = {
  * This ensures all devices connect to the same server when accessing via the same URL.
  */
 function createCamerasSocket() {
-  return io<CamerasServerToClientEvents, CamerasClientToServerEvents>('/cameras', {
+  return io('/cameras', {
     path: '/socket.io',
     transports: ['websocket'],
     withCredentials: true,
@@ -69,10 +74,7 @@ function createCamerasSocket() {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     reconnectionAttempts: Infinity,
-    timeout: 20000,
-    // Keep the connection alive with aggressive pings
-    pingInterval: 25000,
-    pingTimeout: 60000
+    timeout: 20000
   });
 }
 

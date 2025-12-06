@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Camera, ImageIcon, Sparkles, X, Wifi, type LucideIcon } from 'lucide-react';
 import type { ModelJob } from '@shared/types';
@@ -57,7 +59,7 @@ function getDefaultMeshySettings(settings: AppSettings | null): MeshySettingsPay
   };
 }
 
-export default function ModelPage() {
+function ModelPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -242,6 +244,7 @@ export default function ModelPage() {
     let cancelled = false;
 
     async function attachSharedImage() {
+      if (!sharedImageUrl) return;
       try {
         const resolvedUrl = /^https?:/i.test(sharedImageUrl)
           ? sharedImageUrl
@@ -900,7 +903,7 @@ export default function ModelPage() {
                 onClick={() => {
                   const url = getViewerUrl(job);
                   if (url) {
-                    router.push(url);
+                    router.push(url as any);
                   }
                 }}
               >
@@ -994,6 +997,23 @@ export default function ModelPage() {
         </section>
       )}
     </div>
+  );
+}
+
+export default function ModelPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            <p className="text-white/60">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ModelPageContent />
+    </Suspense>
   );
 }
 
