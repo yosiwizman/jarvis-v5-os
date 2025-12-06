@@ -711,6 +711,19 @@ export default function SettingsPage() {
               Controls response length. GPT-5 ignores values above 4k tokens.
             </p>
           </label>
+          <label className="flex items-center gap-3 md:col-span-2">
+            <input
+              type="checkbox"
+              checked={!!chat.useWebSearch}
+              onChange={(event) => updateTextChat('useWebSearch', event.target.checked)}
+            />
+            <div>
+              <div className="text-sm text-white/70">Allow web search for answers</div>
+              <p className="text-xs text-white/40 mt-1">
+                When enabled, searches the web to provide up-to-date information. Requires Web Search integration.
+              </p>
+            </div>
+          </label>
         </div>
       </section>
 
@@ -1038,13 +1051,27 @@ export default function SettingsPage() {
           </div>
 
           {/* Web Search Card */}
-          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('webSearch', settings?.integrations?.webSearch)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{integrationMetadata.webSearch.name}</div>
                 <div className="text-xs text-white/50 mt-1">{integrationMetadata.webSearch.description}</div>
               </div>
-              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('webSearch', settings?.integrations?.webSearch)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('webSearch', settings?.integrations?.webSearch) ? 'Connected' : 'Not connected'}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!settings?.integrations?.webSearch?.enabled}
@@ -1054,11 +1081,25 @@ export default function SettingsPage() {
             {settings?.integrations?.webSearch?.enabled && (
               <div className="space-y-3 pt-2 border-t border-white/10">
                 <label className="space-y-1">
+                  <div className="text-xs text-white/60">Base URL</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.webSearch?.baseUrl ?? ''}
+                    onChange={(e) => { updateIntegration('webSearch', { baseUrl: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="https://api.tavily.com" />
+                </label>
+                <label className="space-y-1">
                   <div className="text-xs text-white/60">API Key</div>
                   <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
                     value={settings?.integrations?.webSearch?.apiKey ?? ''}
                     onChange={(e) => { updateIntegration('webSearch', { apiKey: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="SERP API key" />
+                    placeholder="tvly-..." />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Region (optional)</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.webSearch?.defaultRegion ?? ''}
+                    onChange={(e) => { updateIntegration('webSearch', { defaultRegion: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="us" />
                 </label>
               </div>
             )}

@@ -191,6 +191,33 @@ fastify.get('/integrations/weather', async (req, reply) => {
   }
 });
 
+// Web Search integration endpoint (note: /api prefix is stripped by dev-proxy)
+fastify.post('/integrations/web-search', async (req, reply) => {
+  const body = req.body as { query?: string; maxResults?: number };
+  
+  if (!body.query || typeof body.query !== 'string' || !body.query.trim()) {
+    return reply.status(400).send({ ok: false, error: 'query is required' });
+  }
+  
+  // Import web search client dynamically
+  const { runWebSearch } = await import('./clients/webSearchClient.js');
+  
+  const result = await runWebSearch({
+    query: body.query,
+    maxResults: body.maxResults ?? 5
+  });
+  
+  if (!result.ok) {
+    // Return appropriate status codes based on error type
+    if (result.error === 'web_search_not_configured') {
+      return reply.status(503).send(result);
+    }
+    return reply.status(500).send(result);
+  }
+  
+  return result;
+});
+
 // 3D Print token status endpoint (stub for now)
 fastify.get('/3dprint/token-status', async () => {
   // TODO: Implement real Bambu auth token check

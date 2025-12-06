@@ -25,6 +25,7 @@ export type TextChatSettings = {
   reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
   verbosity?: 'low' | 'medium' | 'high';
   maxOutputTokens?: number;
+  useWebSearch?: boolean;  // Allow web search for answers
 };
 
 export type ImageGenerationSettings = {
@@ -79,7 +80,8 @@ const defaultSettings: AppSettings = {
     initialPrompt: '',
     reasoningEffort: 'low',
     verbosity: 'medium',
-    maxOutputTokens: 800
+    maxOutputTokens: 800,
+    useWebSearch: false
   },
   imageGeneration: {
     model: 'dall-e-3',

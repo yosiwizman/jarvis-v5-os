@@ -39,16 +39,28 @@ async function check(
     expectedStatus?: number;
     validateJson?: boolean;
     assertOkField?: boolean;
+    method?: 'GET' | 'POST';
+    body?: any;
   } = {}
 ): Promise<CheckResult> {
-  const { expectedStatus = 200, validateJson = false, assertOkField = false } = options;
+  const {
+    expectedStatus = 200,
+    validateJson = false,
+    assertOkField = false,
+    method = 'GET',
+    body = undefined
+  } = options;
   const url = `${BASE_URL}${path}`;
 
   try {
     const response = await fetch(url, {
-      method: 'GET',
+      method,
       // @ts-ignore - agent is valid for https requests
       agent: url.startsWith('https') ? agent : undefined,
+      ...(body && {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
     });
 
     const status = response.status;
@@ -115,6 +127,12 @@ async function runSmokeTests(): Promise<void> {
     check('3D print token status API', '/api/3dprint/token-status', {
       validateJson: true,
       assertOkField: true,
+    }),
+    check('Web search API (unconfigured)', '/api/integrations/web-search', {
+      method: 'POST',
+      body: { query: 'test query' },
+      expectedStatus: 503,  // Expected: not configured
+      validateJson: true,
     }),
   ];
 

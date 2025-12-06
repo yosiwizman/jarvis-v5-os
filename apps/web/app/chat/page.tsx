@@ -9,7 +9,7 @@ import {
   type FormEvent,
   type KeyboardEvent
 } from 'react';
-import { readSettings, type TextChatSettings } from '@shared/settings';
+import { readSettings, type TextChatSettings, isIntegrationConnected } from '@shared/settings';
 import { buildServerUrl } from '@/lib/api';
 import { getFunctionTools } from '@/lib/jarvis-functions';
 import { useRouter } from 'next/navigation';
@@ -567,8 +567,40 @@ export default function ChatPage() {
       return;
     }
 
-    const latestSettings = readSettings().textChat;
-    setChatSettings(latestSettings);
+    const latestSettings = readSettings();
+    const textChatSettings = latestSettings.textChat;
+    const webSearchConfig = latestSettings.integrations?.webSearch;
+    setChatSettings(textChatSettings);
+
+    let userContent = trimmed;
+    
+    // If web search is enabled and configured, augment message with search results
+    if (textChatSettings?.useWebSearch && isIntegrationConnected('webSearch', webSearchConfig)) {
+      try {
+        console.log('[Chat] Web search enabled, querying...');
+        const searchResponse = await fetch(buildServerUrl('/api/integrations/web-search'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: trimmed, maxResults: 3 })
+        });
+        
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          if (searchData.ok && searchData.results && searchData.results.length > 0) {
+            const resultsText = searchData.results
+              .map((r: any, idx: number) => `${idx + 1}. ${r.title}\n   ${r.url}\n   ${r.snippet}`)
+              .join('\n\n');
+            userContent = `${trimmed}\n\n[Relevant web search results:]\n${resultsText}`;
+            console.log('[Chat] Augmented message with', searchData.results.length, 'search results');
+          }
+        } else {
+          console.warn('[Chat] Web search request failed:', searchResponse.status);
+        }
+      } catch (err) {
+        console.error('[Chat] Web search error:', err);
+        // Continue without search results
+      }
+    }
 
     const userMessage: ChatMessage = { id: createId(), role: 'user', content: trimmed };
     const pendingId = createId();
@@ -587,14 +619,17 @@ export default function ChatPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: conversation.map(({ role, content }) => ({ role, content })),
+          messages: conversation.map((msg, idx) => ({
+            role: msg.role,
+            content: idx === conversation.length - 1 ? userContent : msg.content
+          })),
           previousResponseId: responseId ?? undefined,
           settings: {
-            model: latestSettings?.model,
-            initialPrompt: latestSettings?.initialPrompt,
-            reasoningEffort: latestSettings?.reasoningEffort,
-            verbosity: latestSettings?.verbosity,
-            maxOutputTokens: latestSettings?.maxOutputTokens
+            model: textChatSettings?.model,
+            initialPrompt: textChatSettings?.initialPrompt,
+            reasoningEffort: textChatSettings?.reasoningEffort,
+            verbosity: textChatSettings?.verbosity,
+            maxOutputTokens: textChatSettings?.maxOutputTokens
           },
           tools: getFunctionTools()
         })
@@ -684,9 +719,24 @@ export default function ChatPage() {
           <p className="text-sm text-white/60">
             Using {activeModel} • reasoning: {activeReasoning} • verbosity: {activeVerbosity}
           </p>
-          <p className="text-xs jarvis-accent-text mt-1">
-            ✨ Function calling enabled - I can create images, generate 3D models, navigate pages, and more!
-          </p>
+          <div className="flex flex-wrap gap-2 items-center mt-1">
+            <p className="text-xs jarvis-accent-text">
+              ✨ Function calling enabled - I can create images, generate 3D models, navigate pages, and more!
+            </p>
+            {chatSettings?.useWebSearch && (
+              <span className={
+                `text-xs px-2 py-0.5 rounded ${
+                  isIntegrationConnected('webSearch', readSettings().integrations?.webSearch)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-amber-500/20 text-amber-400'
+                }`
+              }>
+                {isIntegrationConnected('webSearch', readSettings().integrations?.webSearch)
+                  ? '🌐 Web search: ON'
+                  : '🌐 Web search: ON (not configured)'}
+              </span>
+            )}
+          </div>
         </div>
         {messages.length ? (
           <button

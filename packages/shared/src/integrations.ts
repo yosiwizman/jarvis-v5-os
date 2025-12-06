@@ -19,8 +19,9 @@ export interface WeatherIntegrationConfig {
 
 export interface WebSearchIntegrationConfig {
   enabled: boolean;
-  provider: 'serpapi' | 'other';
-  apiKey?: string;
+  baseUrl: string | null;       // e.g. "https://api.tavily.com" or "https://serpapi.com"
+  apiKey: string | null;        // API key for authentication
+  defaultRegion: string | null; // e.g. "us", "uk" (optional, provider-specific)
 }
 
 export interface LocalLLMIntegrationConfig {
@@ -79,8 +80,9 @@ export const defaultIntegrationSettings: IntegrationSettings = {
   },
   webSearch: {
     enabled: false,
-    provider: 'serpapi',
-    apiKey: ''
+    baseUrl: null,
+    apiKey: null,
+    defaultRegion: null
   },
   localLLM: {
     enabled: false,
@@ -134,7 +136,7 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
     name: 'Web Search',
     description: 'Used for web-aware answers and browsing',
     requiresApiKey: true,
-    comingSoon: true
+    comingSoon: false
   },
   localLLM: {
     id: 'localLLM',
@@ -191,8 +193,10 @@ export function isIntegrationConnected(
   switch (id) {
     case 'weather':
       return !!(config as WeatherIntegrationConfig).defaultLocation;
-    case 'webSearch':
-      return !!(config as WebSearchIntegrationConfig).apiKey;
+    case 'webSearch': {
+      const wsConfig = config as WebSearchIntegrationConfig;
+      return !!(wsConfig.baseUrl && wsConfig.apiKey);
+    }
     case 'localLLM':
       return !!(config as LocalLLMIntegrationConfig).baseUrl;
     case 'elevenLabs':
