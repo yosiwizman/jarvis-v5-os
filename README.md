@@ -1,6 +1,6 @@
 # Jarvis Control Center
 
-> **Current Version:** Jarvis V5.9.0 (Google Calendar + Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
+> **Current Version:** Jarvis V6.0.0 (Notification System + Google Calendar + Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
 
 ![Jarvis Voice Assistant](Screenshots/Jarvis.png)
 
@@ -8,7 +8,8 @@ A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js 
 
 ## Feature Highlights
 
-- **📅 Google Calendar Integration (skeleton):** Backend OAuth2 refresh-token wiring for upcoming events, connection test endpoint, and configuration card in Settings (no calendar UI yet)
+- **🔔 Notification & Event System (NEW v6.0):** Complete notification scheduling with real-time SSE streaming, calendar reminders, printer alerts, camera motion detection, and user preferences
+- **📅 Google Calendar Integration:** OAuth2 refresh-token wiring with automatic event reminders 15 minutes before events
 - **📧 Gmail Integration (skeleton):** Backend OAuth2 refresh-token wiring, connection test endpoint, and configuration card in Settings (no inbox UI yet)
 - **🎵 Spotify Integration:** Backend track search using Client Credentials Flow with full Settings configuration
 - **🎙️ Dual TTS: ElevenLabs + Azure Text-to-Speech** with selectable provider for high-quality voice synthesis
@@ -18,9 +19,9 @@ A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js 
 - **🎨 Full Theming System:** Light/Dark modes with custom accent colors
 - **📊 Real-Time HUD:** Live CPU, memory, and system metrics on all pages
 - **🎙️ Voice Assistant:** OpenAI Realtime API with function calling
-- **📸 Multi-Device Cameras:** Turn any device into a security camera with WebRTC streaming
+- **📸 Multi-Device Cameras:** Turn any device into a security camera with WebRTC streaming and motion detection
 - **🗿 3D Generation:** Text-to-3D and image-to-3D via Meshy.ai
-- **🖨️ 3D Printer Management:** Monitor and control Bambu Lab printers
+- **🖨️ 3D Printer Management:** Monitor and control Bambu Lab printers with automatic completion alerts
 - **🎨 AI Image Generation:** DALL-E and GPT-Image models
 - **🔧 Integrations Cockpit:** Centralized configuration for all services
 
@@ -73,9 +74,12 @@ Keys are stored on the server and shared across all connected devices automatica
 
 ### Documentation
 
-- **Latest Release Notes:** [JARVIS_V5_RELEASE_NOTES_v5.9.0.md](JARVIS_V5_RELEASE_NOTES_v5.9.0.md)
-- **Previous Release Notes:** [v5.8.0](JARVIS_V5_RELEASE_NOTES_v5.8.0.md) | [v5.7.0](JARVIS_V5_RELEASE_NOTES_v5.7.0.md) | [v5.6.0](JARVIS_V5_RELEASE_NOTES_v5.6.0.md) | [v5.5.0](JARVIS_V5_RELEASE_NOTES_v5.5.0.md)
+- **Latest Release Notes:** [JARVIS_V5_RELEASE_NOTES_v6.0.0.md](JARVIS_V5_RELEASE_NOTES_v6.0.0.md) - **NEW: Notification System**
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md) - Complete version history
+- **Previous Release Notes:** [v5.9.0](JARVIS_V5_RELEASE_NOTES_v5.9.0.md) | [v5.8.0](JARVIS_V5_RELEASE_NOTES_v5.8.0.md) | [v5.7.0](JARVIS_V5_RELEASE_NOTES_v5.7.0.md)
 - **Development Workflow:** [DEV_WORKFLOW.md](DEV_WORKFLOW.md) - Branching, CI, and release process
+- **Monitoring Guide:** [MONITORING_CHECKLIST_v6.0.0.md](MONITORING_CHECKLIST_v6.0.0.md) - Post-deployment monitoring
+- **Metrics & Alerts:** [MONITORING_METRICS_v6.0.md](MONITORING_METRICS_v6.0.md) - KPIs and troubleshooting
 - **Test Plan:** [JARVIS_V5_TEST_PLAN.md](JARVIS_V5_TEST_PLAN.md)
 - **Local LLM Setup:** [LOCAL_LLM_INTEGRATION.md](LOCAL_LLM_INTEGRATION.md)
 - **Repository Overview:** [JARVIS_V5_REPO_OVERVIEW.md](JARVIS_V5_REPO_OVERVIEW.md)
@@ -101,6 +105,53 @@ Keys are stored on the server and shared across all connected devices automatica
 ![Assistant Settings](Screenshots/Assistant_Settings.png)
 
 ## Features
+
+### 🔔 Notification & Event System (v6.0)
+
+**Complete internal notification and event scheduling system with real-time alerts**
+
+- **Access:** Settings → Notifications (preferences) | Notifications page (history)
+- **Features:**
+  - Real-time toast notifications with auto-dismiss (10 seconds)
+  - Notification history with filtering and search
+  - User preference toggles for each notification type
+  - Server-Sent Events (SSE) streaming for instant delivery
+  - Persistent storage with 60-second event loop
+  - 6 notification types: Calendar, Printer, Camera, System, Integration, Custom
+
+**Integrated Notifications:**
+
+1. **📅 Calendar Reminders**
+   - Automatically sync from Google Calendar
+   - 15-minute advance reminders before events
+   - One-click sync via Settings → Integrations → Google Calendar
+
+2. **🖨️ Printer Job Alerts**
+   - Automatic notifications on 3D print completion
+   - Success/failure status with job details
+   - No configuration required
+
+3. **📹 Camera Motion Detection**
+   - Frame-to-frame comparison (5% threshold)
+   - 30-second cooldown to prevent spam
+   - Connect/disconnect alerts for camera status changes
+
+4. **⚙️ System Updates** (placeholder for future use)
+5. **⚠️ Integration Errors** (placeholder for future use)
+6. **💬 Custom Notifications** (via API)
+
+**User Controls:**
+- Toggle each notification type on/off in Settings
+- Disabled toasts still logged in history
+- View full notification history with timestamps
+- Filter by type (Calendar, Printer, Camera, etc.)
+- Pagination for large history (50 per page)
+
+**For Developers:**
+- Schedule custom notifications via `POST /api/notifications/schedule`
+- Subscribe to SSE stream at `GET /api/notifications/stream`
+- Query history with `GET /api/notifications/history`
+- Full TypeScript types in `@shared/core`
 
 ### 🎙️ Jarvis Voice Assistant
 
