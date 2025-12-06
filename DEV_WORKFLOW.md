@@ -425,14 +425,19 @@ As of **feature/v6-notification-foundation**, Jarvis V5 OS includes the foundati
   - Event storage in JSON file (`data/scheduled-events.json`)
   - Event loop checking every 60 seconds for due events
   - SSE client management for real-time notification delivery
-  - Singleton `notificationScheduler` instance ready for integration
+  - Singleton `notificationScheduler` instance initialized on server startup
+- ✅ **Backend API Endpoints** (`apps/server/src/index.ts`)
+  - `POST /api/notifications/schedule` - Schedule notifications with validation
+  - `GET /api/notifications/stream` - SSE endpoint for real-time event delivery
+  - Returns proper error codes (400 for validation, 500 for failures)
+- ✅ **Smoke Tests** (`scripts/smoke.ts`)
+  - Test notification scheduling endpoint (validates request/response)
+  - Test SSE stream connectivity (200 status check)
 
 **Not Yet Implemented:**
-- ⏳ Backend API endpoints (`POST /api/notifications/schedule`, `GET /api/notifications/stream`)
 - ⏳ Frontend NotificationProvider (React context with SSE subscription)
 - ⏳ NotificationToast component for displaying notifications
 - ⏳ Integration into root layout
-- ⏳ Smoke tests for notification scheduling and delivery
 
 ### Architecture
 
@@ -453,30 +458,52 @@ As of **feature/v6-notification-foundation**, Jarvis V5 OS includes the foundati
 - Startup behavior: Loads events from disk, fires any overdue events immediately
 - Shutdown behavior: Stops interval timer cleanly
 
+### API Usage
+
+**Schedule a Notification:**
+```bash
+curl -X POST https://localhost:3000/api/notifications/schedule \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "calendar_reminder",
+    "payload": { "eventName": "Team standup", "location": "Zoom" },
+    "triggerAt": "2025-12-06T10:00:00Z"
+  }'
+
+# Response (200 OK):
+# { "ok": true, "eventId": "uuid-here" }
+
+# Validation errors (400 Bad Request):
+# { "ok": false, "error": "type is required and must be a string" }
+# { "ok": false, "error": "payload is required and must be an object" }
+# { "ok": false, "error": "triggerAt must be a valid ISO 8601 timestamp" }
+```
+
+**Subscribe to Notifications (SSE):**
+```javascript
+const eventSource = new EventSource('https://localhost:3000/api/notifications/stream');
+
+eventSource.onmessage = (event) => {
+  const notification = JSON.parse(event.data);
+  console.log('Notification received:', notification);
+  // { type: 'calendar_reminder', payload: {...}, triggeredAt: '...' }
+};
+
+eventSource.onerror = () => {
+  console.error('SSE connection lost');
+};
+```
+
 ### Next Steps for v6.0 Completion
 
 To complete the notification system, future development should:
 
-1. **Add Backend Endpoints** (in `apps/server/src/index.ts`):
-   ```typescript
-   // Initialize scheduler on startup
-   await notificationScheduler.initialize();
-   
-   // POST /api/notifications/schedule
-   // GET /api/notifications/stream (Server-Sent Events)
-   ```
-
-2. **Create Frontend Components**:
+1. **Create Frontend Components**:
    - `apps/web/context/NotificationContext.tsx` - React context + SSE subscription
    - `apps/web/components/NotificationToast.tsx` - Toast display component
    - Wrap root layout with `NotificationProvider`
 
-3. **Add Tests**:
-   - Smoke test for scheduling endpoint (returns 200 + eventId)
-   - Smoke test for event delivery (schedule event 2s in future, verify SSE receipt)
-   - Update `scripts/smoke.ts` with notification checks
-
-4. **Integration Examples**:
+2. **Integration Examples**:
    - Calendar: Schedule event reminders when syncing Google Calendar events
    - Printers: Fire alerts when print job completes or fails
    - Security: Notify when camera detects motion
