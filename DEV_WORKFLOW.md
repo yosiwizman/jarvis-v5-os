@@ -409,11 +409,100 @@ npm run ci:smoke    # Start system, run smoke tests, stop system
 
 ---
 
+## 5. Notification & Event Loop Subsystem (v6.0 Foundation)
+
+### Overview
+
+As of **feature/v6-notification-foundation**, Jarvis V5 OS includes the foundational infrastructure for an internal notification and event scheduling system. This subsystem is designed to support future features like calendar reminders, printer alerts, security camera notifications, and system updates.
+
+### Current Status: Foundation Only
+
+**What's Implemented:**
+- ✅ **Shared Types** (`packages/shared/src/notifications.ts`)
+  - `Notification`, `ScheduledEvent`, `ScheduleNotificationRequest` types
+  - Support for notification types: calendar_reminder, printer_alert, camera_alert, system_update, integration_error, custom
+- ✅ **Backend Scheduler** (`apps/server/src/notificationScheduler.ts`)
+  - Event storage in JSON file (`data/scheduled-events.json`)
+  - Event loop checking every 60 seconds for due events
+  - SSE client management for real-time notification delivery
+  - Singleton `notificationScheduler` instance ready for integration
+
+**Not Yet Implemented:**
+- ⏳ Backend API endpoints (`POST /api/notifications/schedule`, `GET /api/notifications/stream`)
+- ⏳ Frontend NotificationProvider (React context with SSE subscription)
+- ⏳ NotificationToast component for displaying notifications
+- ⏳ Integration into root layout
+- ⏳ Smoke tests for notification scheduling and delivery
+
+### Architecture
+
+**Event Flow:**
+1. External system (calendar, printer, camera, etc.) schedules a notification via API
+2. Scheduler stores event with `triggerAt` ISO timestamp in JSON file
+3. Event loop checks every minute for events where `triggerAt <= now`
+4. When due, event fires and broadcasts to all connected SSE clients
+5. Frontend receives notification via SSE stream and displays toast
+
+**Storage:**
+- File: `apps/server/data/scheduled-events.json`
+- Format: Array of `ScheduledEvent` objects with `fired` boolean flag
+- Persistence: Events persist across server restarts
+
+**Event Loop:**
+- Check interval: 60 seconds
+- Startup behavior: Loads events from disk, fires any overdue events immediately
+- Shutdown behavior: Stops interval timer cleanly
+
+### Next Steps for v6.0 Completion
+
+To complete the notification system, future development should:
+
+1. **Add Backend Endpoints** (in `apps/server/src/index.ts`):
+   ```typescript
+   // Initialize scheduler on startup
+   await notificationScheduler.initialize();
+   
+   // POST /api/notifications/schedule
+   // GET /api/notifications/stream (Server-Sent Events)
+   ```
+
+2. **Create Frontend Components**:
+   - `apps/web/context/NotificationContext.tsx` - React context + SSE subscription
+   - `apps/web/components/NotificationToast.tsx` - Toast display component
+   - Wrap root layout with `NotificationProvider`
+
+3. **Add Tests**:
+   - Smoke test for scheduling endpoint (returns 200 + eventId)
+   - Smoke test for event delivery (schedule event 2s in future, verify SSE receipt)
+   - Update `scripts/smoke.ts` with notification checks
+
+4. **Integration Examples**:
+   - Calendar: Schedule event reminders when syncing Google Calendar events
+   - Printers: Fire alerts when print job completes or fails
+   - Security: Notify when camera detects motion
+   - System: Alert on available updates or low disk space
+
+### Foundation Files
+
+- **Types:** `packages/shared/src/notifications.ts` (71 lines)
+- **Scheduler:** `apps/server/src/notificationScheduler.ts` (262 lines)
+- **Documentation:** This section in `DEV_WORKFLOW.md`
+
+### Design Decisions
+
+- **Why SSE over WebSocket?** Simpler for one-way server→client push, no need for bidirectional communication
+- **Why JSON file storage?** Sufficient for MVP, easy to debug, no DB dependency. Can migrate to SQLite/Postgres later
+- **Why 60-second intervals?** Balances responsiveness with server load; minute-level precision is sufficient for most use cases
+- **Why internal-only?** No external notification services (email, SMS, push) yet — focus on in-app notifications first
+
+---
+
 ## References
 
 - **CI Workflow:** `.github/workflows/jarvis-ci.yml`
 - **Release Notes:** `JARVIS_V5_RELEASE_NOTES_v5.4.0.md` (example)
 - **Test Plan:** `JARVIS_V5_TEST_PLAN.md`
 - **Repository Overview:** `JARVIS_V5_REPO_OVERVIEW.md`
+- **Notification Foundation:** `packages/shared/src/notifications.ts`, `apps/server/src/notificationScheduler.ts`
 
 For questions or workflow improvements, open an issue or discussion on GitHub.
