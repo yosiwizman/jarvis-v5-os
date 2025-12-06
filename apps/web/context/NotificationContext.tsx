@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import type { Notification } from '@shared/core';
+import { readSettings } from '@shared/settings';
 
 interface NotificationContextValue {
   notifications: Notification[];
@@ -88,6 +89,19 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         }
 
         console.log('[NotificationContext] Notification received:', notification);
+
+        // Check user preferences
+        const settings = readSettings();
+        const preferences = settings?.notificationPreferences;
+        
+        // Filter based on user preferences (default to true if preference not set)
+        const preferenceKey = notification.type as keyof typeof preferences;
+        const isEnabled = preferences?.[preferenceKey] !== false;
+        
+        if (!isEnabled) {
+          console.log(`[NotificationContext] Notification filtered by preferences: ${notification.type}`);
+          return;
+        }
 
         // Add notification to state with unique ID
         setNotifications((prev) => [

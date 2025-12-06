@@ -160,6 +160,48 @@ fastify.post('/api/notifications/schedule', async (req, reply) => {
   }
 });
 
+// Notification API: Get notification history with filtering and pagination
+fastify.get('/api/notifications/history', async (req, reply) => {
+  try {
+    const query = req.query as { type?: string; limit?: string; offset?: string };
+    const type = query.type;
+    const limit = query.limit ? parseInt(query.limit, 10) : 50;
+    const offset = query.offset ? parseInt(query.offset, 10) : 0;
+    
+    // Get all fired events
+    let firedEvents = notificationScheduler.getFiredEvents();
+    
+    // Filter by type if specified
+    if (type) {
+      firedEvents = firedEvents.filter(e => e.type === type);
+    }
+    
+    // Sort by firedAt descending (most recent first)
+    firedEvents.sort((a, b) => {
+      const aTime = a.firedAt ? new Date(a.firedAt).getTime() : 0;
+      const bTime = b.firedAt ? new Date(b.firedAt).getTime() : 0;
+      return bTime - aTime;
+    });
+    
+    // Apply pagination
+    const total = firedEvents.length;
+    const paginated = firedEvents.slice(offset, offset + limit);
+    
+    fastify.log.info({ total, type, limit, offset, returned: paginated.length }, 'Notification history accessed');
+    
+    return reply.send({
+      ok: true,
+      notifications: paginated,
+      total,
+      limit,
+      offset
+    });
+  } catch (error) {
+    fastify.log.error({ error }, 'Failed to retrieve notification history');
+    return reply.status(500).send({ ok: false, error: 'failed_to_retrieve_history' });
+  }
+});
+
 // Notification API: SSE stream for real-time notification delivery
 fastify.get('/api/notifications/stream', async (req, reply) => {
   // Set SSE headers
