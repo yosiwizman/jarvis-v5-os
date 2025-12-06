@@ -1,14 +1,14 @@
-# Jarvis V5 OS – Test Plan (v5.5.0)
+# Jarvis V5 OS – Test Plan (v5.6.0)
 
 **For:** Mr. W  
-**Version:** v5.5.0
+**Version:** v5.6.0
 **Date:** 2025-12-06
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V5 OS version 5.5.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, and the new ElevenLabs text-to-speech integration works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V5 OS version 5.6.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, and the new Azure TTS integration with multi-provider selection works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -441,6 +441,200 @@ If you want to test with real TTS audio:
 
 ---
 
+## Azure TTS Integration Tests (v5.6.0 New Feature)
+
+This tests the new Azure TTS integration with multi-provider TTS architecture:
+
+### Prerequisites (Optional)
+
+If you want to test with real Azure TTS audio:
+1. Sign up for Azure at https://portal.azure.com
+2. Create a Speech resource and note the Region and API Key
+3. Choose a voice from Azure's voice gallery (e.g., en-US-JennyNeural)
+
+**Skip the functional test if you don't have Azure credentials** – you can still test the UI configuration.
+
+### Settings UI Test – Azure TTS Card
+
+1. **Navigate to Settings → Integrations**
+   - [ ] Go to https://localhost:3000/settings
+   - [ ] Scroll to the **Integrations** section
+   - [ ] Find the **Azure TTS** card
+
+2. **Check Initial State**
+   - [ ] The card shows **"Not connected"** badge (gray)
+   - [ ] The **Enable** checkbox is unchecured
+   - [ ] **No "Coming soon" badge** should appear (that was v5.5.0)
+
+3. **Enable and Configure**
+   - [ ] Check the **Enable** checkbox
+   - [ ] Configuration fields appear below
+   - [ ] **Region** field is visible
+   - [ ] **API Key** field is visible (password-masked)
+   - [ ] **Voice Name** field is visible
+   - [ ] **Advanced Settings** collapsible section is visible
+
+4. **Fill in Configuration** (if you have credentials)
+   - [ ] Region: `eastus` (or your Azure region)
+   - [ ] API Key: Paste your Azure Speech key
+   - [ ] Voice Name: `en-US-JennyNeural` (or your chosen voice)
+   - [ ] The status badge changes to **"Connected"** (green)
+
+5. **Test Advanced Settings**
+   - [ ] Click **"Advanced Settings"** to expand
+   - [ ] **Style** field appears (text input)
+   - [ ] **Rate** field appears (text input with hint "+0%")
+   - [ ] **Pitch** field appears (text input with hint "+0st")
+   - [ ] Enter optional values if desired
+
+6. **Refresh and Verify Persistence**
+   - [ ] Press `F5` to refresh the page
+   - [ ] Go back to Settings → Integrations → Azure TTS
+   - [ ] Verify **Enable** is still checked
+   - [ ] Verify Region, API Key (asterisks), and Voice Name persisted
+   - [ ] Verify status badge still shows "Connected" (if configured)
+   - [ ] Expand Advanced Settings and check persistence
+
+**Expected Result:** Configuration persists across page refreshes.
+
+### Settings UI Test – TTS Provider Selector
+
+1. **Navigate to Text Chat Settings**
+   - [ ] In Settings, scroll to the **Text chat** section
+   - [ ] Find the **"Text-to-speech provider"** dropdown
+
+2. **Check Provider Options**
+   - [ ] Dropdown shows three options:
+     - "None — no TTS button"
+     - "ElevenLabs"
+     - "Azure TTS"
+   - [ ] Default selected is "ElevenLabs" (for backward compatibility)
+
+3. **Switch Provider**
+   - [ ] Select **"Azure TTS"** from dropdown
+   - [ ] Press `F5` to refresh
+   - [ ] Verify **"Azure TTS"** is still selected
+
+4. **Switch to None**
+   - [ ] Select **"None"** from dropdown
+   - [ ] Press `F5` to refresh
+   - [ ] Verify **"None"** is still selected
+
+**Expected Result:** Provider selection persists across page refreshes.
+
+### Backend Endpoint Test (Unconfigured)
+
+1. **Test Unconfigured Endpoint** (before entering credentials)
+   - [ ] Open Browser DevTools (F12) → Network tab
+   - [ ] Manually test endpoint using Console tab:
+     ```javascript
+     fetch('https://localhost:3000/integrations/azure-tts/tts', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ text: 'Test' })
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **503** with JSON `{ error: "azure_tts_not_configured" }`
+   - [ ] Page should **NOT crash**
+
+### Chat UI Test (Provider Selection)
+
+1. **Test with Provider = None**
+   - [ ] In Settings, set TTS provider to **"None"**
+   - [ ] Go to https://localhost:3000/chat
+   - [ ] Send a message (any message)
+   - [ ] Wait for assistant response
+   - [ ] **Expected:** NO "🔊 Speak answer" button appears (TTS disabled)
+
+2. **Test with Provider = ElevenLabs (Not Configured)**
+   - [ ] In Settings, set TTS provider to **"ElevenLabs"**
+   - [ ] Ensure ElevenLabs is NOT configured (disabled or missing key/voice)
+   - [ ] Go to Chat and send a message
+   - [ ] **Expected:** NO "🔊 Speak answer" button appears (provider not connected)
+
+3. **Test with Provider = Azure TTS (Not Configured)**
+   - [ ] In Settings, set TTS provider to **"Azure TTS"**
+   - [ ] Ensure Azure TTS is NOT configured
+   - [ ] Go to Chat and send a message
+   - [ ] **Expected:** NO "🔊 Speak answer" button appears (provider not connected)
+
+4. **Test with Provider = Azure TTS (Configured)** (skip if no credentials)
+   - [ ] Configure Azure TTS in Settings (Region, API Key, Voice Name)
+   - [ ] Verify status shows "Connected" (green)
+   - [ ] Set TTS provider to **"Azure TTS"**
+   - [ ] Go to https://localhost:3000/chat
+   - [ ] Send a message: **"Say hello in one sentence"**
+   - [ ] Wait for assistant response
+   - [ ] **Expected:** "🔊 Speak answer" button appears below the assistant message
+
+### Functional Test (Only if Azure TTS is Configured)
+
+**Skip this if you don't have Azure credentials.**
+
+1. **Test Azure TTS Playback**
+   - [ ] In Chat (with Azure configured and selected), send: **"Explain quantum computing in one sentence"**
+   - [ ] Wait for assistant response
+   - [ ] Click **"🔊 Speak answer"** button
+   - [ ] **Expected:** Audio plays immediately (Azure-synthesized voice)
+   - [ ] Button changes to **"⏹ Stop"** while audio is playing
+   - [ ] Other "Speak answer" buttons on other messages are **disabled/grayed out**
+   - [ ] Audio finishes playing → button returns to "🔊 Speak answer"
+
+2. **Test Stop Button**
+   - [ ] Send another message and get response
+   - [ ] Click **"🔊 Speak answer"**
+   - [ ] While audio is playing, click **"⏹ Stop"**
+   - [ ] **Expected:** Audio stops immediately
+   - [ ] Button returns to "🔊 Speak answer"
+
+3. **Test Provider Switching**
+   - [ ] With both ElevenLabs and Azure configured
+   - [ ] Set provider to **"ElevenLabs"** in Settings
+   - [ ] Send message in Chat, click "Speak answer"
+   - [ ] **Expected:** ElevenLabs voice plays
+   - [ ] Switch provider to **"Azure TTS"** in Settings
+   - [ ] Send another message, click "Speak answer"
+   - [ ] **Expected:** Azure voice plays (different from ElevenLabs)
+
+4. **Test Error Handling (Bad API Key)** (optional destructive test)
+   - [ ] Go to Settings → Azure TTS
+   - [ ] Change API Key to invalid value (e.g., `invalid-key-123`)
+   - [ ] Go back to Chat
+   - [ ] Try clicking "🔊 Speak answer"
+   - [ ] **Expected:** Error message appears in chat UI (e.g., "TTS failed: 502")
+   - [ ] Chat continues to work (no crash)
+   - [ ] Restore correct API key after test
+
+**Expected Result:** Azure TTS plays audio correctly when configured; graceful error messages when misconfigured.
+
+### Regression Test (Other Integrations)
+
+1. **Verify ElevenLabs Still Works**
+   - [ ] Go to Settings → Integrations → ElevenLabs
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Set TTS provider to "ElevenLabs"
+   - [ ] Verify "Speak answer" button works with ElevenLabs voice
+
+2. **Verify Local LLM Still Works**
+   - [ ] Go to Settings → Integrations → Local LLM
+   - [ ] Verify configuration is still present
+   - [ ] Verify connection status badge still works
+
+3. **Verify Web Search Still Works**
+   - [ ] Go to Settings → Integrations → Web Search
+   - [ ] Verify configuration is still present
+   - [ ] Verify connection status badge still works
+
+4. **Verify Chat Works Without TTS**
+   - [ ] Set TTS provider to "None"
+   - [ ] Go to Chat
+   - [ ] Send a message
+   - [ ] **Expected:** Chat works normally, just no "Speak answer" button
+
+**Expected Result:** Azure TTS is purely additive; all previous features work unchanged.
+
+---
+
 ## 3D, Camera & Security Sanity Checks
 
 Quick checks to ensure specialized pages don't crash:
@@ -530,10 +724,13 @@ Before you finish, make sure you've tested:
 - [ ] Chat/Jarvis either works with AI OR shows clear error message
 - [ ] Local LLM integration UI works and persists configuration
 - [ ] ElevenLabs TTS integration UI works and persists configuration
-- [ ] "Speak answer" button appears/disappears based on ElevenLabs connection status
+- [ ] Azure TTS integration UI works and persists configuration
+- [ ] TTS provider selector works and persists selection
+- [ ] "Speak answer" button appears/disappears based on selected provider and connection status
 - [ ] Backend API returns 200 status codes for key endpoints
+- [ ] Smoke tests: 10/10 checks pass (5 pages + 5 APIs including Azure TTS)
 
-If all checkboxes are marked and no major issues were found, **v5.5.0 is ready for deployment!**
+If all checkboxes are marked and no major issues were found, **v5.6.0 is ready for deployment!**
 
 ---
 

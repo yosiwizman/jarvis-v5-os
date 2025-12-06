@@ -79,6 +79,7 @@ Here's a summary of each major version released:
 - **v5.3.0** (November 2025) – Web Search integration (Tavily, SerpAPI support)
 - **v5.4.0** (December 2025) – Local LLM integration (Ollama, custom HTTP, intelligent routing with fallback)
 - **v5.5.0** (December 2025) – ElevenLabs TTS integration (voice playback for assistant messages)
+- **v5.6.0** (December 2025) – Azure TTS integration (multi-provider TTS architecture with ElevenLabs + Azure)
 
 For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md` files in the repository root.
 
