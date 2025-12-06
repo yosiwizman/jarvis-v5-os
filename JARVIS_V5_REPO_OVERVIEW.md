@@ -80,6 +80,7 @@ Here's a summary of each major version released:
 - **v5.4.0** (December 2025) – Local LLM integration (Ollama, custom HTTP, intelligent routing with fallback)
 - **v5.5.0** (December 2025) – ElevenLabs TTS integration (voice playback for assistant messages)
 - **v5.6.0** (December 2025) – Azure TTS integration (multi-provider TTS architecture with ElevenLabs + Azure)
+- **v5.7.0** (December 2025) – Spotify integration (Client Credentials Flow, backend track search endpoint, Settings configuration card)
 
 For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md` files in the repository root.
 

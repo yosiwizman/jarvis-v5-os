@@ -1,14 +1,14 @@
-# Jarvis V5 OS – Test Plan (v5.6.0)
+# Jarvis V5 OS – Test Plan (v5.7.0)
 
 **For:** Mr. W  
-**Version:** v5.6.0
+**Version:** v5.7.0
 **Date:** 2025-12-06
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V5 OS version 5.6.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, and the new Azure TTS integration with multi-provider selection works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V5 OS version 5.7.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, Azure TTS integration with multi-provider selection works correctly, and the new Spotify integration (backend + config) works properly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -635,6 +635,177 @@ If you want to test with real Azure TTS audio:
 
 ---
 
+## Spotify Integration Tests (v5.7.0 New Feature)
+
+This tests the new Spotify integration using Client Credentials Flow for backend track search:
+
+### Prerequisites (Optional)
+
+If you want to test with real Spotify API:
+1. Sign up for Spotify Developer at https://developer.spotify.com/dashboard
+2. Create an app and note the Client ID and Client Secret
+3. **Note:** Client Credentials Flow does NOT require user login (perfect for backend search)
+
+**Skip the functional test if you don't have Spotify credentials** – you can still test the UI configuration.
+
+### Settings UI Test – Spotify Card
+
+1. **Navigate to Settings → Integrations**
+   - [ ] Go to https://localhost:3000/settings
+   - [ ] Scroll to the **Integrations** section
+   - [ ] Find the **Spotify** card
+
+2. **Check Initial State**
+   - [ ] The card shows **"Not connected"** badge (gray)
+   - [ ] The **Enable** checkbox is unchecked
+   - [ ] **No "Coming soon" badge** should appear (that was removed in v5.7.0)
+
+3. **Enable and Configure**
+   - [ ] Check the **Enable** checkbox
+   - [ ] Configuration fields appear below
+   - [ ] **Client ID** field is visible (text input)
+   - [ ] **Client Secret** field is visible (password-masked)
+   - [ ] **Default Market (optional)** field is visible
+
+4. **Fill in Configuration** (if you have credentials)
+   - [ ] Client ID: Paste your Spotify app's Client ID
+   - [ ] Client Secret: Paste your Spotify app's Client Secret
+   - [ ] Default Market: `US` (or leave blank, defaults to US)
+   - [ ] The status badge changes to **"Connected"** (green)
+
+5. **Test Without Credentials** (default state)
+   - [ ] Leave fields empty or enter dummy values
+   - [ ] Status badge remains **"Not connected"** (gray)
+   - [ ] No crashes or errors
+
+6. **Refresh and Verify Persistence**
+   - [ ] Press `F5` to refresh the page
+   - [ ] Go back to Settings → Integrations → Spotify
+   - [ ] Verify **Enable** is still checked (if you enabled it)
+   - [ ] Verify Client ID, Client Secret (asterisks), and Default Market persisted
+   - [ ] Verify status badge still shows "Connected" (if configured with real credentials)
+
+**Expected Result:** Configuration persists across page refreshes.
+
+### Backend Endpoint Test (Unconfigured)
+
+1. **Test Unconfigured Endpoint** (before entering credentials)
+   - [ ] Open Browser DevTools (F12) → Console tab
+   - [ ] Manually test endpoint using Console:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/spotify/search', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ query: 'test' })
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **503** with JSON:
+     ```json
+     { "ok": false, "error": "spotify_not_configured" }
+     ```
+   - [ ] Page should **NOT crash**
+
+### Functional Test (Only if Spotify is Configured)
+
+**Skip this if you don't have Spotify Developer credentials.**
+
+1. **Test Track Search**
+   - [ ] Configure Spotify in Settings (Client ID, Client Secret, optional Market)
+   - [ ] Verify status shows "Connected" (green)
+   - [ ] Open Browser DevTools (F12) → Console tab
+   - [ ] Test search with valid query:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/spotify/search', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ query: 'never gonna give you up', limit: 5 })
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **200** with JSON:
+     ```json
+     {
+       "ok": true,
+       "results": [
+         {
+           "id": "...",
+           "name": "Never Gonna Give You Up",
+           "artists": ["Rick Astley"],
+           "album": "...",
+           "duration_ms": 213573,
+           "preview_url": "...",
+           "external_url": "https://open.spotify.com/track/..."
+         }
+       ]
+     }
+     ```
+   - [ ] Verify results contain track metadata (name, artists, album, etc.)
+
+2. **Test Empty Query Error**
+   - [ ] Test with empty query:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/spotify/search', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ query: '' })
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **400** with error
+
+3. **Test Error Handling (Bad Credentials)** (optional destructive test)
+   - [ ] Go to Settings → Spotify
+   - [ ] Change Client Secret to invalid value (e.g., `invalid-secret-123`)
+   - [ ] Try search request from Console
+   - [ ] **Expected:** Status **502** with error message
+   - [ ] Page continues to work (no crash)
+   - [ ] Restore correct Client Secret after test
+
+**Expected Result:** Spotify search returns track metadata when configured; graceful error messages when misconfigured.
+
+### Current Limitations (v5.7.0)
+
+1. **No Chat UI** (documented behavior)
+   - [ ] Go to https://localhost:3000/chat
+   - [ ] **Expected:** No Spotify search buttons or music controls visible (backend-only in v5.7.0)
+   - [ ] Chat works normally for text conversations
+
+2. **Backend Search Only**
+   - [ ] Spotify integration is currently API-only
+   - [ ] User-facing music search/playback UI will come in future versions (v5.7.x or v5.8.0)
+
+**Expected Result:** Spotify is backend-only in v5.7.0; no user-facing music UI yet.
+
+### Regression Test (Other Integrations)
+
+1. **Verify Azure TTS Still Works**
+   - [ ] Go to Settings → Integrations → Azure TTS
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+2. **Verify ElevenLabs Still Works**
+   - [ ] Go to Settings → Integrations → ElevenLabs
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+
+3. **Verify Local LLM Still Works**
+   - [ ] Go to Settings → Integrations → Local LLM
+   - [ ] Verify configuration is still present
+   - [ ] Verify connection status badge still works
+
+4. **Verify Web Search Still Works**
+   - [ ] Go to Settings → Integrations → Web Search
+   - [ ] Verify configuration is still present
+   - [ ] Verify connection status badge still works
+
+5. **Verify Chat Works Without Spotify**
+   - [ ] Disable Spotify (or leave unconfigured)
+   - [ ] Go to Chat
+   - [ ] Send a message
+   - [ ] **Expected:** Chat works normally (Spotify is purely additive)
+
+**Expected Result:** Spotify is purely additive; all previous features work unchanged.
+
+---
+
 ## 3D, Camera & Security Sanity Checks
 
 Quick checks to ensure specialized pages don't crash:
@@ -728,9 +899,11 @@ Before you finish, make sure you've tested:
 - [ ] TTS provider selector works and persists selection
 - [ ] "Speak answer" button appears/disappears based on selected provider and connection status
 - [ ] Backend API returns 200 status codes for key endpoints
-- [ ] Smoke tests: 10/10 checks pass (5 pages + 5 APIs including Azure TTS)
+- [ ] Spotify integration UI works and persists configuration
+- [ ] Spotify search endpoint returns 503 when unconfigured (expected behavior)
+- [ ] Smoke tests: 11/11 checks pass (5 pages + 6 APIs including Spotify)
 
-If all checkboxes are marked and no major issues were found, **v5.6.0 is ready for deployment!**
+If all checkboxes are marked and no major issues were found, **v5.7.0 is ready for deployment!**
 
 ---
 
