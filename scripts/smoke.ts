@@ -160,6 +160,13 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
+    check('Gmail API (unconfigured)', '/integrations/gmail/test', {
+      method: 'POST',
+      body: {},
+      expectedStatus: 503,  // Expected: not configured
+      validateJson: true,
+      useApiBase: true,
+    }),
   ];
 
   const results = await Promise.all(checks);
