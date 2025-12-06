@@ -430,14 +430,25 @@ As of **feature/v6-notification-foundation**, Jarvis V5 OS includes the foundati
   - `POST /api/notifications/schedule` - Schedule notifications with validation
   - `GET /api/notifications/stream` - SSE endpoint for real-time event delivery
   - Returns proper error codes (400 for validation, 500 for failures)
+  - Auto-schedule camera_alert notifications when cameras connect/disconnect
 - ✅ **Smoke Tests** (`scripts/smoke.ts`)
   - Test notification scheduling endpoint (validates request/response)
   - Test SSE stream connectivity (200 status check)
-
-**Not Yet Implemented:**
-- ⏳ Frontend NotificationProvider (React context with SSE subscription)
-- ⏳ NotificationToast component for displaying notifications
-- ⏳ Integration into root layout
+- ✅ **Frontend NotificationProvider** (`apps/web/context/NotificationContext.tsx`)
+  - React context with SSE subscription to `/api/notifications/stream`
+  - Auto-dismiss notifications after 10 seconds
+  - `scheduleNotification()` helper for programmatic scheduling
+- ✅ **NotificationToast Component** (`apps/web/components/NotificationToast.tsx`)
+  - Toast display with type-specific icons and colors
+  - Manual dismiss button + auto-dismiss
+  - Positioned top-right with slide-in animation
+- ✅ **Root Layout Integration** (`apps/web/app/layout.tsx`)
+  - NotificationProvider wraps entire app
+  - NotificationToast rendered globally
+- ✅ **Camera Settings UI** (`apps/web/components/CameraSettings.tsx`)
+  - Permission status display and request button
+  - Wi-Fi configuration placeholder (SSID + password inputs)
+  - Security dashboard logging for camera connect/disconnect events
 
 ### Architecture
 
@@ -494,26 +505,63 @@ eventSource.onerror = () => {
 };
 ```
 
+### Camera Integration
+
+**Camera Feed Architecture:**
+- **Live Streaming:** WebRTC-based peer-to-peer streaming between camera devices and security dashboard
+- **Frame Broadcasting:** JPEG frames sent via Socket.IO at 8 FPS for thumbnail preview
+- **Auto-Discovery:** Cameras announce themselves via Socket.IO and appear in security dashboard automatically
+- **RTCPeerConnection:** Signaling via Socket.IO for SDP offers/answers and ICE candidates
+
+**Camera Settings:**
+- **Permission Management:** Browser getUserMedia permission status and request UI
+- **Wi-Fi Configuration (Placeholder):** Future feature for configuring standalone camera devices
+- **Automatic Notifications:** Camera connect/disconnect events trigger camera_alert notifications
+
+**Security Dashboard Features:**
+- **Camera Grid:** Thumbnail previews with live/offline status indicators
+- **Expand View:** Click to open full-screen WebRTC live stream
+- **Snapshot Download:** Save current frame as JPEG
+- **Connection Logging:** Console logs for camera join/leave/frame events
+
 ### Next Steps for v6.0 Completion
 
-To complete the notification system, future development should:
+The notification system is now fully functional. Future enhancements could include:
 
-1. **Create Frontend Components**:
-   - `apps/web/context/NotificationContext.tsx` - React context + SSE subscription
-   - `apps/web/components/NotificationToast.tsx` - Toast display component
-   - Wrap root layout with `NotificationProvider`
-
-2. **Integration Examples**:
+1. **Integration Examples:**
    - Calendar: Schedule event reminders when syncing Google Calendar events
-   - Printers: Fire alerts when print job completes or fails
-   - Security: Notify when camera detects motion
+   - Printers: Fire alerts when print job completes or fails (already implemented for cameras)
    - System: Alert on available updates or low disk space
 
-### Foundation Files
+2. **Camera Enhancements:**
+   - Implement Wi-Fi configuration backend (ESP32/Raspberry Pi provisioning)
+   - Add motion detection alerts (integrate with camera_alert notifications)
+   - 3D camera feed placeholder integration (depth data visualization)
 
+3. **Notification Improvements:**
+   - Add notification history/log viewer
+   - User preferences for notification types (enable/disable per type)
+   - Sound effects or vibration for critical alerts
+
+### Implementation Files
+
+**Backend:**
 - **Types:** `packages/shared/src/notifications.ts` (71 lines)
 - **Scheduler:** `apps/server/src/notificationScheduler.ts` (262 lines)
-- **Documentation:** This section in `DEV_WORKFLOW.md`
+- **API Endpoints:** `apps/server/src/index.ts` (notification routes + camera event triggers)
+- **Storage:** `apps/server/data/scheduled-events.json` (event persistence)
+
+**Frontend:**
+- **Context:** `apps/web/context/NotificationContext.tsx` (123 lines)
+- **Toast Component:** `apps/web/components/NotificationToast.tsx` (131 lines)
+- **Camera Settings:** `apps/web/components/CameraSettings.tsx` (100 lines)
+- **Root Integration:** `apps/web/app/layout.tsx` (NotificationProvider + NotificationToast)
+
+**Testing:**
+- **Smoke Tests:** `scripts/smoke.ts` (15 checks including notification endpoints)
+
+**Documentation:**
+- This section in `DEV_WORKFLOW.md`
 
 ### Design Decisions
 
