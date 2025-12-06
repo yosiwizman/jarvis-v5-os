@@ -25,7 +25,8 @@
     "maxOutputTokens": 800,
     "useWebSearch": false,
     "useLocalLlm": false,
-    "localLlmPrimary": false
+    "localLlmPrimary": false,
+    "ttsProvider": "elevenlabs"
   },
   "imageGeneration": {
     "model": "dall-e-3",

@@ -2284,9 +2284,21 @@ function emitCameraList() {
 
 function removeCamera(cameraId: string) {
   if (!cameraDirectory.has(cameraId)) return;
+  const info = cameraDirectory.get(cameraId);
   cameraDirectory.delete(cameraId);
   cameras.emit('camera:left', { cameraId });
   emitCameraList();
+  
+  // Schedule notification for camera disconnection (immediate)
+  if (info) {
+    notificationScheduler.scheduleEvent(
+      'camera_alert',
+      { message: `Camera "${info.friendlyName}" disconnected`, cameraId, action: 'disconnected' },
+      new Date(Date.now() + 1000).toISOString() // Fire in 1 second
+    ).catch((err) => {
+      fastify.log.error({ error: err, cameraId }, 'Failed to schedule camera disconnected notification');
+    });
+  }
 }
 
 cameras.on('connection', (socket) => {
@@ -2318,6 +2330,15 @@ cameras.on('connection', (socket) => {
     socket.join('camera.clients');
     cameras.emit('camera:joined', { cameraId: info.cameraId, friendlyName: info.friendlyName, lastSeenTs: info.lastSeenTs });
     emitCameraList();
+    
+    // Schedule notification for camera connection (immediate)
+    notificationScheduler.scheduleEvent(
+      'camera_alert',
+      { message: `Camera "${name}" connected`, cameraId, action: 'connected' },
+      new Date(Date.now() + 1000).toISOString() // Fire in 1 second
+    ).catch((err) => {
+      fastify.log.error({ error: err, cameraId }, 'Failed to schedule camera connected notification');
+    });
   });
 
   socket.on('camera:frame', ({ cameraId, ts, jpegBase64 }: { cameraId: string; ts?: number; jpegBase64: string }) => {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getCameraSocket } from '@/lib/socket';
 import { grabStill } from '@/lib/capture';
 import { buildServerUrl } from '@/lib/api';
+import { CameraSettings } from '@/components/CameraSettings';
 
 const STREAM_FPS = 8;
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds - matches socket ping interval
@@ -352,6 +353,12 @@ export default function CameraPage() {
           </p>
         )}
       </div>
+
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold">Camera Settings</h2>
+        <p className="text-sm text-white/60">Configure permissions and Wi‑Fi connection for camera devices.</p>
+      </div>
+      <CameraSettings />
     </div>
   );
 }
