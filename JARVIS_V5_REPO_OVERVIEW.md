@@ -82,6 +82,7 @@ Here's a summary of each major version released:
 - **v5.6.0** (December 2025) – Azure TTS integration (multi-provider TTS architecture with ElevenLabs + Azure)
 - **v5.7.0** (December 2025) – Spotify integration (Client Credentials Flow, backend track search endpoint, Settings configuration card)
 - **v5.8.0** (December 2025) – Gmail integration skeleton (OAuth2 refresh token config, backend test endpoint, Settings card, CI smoke test)
+- **v5.9.0** (December 2025) – Google Calendar integration skeleton (OAuth2 refresh token config, upcoming events fetch endpoint, Settings card with calendar ID, CI smoke test)
 
 For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md` files in the repository root.
 

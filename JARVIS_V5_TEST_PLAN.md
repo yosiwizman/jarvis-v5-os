@@ -1,14 +1,14 @@
-# Jarvis V5 OS – Test Plan (v5.8.0)
+# Jarvis V5 OS – Test Plan (v5.9.0)
 
 **For:** Mr. W  
-**Version:** v5.8.0
+**Version:** v5.9.0
 **Date:** 2025-12-06
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V5 OS version 5.8.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, Azure TTS integration with multi-provider selection works correctly, Spotify integration (backend + config) works, and the new Gmail integration skeleton (backend + config) works properly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V5 OS version 5.9.0**. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, web search integration works, Local LLM integration functions properly, ElevenLabs TTS works, Azure TTS integration with multi-provider selection works correctly, Spotify integration (backend + config) works, Gmail integration skeleton (backend + config) works, and the new Google Calendar integration skeleton (backend + config) works properly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -980,6 +980,151 @@ If you want to test with real Gmail API:
 
 ---
 
+## Google Calendar Integration Tests (v5.9.0 New Feature)
+
+This tests the new Google Calendar integration skeleton with OAuth2 refresh token backend:
+
+### Prerequisites (Optional)
+
+If you want to test with real Google Calendar API:
+1. Create OAuth2 Client in Google Cloud Console
+2. Enable Google Calendar API for your project
+3. Obtain refresh token via OAuth2 Playground or custom script
+4. **Note:** OAuth2 wizard UI is NOT implemented; manual token entry required
+
+**Skip the functional test if you don't have Google Calendar credentials** – you can still test the UI configuration.
+
+### Settings UI Test – Google Calendar Card
+
+1. **Navigate to Settings → Integrations**
+   - [ ] Go to https://localhost:3000/settings
+   - [ ] Scroll to the **Integrations** section
+   - [ ] Find the **Google Calendar** card
+
+2. **Check Initial State**
+   - [ ] The card shows **"Not connected"** badge (gray)
+   - [ ] The **Enable** checkbox is unchecked
+   - [ ] **No "Coming soon" badge** should appear (that was removed in v5.9.0)
+
+3. **Enable and Configure**
+   - [ ] Check the **Enable** checkbox
+   - [ ] Configuration fields appear below
+   - [ ] **Client ID** field is visible (text input)
+   - [ ] **Client Secret** field is visible (password-masked)
+   - [ ] **Redirect URI** field is visible (text input, optional)
+   - [ ] **Calendar ID** field is visible (text input, placeholder: "primary")
+   - [ ] **Refresh Token** field is visible (password-masked)
+
+4. **Fill in Configuration** (if you have credentials)
+   - [ ] Client ID: Paste your Google OAuth2 Client ID
+   - [ ] Client Secret: Paste your Client Secret
+   - [ ] Redirect URI: Enter if needed (optional)
+   - [ ] Calendar ID: Enter "primary" or specific calendar ID
+   - [ ] Refresh Token: Paste refresh token from OAuth flow
+   - [ ] The status badge changes to **"Connected"** (green)
+
+5. **Test Without Credentials** (default state)
+   - [ ] Leave fields empty or enter dummy values
+   - [ ] Status badge remains **"Not connected"** (gray)
+   - [ ] No crashes or errors
+
+6. **Refresh and Verify Persistence**
+   - [ ] Press `F5` to refresh the page
+   - [ ] Go back to Settings → Integrations → Google Calendar
+   - [ ] Verify **Enable** is still checked (if you enabled it)
+   - [ ] Verify Client ID, Client Secret (asterisks), Redirect URI, Calendar ID, Token persisted
+   - [ ] Verify status badge still shows "Connected" (if configured with real credentials)
+
+**Expected Result:** Configuration persists across page refreshes.
+
+### Backend Endpoint Test (Unconfigured)
+
+1. **Test Unconfigured Endpoint** (before entering credentials)
+   - [ ] Open Browser DevTools (F12) → Console tab
+   - [ ] Manually test endpoint using Console:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/google-calendar/test', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({})
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **503** with JSON:
+     ```json
+     { "ok": false, "error": "google_calendar_not_configured" }
+     ```
+   - [ ] Page should **NOT crash**
+
+### Functional Test (Only if Google Calendar is Configured)
+
+**Skip this if you don't have Google Calendar OAuth2 credentials.**
+
+1. **Test Connection**
+   - [ ] Configure Google Calendar in Settings (Client ID, Secret, Calendar ID, Token)
+   - [ ] Verify status shows "Connected" (green)
+   - [ ] Open Browser DevTools (F12) → Console tab
+   - [ ] Test connection:
+     ```javascript
+     fetch('https://localhost:3000/api/integrations/google-calendar/test', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({})
+     }).then(r => r.json()).then(console.log)
+     ```
+   - [ ] **Expected Response:** Status **200** with JSON:
+     ```json
+     {
+       "ok": true,
+       "events": [
+         {
+           "id": "...",
+           "summary": "...",
+           "start": "2025-12-07T14:00:00Z",
+           "end": "2025-12-07T15:00:00Z"
+         }
+       ]
+     }
+     ```
+   - [ ] Verify events contain summary, start, end ISO date strings
+
+2. **Test Error Handling (Bad Token)** (optional destructive test)
+   - [ ] Go to Settings → Google Calendar
+   - [ ] Change Refresh Token to invalid value (e.g., `invalid-token-123`)
+   - [ ] Try connection test from Console
+   - [ ] **Expected:** Status **502** with error (e.g., `token_exchange_failed`)
+   - [ ] Page continues to work (no crash)
+   - [ ] Restore correct token after test
+
+**Expected Result:** Google Calendar test endpoint returns event summaries when configured; graceful errors when misconfigured.
+
+### Current Limitations (v5.9.0)
+
+1. **No OAuth Wizard** (documented behavior)
+   - [ ] No "Connect with Google" button in Settings
+   - [ ] User must manually obtain refresh token via external tools
+
+2. **No Calendar UI** (documented behavior)
+   - [ ] **Expected:** No `/calendar` route, no event list, no calendar grid visible (backend-only in v5.9.0)
+   - [ ] Future versions will add calendar UI
+
+3. **Backend Test Only**
+   - [ ] Google Calendar integration is currently API-only
+   - [ ] User-facing calendar management UI will come in future versions (v5.9.x or v5.10.0)
+
+**Expected Result:** Google Calendar is backend skeleton only in v5.9.0; no user-facing calendar UI yet.
+
+### Regression Test (Gmail Still Works)
+
+1. **Verify Gmail Still Works**
+   - [ ] Go to Settings → Integrations → Gmail
+   - [ ] Verify configuration is still present (if you had it configured)
+   - [ ] Verify connection status badge still works
+   - [ ] Gmail test endpoint still returns expected responses
+
+**Expected Result:** Google Calendar is purely additive; Gmail and all other integrations work unchanged.
+
+---
+
 ## 3D, Camera & Security Sanity Checks
 
 Quick checks to ensure specialized pages don't crash:
@@ -1077,9 +1222,13 @@ Before you finish, make sure you've tested:
 - [ ] Spotify search endpoint returns 503 when unconfigured (expected behavior)
 - [ ] Gmail integration UI works and persists configuration
 - [ ] Gmail test endpoint returns 503 when unconfigured (expected behavior)
-- [ ] Smoke tests: 12/12 checks pass (5 pages + 7 APIs including Spotify and Gmail)
+- [ ] Gmail integration UI works and persists configuration
+- [ ] Gmail test endpoint returns 503 when unconfigured (expected behavior)
+- [ ] Google Calendar integration UI works and persists configuration  
+- [ ] Google Calendar test endpoint returns 503 when unconfigured (expected behavior)
+- [ ] Smoke tests: 13/13 checks pass (5 pages + 8 APIs including Spotify, Gmail, and Google Calendar)
 
-If all checkboxes are marked and no major issues were found, **v5.8.0 is ready for deployment!**
+If all checkboxes are marked and no major issues were found, **v5.9.0 is ready for deployment!**
 
 ---
 
