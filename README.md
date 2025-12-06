@@ -1,15 +1,34 @@
 # Jarvis Control Center
 
+> **Current Version:** Jarvis V5.4.0 (Local LLM + Web Search + Weather + HUD + Theming)
+
 ![Jarvis Voice Assistant](Screenshots/Jarvis.png)
 
 A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js dashboard. The system features voice control, multi-device camera streaming, 3D printing management, AI image generation, and creative tooling through a unified interface.
+
+## Feature Highlights
+
+- **🤖 Local LLM Integration:** Run AI models locally (Ollama, LM Studio) with intelligent cloud fallback
+- **🔍 Web Search:** Integrate real-time search results into chat responses (Tavily, SerpAPI)
+- **🌤️ Weather Integration:** Live weather data with OpenWeather API
+- **🎨 Full Theming System:** Light/Dark modes with custom accent colors
+- **📊 Real-Time HUD:** Live CPU, memory, and system metrics on all pages
+- **🎙️ Voice Assistant:** OpenAI Realtime API with function calling
+- **📸 Multi-Device Cameras:** Turn any device into a security camera with WebRTC streaming
+- **🗿 3D Generation:** Text-to-3D and image-to-3D via Meshy.ai
+- **🖨️ 3D Printer Management:** Monitor and control Bambu Lab printers
+- **🎨 AI Image Generation:** DALL-E and GPT-Image models
+- **🔧 Integrations Cockpit:** Centralized configuration for all services
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 20+
-- mkcert (for HTTPS certificates)
+- **Node.js 20+**
+- **npm** (comes with Node)
+- **mkcert** (for HTTPS certificates): [Installation guide](https://github.com/FiloSottile/mkcert#installation)
+- **OpenAI API key** (for cloud features): [Get API key](https://platform.openai.com/api-keys)
+- **(Optional) Ollama** (for local LLM): [Install Ollama](https://ollama.com)
 
 ### Installation & Running
 
@@ -42,6 +61,13 @@ This command will:
 3. Click "Save"
 
 Keys are stored on the server and shared across all connected devices automatically.
+
+### Documentation
+
+- **Full Release Notes:** [JARVIS_V5_RELEASE_NOTES_v5.4.0.md](JARVIS_V5_RELEASE_NOTES_v5.4.0.md)
+- **Test Plan:** [JARVIS_V5_TEST_PLAN.md](JARVIS_V5_TEST_PLAN.md)
+- **Local LLM Setup:** [LOCAL_LLM_INTEGRATION.md](LOCAL_LLM_INTEGRATION.md)
+- **Repository Overview:** [JARVIS_V5_REPO_OVERVIEW.md](JARVIS_V5_REPO_OVERVIEW.md)
 
 ## Screenshots
 
