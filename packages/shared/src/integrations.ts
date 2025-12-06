@@ -56,8 +56,9 @@ export interface AzureTTSIntegrationConfig {
 
 export interface SpotifyIntegrationConfig {
   enabled: boolean;
-  clientId?: string;
-  clientSecret?: string;
+  clientId: string | null;
+  clientSecret: string | null;
+  defaultMarket: string | null;  // e.g. "US", "GB", "DE"
 }
 
 export interface GmailIntegrationConfig {
@@ -124,8 +125,9 @@ export const defaultIntegrationSettings: IntegrationSettings = {
   },
   spotify: {
     enabled: false,
-    clientId: '',
-    clientSecret: ''
+    clientId: null,
+    clientSecret: null,
+    defaultMarket: 'US'
   },
   gmail: {
     enabled: false
@@ -186,7 +188,7 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
     name: 'Spotify',
     description: 'Media playback and context via Spotify',
     requiresApiKey: true,
-    comingSoon: true
+    comingSoon: false
   },
   gmail: {
     id: 'gmail',
@@ -231,9 +233,10 @@ export function isIntegrationConnected(
       const azConfig = config as AzureTTSIntegrationConfig;
       return !!(azConfig.apiKey && azConfig.region && azConfig.voiceName);
     }
-    case 'spotify':
-      return !!(config as SpotifyIntegrationConfig).clientId &&
-             !!(config as SpotifyIntegrationConfig).clientSecret;
+    case 'spotify': {
+      const spotifyConfig = config as SpotifyIntegrationConfig;
+      return !!(spotifyConfig.clientId && spotifyConfig.clientSecret);
+    }
     case 'gmail':
     case 'googleCalendar':
       return config.enabled; // No extra requirements yet

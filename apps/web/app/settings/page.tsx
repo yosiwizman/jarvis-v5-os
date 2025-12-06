@@ -1413,13 +1413,27 @@ export default function SettingsPage() {
           </div>
 
           {/* Spotify Card */}
-          <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('spotify', settings?.integrations?.spotify)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-medium">{integrationMetadata.spotify.name}</div>
                 <div className="text-xs text-white/50 mt-1">{integrationMetadata.spotify.description}</div>
               </div>
-              <div className="px-2 py-1 rounded text-xs bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text">Coming soon</div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('spotify', settings?.integrations?.spotify)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('spotify', settings?.integrations?.spotify) ? 'Connected' : 'Not connected'}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!settings?.integrations?.spotify?.enabled}
@@ -1433,14 +1447,22 @@ export default function SettingsPage() {
                   <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
                     value={settings?.integrations?.spotify?.clientId ?? ''}
                     onChange={(e) => { updateIntegration('spotify', { clientId: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="Spotify client ID" />
+                    placeholder="your-spotify-client-id" />
                 </label>
                 <label className="space-y-1">
                   <div className="text-xs text-white/60">Client Secret</div>
                   <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
                     value={settings?.integrations?.spotify?.clientSecret ?? ''}
                     onChange={(e) => { updateIntegration('spotify', { clientSecret: e.target.value }); setSettings(readSettings()); }}
-                    placeholder="Client secret" />
+                    placeholder="********" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Default Market (optional)</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.spotify?.defaultMarket ?? ''}
+                    onChange={(e) => { updateIntegration('spotify', { defaultMarket: e.target.value || null }); setSettings(readSettings()); }}
+                    placeholder="US" />
+                  <div className="text-xs text-white/40">ISO 3166-1 alpha-2 country code (e.g. US, GB, DE)</div>
                 </label>
               </div>
             )}
