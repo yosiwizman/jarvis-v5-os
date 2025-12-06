@@ -14,7 +14,7 @@
     "lint": "npm run lint -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",
     "smoke": "tsx scripts/smoke.ts",
-    "smoke:ci": "cross-env JARVIS_SMOKE_BASE_URL=http://127.0.0.1:3000 JARVIS_SMOKE_API_URL=https://127.0.0.1:1234 tsx scripts/smoke.ts",
+    "smoke:ci": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 JARVIS_SMOKE_BASE_URL=http://127.0.0.1:3000 JARVIS_SMOKE_API_URL=https://127.0.0.1:1234 tsx scripts/smoke.ts",
     "ci:smoke": "concurrently -k -s first \"npm run start:ci\" \"wait-on -t 60000 http://127.0.0.1:3000 https-get://127.0.0.1:1234/config && npm run smoke:ci\"",
     "clean": "rimraf node_modules apps/*/node_modules packages/*/node_modules .next apps/*/.next"
   },
