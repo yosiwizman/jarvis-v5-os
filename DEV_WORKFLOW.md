@@ -524,24 +524,56 @@ eventSource.onerror = () => {
 - **Snapshot Download:** Save current frame as JPEG
 - **Connection Logging:** Console logs for camera join/leave/frame events
 
-### Next Steps for v6.0 Completion
+### v6.0 Enhancements (Implemented)
 
-The notification system is now fully functional. Future enhancements could include:
+**Calendar Event Reminders:**
+- `POST /integrations/google-calendar/sync-reminders` endpoint
+- Fetches upcoming Google Calendar events (next 5 events)
+- Schedules `calendar_reminder` notifications 15 minutes before each event
+- Includes event name, ID, start time, and reminder minutes in payload
+- Logs sync results (events found, notifications scheduled)
+- Returns: `{ ok, eventsFound, scheduledCount, message }`
 
-1. **Integration Examples:**
-   - Calendar: Schedule event reminders when syncing Google Calendar events
-   - Printers: Fire alerts when print job completes or fails (already implemented for cameras)
-   - System: Alert on available updates or low disk space
+**Printer Job Completion Alerts:**
+- Auto-trigger `printer_alert` notifications on 3D model job completion/failure
+- Monitors `ModelJob` status changes in `updateJob()` function
+- Completion notification: job ID, prompt (truncated to 50 chars), status='completed'
+- Failure notification: job ID, error message (truncated), status='failed', error details
+- Prevents duplicate notifications (only fires on status transition)
+- Logs all printer notification scheduling attempts
 
-2. **Camera Enhancements:**
-   - Implement Wi-Fi configuration backend (ESP32/Raspberry Pi provisioning)
-   - Add motion detection alerts (integrate with camera_alert notifications)
-   - 3D camera feed placeholder integration (depth data visualization)
+**Motion Detection:**
+- Simple frame-to-frame comparison using base64 string length difference
+- Motion threshold: 5% change between consecutive frames
+- Cooldown: 30 seconds between motion alerts per camera (prevents spam)
+- Triggers `camera_alert` with action='motion_detected', timestamp, camera details
+- Stores `previousFrameBase64` and `lastMotionAlertTs` in camera directory
+- Logs motion detection events with camera ID and friendly name
+- Production note: Could be upgraded to proper image diff/computer vision libraries
 
-3. **Notification Improvements:**
-   - Add notification history/log viewer
-   - User preferences for notification types (enable/disable per type)
-   - Sound effects or vibration for critical alerts
+### Future Enhancements (Recommended)
+
+The notification system foundation is complete. Additional features to consider:
+
+1. **Notification History:**
+   - Persistent storage of fired notifications with delivery status
+   - `GET /api/notifications/history` endpoint with filtering
+   - UI component to view past notifications (type, status, timestamp)
+
+2. **User Preferences:**
+   - Settings endpoint to store notification type preferences (enabled/disabled per type)
+   - Frontend toggle switches in Settings page
+   - Filter notifications in NotificationContext based on user preferences
+
+3. **Advanced Motion Detection:**
+   - Upgrade to proper image diff libraries (e.g. pixelmatch, opencv)
+   - Region-of-interest (ROI) selection for motion detection zones
+   - Sensitivity tuning per camera
+
+4. **Additional Integrations:**
+   - System update notifications (low disk space, security updates)
+   - Smart home device alerts (temperature, humidity, door sensors)
+   - Reminder snooze functionality for calendar events
 
 ### Implementation Files
 
