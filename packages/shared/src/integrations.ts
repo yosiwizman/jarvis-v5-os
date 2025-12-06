@@ -63,6 +63,11 @@ export interface SpotifyIntegrationConfig {
 
 export interface GmailIntegrationConfig {
   enabled: boolean;
+  clientId: string | null;
+  clientSecret: string | null;
+  redirectUri: string | null;   // where Google will redirect after consent
+  refreshToken: string | null;  // long-lived; obtained via manual flow
+  userEmail: string | null;     // the Gmail account Jarvis is reading
 }
 
 export interface GoogleCalendarIntegrationConfig {
@@ -130,7 +135,12 @@ export const defaultIntegrationSettings: IntegrationSettings = {
     defaultMarket: 'US'
   },
   gmail: {
-    enabled: false
+    enabled: false,
+    clientId: null,
+    clientSecret: null,
+    redirectUri: null,
+    refreshToken: null,
+    userEmail: null
   },
   googleCalendar: {
     enabled: false
@@ -193,9 +203,9 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
   gmail: {
     id: 'gmail',
     name: 'Gmail',
-    description: 'Future email capabilities',
-    requiresApiKey: false,
-    comingSoon: true
+    description: 'Connect Gmail account using OAuth2 refresh token',
+    requiresApiKey: true,
+    comingSoon: false
   },
   googleCalendar: {
     id: 'googleCalendar',
@@ -237,7 +247,15 @@ export function isIntegrationConnected(
       const spotifyConfig = config as SpotifyIntegrationConfig;
       return !!(spotifyConfig.clientId && spotifyConfig.clientSecret);
     }
-    case 'gmail':
+    case 'gmail': {
+      const gmailConfig = config as GmailIntegrationConfig;
+      return !!(
+        gmailConfig.clientId &&
+        gmailConfig.clientSecret &&
+        gmailConfig.refreshToken &&
+        gmailConfig.userEmail
+      );
+    }
     case 'googleCalendar':
       return config.enabled; // No extra requirements yet
     default:
