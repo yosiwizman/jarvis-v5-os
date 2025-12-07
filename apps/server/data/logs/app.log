@@ -734,3 +734,59 @@
 {"level":"info","time":"2025-12-07T03:57:06.150Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/system/metrics","statusCode":200,"duration":3,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","ip":"127.0.0.1","msg":"GET /system/metrics 200 - 3ms"}
 {"level":"info","time":"2025-12-07T03:57:21.155Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/system/metrics","statusCode":200,"duration":3,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","ip":"127.0.0.1","msg":"GET /system/metrics 200 - 3ms"}
 {"level":"info","time":"2025-12-07T03:57:37.120Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/system/metrics","statusCode":200,"duration":3,"userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","ip":"127.0.0.1","msg":"GET /system/metrics 200 - 3ms"}
+{"level":"info","time":"2025-12-07T16:43:40.387Z","node_version":"v22.17.1","logsDir":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\apps\\server\\data\\logs","msg":"Logger initialized"}
+{"level":"info","time":"2025-12-07T16:43:40.411Z","node_version":"v22.17.1","keyPath":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\infra\\certs\\localhost-key.pem","certPath":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\infra\\certs\\localhost.pem","msg":"Loaded TLS certificates"}
+{"level":"info","time":"2025-12-07T16:43:40.413Z","node_version":"v22.17.1","msg":"Lockdown service initialized"}
+{"level":"info","time":"2025-12-07T16:43:40.420Z","node_version":"v22.17.1","type":"system","event":"server_starting","msg":"System event: server_starting"}
+{"level":"info","time":"2025-12-07T16:43:40.420Z","node_version":"v22.17.1","msg":"Conversation store initialized"}
+{"level":"info","time":"2025-12-07T16:43:40.420Z","node_version":"v22.17.1","msg":"Action store initialized"}
+{"level":"info","time":"2025-12-07T16:43:40.423Z","node_version":"v22.17.1","msg":"Notification scheduler initialized"}
+{"level":"info","time":"2025-12-07T16:43:40.423Z","node_version":"v22.17.1","msg":"Email notification system not initialized (Gmail not configured)"}
+{"level":"warn","time":"2025-12-07T16:43:40.444Z","node_version":"v22.17.1","msg":"HTTPS & Socket.IO up on https://localhost:1234"}
+{"level":"info","time":"2025-12-07T16:43:40.444Z","node_version":"v22.17.1","msg":"No valid Bambu token found, skipping Cloud MQTT"}
+{"level":"info","time":"2025-12-07T16:43:40.624Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/config","statusCode":200,"duration":2,"userAgent":"axios/1.13.2","ip":"127.0.0.1","msg":"GET /config 200 - 2ms"}
+{"level":"info","time":"2025-12-07T16:43:46.146Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/3dprint/token-status","statusCode":200,"duration":1,"userAgent":"node","ip":"127.0.0.1","msg":"GET /3dprint/token-status 200 - 1ms"}
+{"level":"info","time":"2025-12-07T16:43:46.147Z","node_version":"v22.17.1","clientId":"e094df87-ef05-459f-9c8f-fef559e8a77d","msg":"SSE client connected to notification stream"}
+{"level":"info","time":"2025-12-07T16:43:46.151Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/system/metrics","statusCode":200,"duration":6,"userAgent":"node","ip":"127.0.0.1","msg":"GET /system/metrics 200 - 6ms"}
+{"level":"warn","time":"2025-12-07T16:43:46.155Z","node_version":"v22.17.1","msg":"ElevenLabs TTS not configured"}
+{"level":"info","time":"2025-12-07T16:43:46.155Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/elevenlabs/tts","statusCode":503,"duration":5,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/elevenlabs/tts 503 - 5ms"}
+{"level":"warn","time":"2025-12-07T16:43:46.155Z","node_version":"v22.17.1","msg":"Google Calendar not configured"}
+{"level":"warn","time":"2025-12-07T16:43:46.155Z","node_version":"v22.17.1","msg":"Azure TTS not configured"}
+{"level":"warn","time":"2025-12-07T16:43:46.156Z","node_version":"v22.17.1","msg":"Gmail not configured"}
+{"level":"warn","time":"2025-12-07T16:43:46.167Z","node_version":"v22.17.1","msg":"Spotify not configured"}
+{"level":"info","time":"2025-12-07T16:43:46.167Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/google-calendar/test","statusCode":503,"duration":14,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/google-calendar/test 503 - 14ms"}
+{"level":"info","time":"2025-12-07T16:43:46.167Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/azure-tts/tts","statusCode":503,"duration":16,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/azure-tts/tts 503 - 16ms"}
+{"level":"info","time":"2025-12-07T16:43:46.168Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/gmail/test","statusCode":503,"duration":15,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/gmail/test 503 - 15ms"}
+{"level":"info","time":"2025-12-07T16:43:46.168Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/spotify/search","statusCode":503,"duration":16,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/spotify/search 503 - 16ms"}
+{"level":"info","time":"2025-12-07T16:43:46.174Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/web-search","statusCode":503,"duration":26,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/web-search 503 - 26ms"}
+{"level":"info","time":"2025-12-07T16:43:46.175Z","node_version":"v22.17.1","eventId":"c0c9a2d1-88df-4996-9845-342eacc01e05","type":"system.test","triggerAt":"2025-12-07T16:48:46.133Z","msg":"Notification scheduled"}
+{"level":"info","time":"2025-12-07T16:43:46.175Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/api/notifications/schedule","statusCode":200,"duration":21,"userAgent":"node","ip":"127.0.0.1","msg":"POST /api/notifications/schedule 200 - 21ms"}
+{"level":"info","time":"2025-12-07T16:43:48.564Z","node_version":"v22.17.1","clientId":"e094df87-ef05-459f-9c8f-fef559e8a77d","msg":"SSE client disconnected from notification stream"}
+{"level":"info","time":"2025-12-07T16:57:35.794Z","node_version":"v22.17.1","logsDir":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\apps\\server\\data\\logs","msg":"Logger initialized"}
+{"level":"info","time":"2025-12-07T16:57:35.817Z","node_version":"v22.17.1","keyPath":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\infra\\certs\\localhost-key.pem","certPath":"C:\\Users\\yosiw\\Desktop\\Jarvis-main\\infra\\certs\\localhost.pem","msg":"Loaded TLS certificates"}
+{"level":"info","time":"2025-12-07T16:57:35.819Z","node_version":"v22.17.1","msg":"Lockdown service initialized"}
+{"level":"info","time":"2025-12-07T16:57:35.825Z","node_version":"v22.17.1","type":"system","event":"server_starting","msg":"System event: server_starting"}
+{"level":"info","time":"2025-12-07T16:57:35.826Z","node_version":"v22.17.1","msg":"Conversation store initialized"}
+{"level":"info","time":"2025-12-07T16:57:35.826Z","node_version":"v22.17.1","msg":"Action store initialized"}
+{"level":"info","time":"2025-12-07T16:57:35.829Z","node_version":"v22.17.1","msg":"Notification scheduler initialized"}
+{"level":"info","time":"2025-12-07T16:57:35.830Z","node_version":"v22.17.1","msg":"Email notification system not initialized (Gmail not configured)"}
+{"level":"warn","time":"2025-12-07T16:57:35.852Z","node_version":"v22.17.1","msg":"HTTPS & Socket.IO up on https://localhost:1234"}
+{"level":"info","time":"2025-12-07T16:57:35.852Z","node_version":"v22.17.1","msg":"No valid Bambu token found, skipping Cloud MQTT"}
+{"level":"info","time":"2025-12-07T16:57:36.105Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/config","statusCode":200,"duration":2,"userAgent":"axios/1.13.2","ip":"127.0.0.1","msg":"GET /config 200 - 2ms"}
+{"level":"info","time":"2025-12-07T16:57:40.362Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/3dprint/token-status","statusCode":200,"duration":1,"userAgent":"node","ip":"127.0.0.1","msg":"GET /3dprint/token-status 200 - 1ms"}
+{"level":"info","time":"2025-12-07T16:57:40.363Z","node_version":"v22.17.1","clientId":"59301b5b-379d-4510-a80b-09396c889202","msg":"SSE client connected to notification stream"}
+{"level":"info","time":"2025-12-07T16:57:40.367Z","node_version":"v22.17.1","type":"api_request","method":"GET","url":"/system/metrics","statusCode":200,"duration":6,"userAgent":"node","ip":"127.0.0.1","msg":"GET /system/metrics 200 - 6ms"}
+{"level":"warn","time":"2025-12-07T16:57:40.372Z","node_version":"v22.17.1","msg":"ElevenLabs TTS not configured"}
+{"level":"info","time":"2025-12-07T16:57:40.372Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/elevenlabs/tts","statusCode":503,"duration":6,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/elevenlabs/tts 503 - 6ms"}
+{"level":"warn","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","msg":"Azure TTS not configured"}
+{"level":"warn","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","msg":"Spotify not configured"}
+{"level":"warn","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","msg":"Gmail not configured"}
+{"level":"warn","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","msg":"Google Calendar not configured"}
+{"level":"info","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/azure-tts/tts","statusCode":503,"duration":5,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/azure-tts/tts 503 - 5ms"}
+{"level":"info","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/spotify/search","statusCode":503,"duration":5,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/spotify/search 503 - 5ms"}
+{"level":"info","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/gmail/test","statusCode":503,"duration":4,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/gmail/test 503 - 4ms"}
+{"level":"info","time":"2025-12-07T16:57:40.373Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/google-calendar/test","statusCode":503,"duration":3,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/google-calendar/test 503 - 3ms"}
+{"level":"info","time":"2025-12-07T16:57:40.391Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/integrations/web-search","statusCode":503,"duration":28,"userAgent":"node","ip":"127.0.0.1","msg":"POST /integrations/web-search 503 - 28ms"}
+{"level":"info","time":"2025-12-07T16:57:40.392Z","node_version":"v22.17.1","eventId":"32a084af-6aad-437a-8fcd-5e7a6fe32bb4","type":"system.test","triggerAt":"2025-12-07T17:02:40.347Z","msg":"Notification scheduled"}
+{"level":"info","time":"2025-12-07T16:57:40.392Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/api/notifications/schedule","statusCode":200,"duration":21,"userAgent":"node","ip":"127.0.0.1","msg":"POST /api/notifications/schedule 200 - 21ms"}
+{"level":"info","time":"2025-12-07T16:57:43.208Z","node_version":"v22.17.1","clientId":"59301b5b-379d-4510-a80b-09396c889202","msg":"SSE client disconnected from notification stream"}

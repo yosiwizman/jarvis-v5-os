@@ -4,9 +4,18 @@ import React, { createContext, useContext, useEffect, useState, useCallback, Rea
 import type { Notification } from '@shared/core';
 import { readSettings } from '@shared/settings';
 
+interface NotificationWithReadState extends Notification {
+  read: boolean;
+}
+
 interface NotificationContextValue {
-  notifications: Notification[];
+  notifications: NotificationWithReadState[];
+  unreadCount: number;
   dismissNotification: (id: string) => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  clearAll: () => void;
+  loadHistory: () => Promise<void>;
   scheduleNotification: (type: string, payload: Record<string, unknown>, triggerAt: string) => Promise<boolean>;
 }
 
@@ -25,13 +34,70 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationWithReadState[]>([]);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // Calculate unread count
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Dismiss notification by ID
   const dismissNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((notification) => notification.id !== id));
   }, []);
+
+  // Mark single notification as read
+  const markAsRead = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  }, []);
+
+  // Mark all notifications as read
+  const markAllAsRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  // Clear all notifications (client-side only)
+  const clearAll = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
+  // Load notification history from server
+  const loadHistory = useCallback(async () => {
+    if (historyLoaded) return; // Only load once
+
+    try {
+      const response = await fetch('/api/notifications/history?limit=50&offset=0');
+      if (!response.ok) {
+        throw new Error('Failed to load notification history');
+      }
+
+      const data = await response.json();
+      const historyNotifications: NotificationWithReadState[] = (data.notifications || []).map(
+        (event: any) => ({
+          id: event.id,
+          type: event.type,
+          payload: event.payload,
+          triggeredAt: event.firedAt || event.triggerAt,
+          readAt: null,
+          read: true // History items are considered "already seen"
+        })
+      );
+
+      // Merge with existing notifications (avoid duplicates)
+      setNotifications((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        const newNotifications = historyNotifications.filter((n) => !existingIds.has(n.id));
+        return [...prev, ...newNotifications];
+      });
+
+      setHistoryLoaded(true);
+      console.log('[NotificationContext] Loaded history:', historyNotifications.length, 'notifications');
+    } catch (error) {
+      console.error('[NotificationContext] Failed to load history:', error);
+    }
+  }, [historyLoaded]);
 
   // Schedule a notification via API
   const scheduleNotification = useCallback(
@@ -103,13 +169,14 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           return;
         }
 
-        // Add notification to state with unique ID
+        // Add notification to state with unique ID and mark as unread
         setNotifications((prev) => [
-          ...prev,
           {
             ...notification,
-            id: notification.id || `notif-${Date.now()}-${Math.random()}`
-          }
+            id: notification.id || `notif-${Date.now()}-${Math.random()}`,
+            read: false // New live notifications are unread
+          },
+          ...prev // Prepend to show newest first
         ]);
       } catch (error) {
         console.error('[NotificationContext] Failed to parse notification:', error);
@@ -130,7 +197,18 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notifications, dismissNotification, scheduleNotification }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        dismissNotification,
+        markAsRead,
+        markAllAsRead,
+        clearAll,
+        loadHistory,
+        scheduleNotification
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

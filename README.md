@@ -74,15 +74,13 @@ Keys are stored on the server and shared across all connected devices automatica
 
 ### Documentation
 
-- **Latest Release Notes:** [JARVIS_V5_RELEASE_NOTES_v6.0.0.md](JARVIS_V5_RELEASE_NOTES_v6.0.0.md) - **NEW: Notification System**
+- **Latest Release Notes:** [JARVIS_V6_RELEASE_NOTES_v6.0.0.md](JARVIS_V6_RELEASE_NOTES_v6.0.0.md) - **NEW: Notification System**
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md) - Complete version history
 - **Previous Release Notes:** [v5.9.0](JARVIS_V5_RELEASE_NOTES_v5.9.0.md) | [v5.8.0](JARVIS_V5_RELEASE_NOTES_v5.8.0.md) | [v5.7.0](JARVIS_V5_RELEASE_NOTES_v5.7.0.md)
 - **Development Workflow:** [DEV_WORKFLOW.md](DEV_WORKFLOW.md) - Branching, CI, and release process
-- **Monitoring Guide:** [MONITORING_CHECKLIST_v6.0.0.md](MONITORING_CHECKLIST_v6.0.0.md) - Post-deployment monitoring
-- **Metrics & Alerts:** [MONITORING_METRICS_v6.0.md](MONITORING_METRICS_v6.0.md) - KPIs and troubleshooting
-- **Test Plan:** [JARVIS_V5_TEST_PLAN.md](JARVIS_V5_TEST_PLAN.md)
+- **Test Plan:** [JARVIS_V6_TEST_PLAN.md](JARVIS_V6_TEST_PLAN.md)
 - **Local LLM Setup:** [LOCAL_LLM_INTEGRATION.md](LOCAL_LLM_INTEGRATION.md)
-- **Repository Overview:** [JARVIS_V5_REPO_OVERVIEW.md](JARVIS_V5_REPO_OVERVIEW.md)
+- **Repository Overview:** [JARVIS_V6_REPO_OVERVIEW.md](JARVIS_V6_REPO_OVERVIEW.md)
 
 ## Screenshots
 

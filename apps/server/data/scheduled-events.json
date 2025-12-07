@@ -322,7 +322,29 @@
       "createdAt": "2025-12-06T23:50:41.700Z",
       "fired": true,
       "firedAt": "2025-12-07T03:46:04.007Z"
+    },
+    {
+      "id": "c0c9a2d1-88df-4996-9845-342eacc01e05",
+      "type": "system.test",
+      "payload": {
+        "message": "smoke test notification"
+      },
+      "triggerAt": "2025-12-07T16:48:46.133Z",
+      "createdAt": "2025-12-07T16:43:46.154Z",
+      "fired": true,
+      "firedAt": "2025-12-07T16:57:35.828Z"
+    },
+    {
+      "id": "32a084af-6aad-437a-8fcd-5e7a6fe32bb4",
+      "type": "system.test",
+      "payload": {
+        "message": "smoke test notification"
+      },
+      "triggerAt": "2025-12-07T17:02:40.347Z",
+      "createdAt": "2025-12-07T16:57:40.371Z",
+      "fired": false,
+      "firedAt": null
     }
   ],
-  "lastUpdated": "2025-12-07T03:46:04.008Z"
+  "lastUpdated": "2025-12-07T16:57:40.371Z"
 }
