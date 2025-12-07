@@ -124,7 +124,7 @@ export function NotificationToast() {
   }
 
   return (
-    <div className="fixed top-6 right-6 z-[100] space-y-3 w-full max-w-sm pointer-events-none">
+    <div className="fixed top-24 right-6 z-[100] space-y-3 w-full max-w-sm pointer-events-none">
       <div className="pointer-events-auto space-y-3">
         {notifications.map((notification) => (
           <NotificationToastItem

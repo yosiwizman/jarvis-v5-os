@@ -1,0 +1,71 @@
+# Jarvis V6 Server - Systemd User Service Template
+#
+# This is a systemd user service that runs the Jarvis backend server
+# as a persistent background process after Ubuntu login.
+#
+# INSTALLATION INSTRUCTIONS:
+#
+# 1. Copy this file to your systemd user directory:
+#    mkdir -p ~/.config/systemd/user
+#    cp jarvis-server.service.example ~/.config/systemd/user/jarvis-server.service
+#
+# 2. Edit the service file and replace placeholders:
+#    - Change /home/<USERNAME>/jarvis-v5-os to your actual repo path
+#    - Adjust NODE_ENV if needed (production vs development)
+#
+# 3. Reload systemd and enable the service:
+#    systemctl --user daemon-reload
+#    systemctl --user enable jarvis-server.service
+#    systemctl --user start jarvis-server.service
+#
+# 4. Check service status:
+#    systemctl --user status jarvis-server.service
+#
+# 5. View logs:
+#    journalctl --user -u jarvis-server.service -f
+#
+# NOTES:
+# - This runs as a user service (no root required)
+# - Service starts automatically after login when enabled
+# - Logs are stored in systemd journal (use journalctl to view)
+# - Service restarts automatically on failure (up to 5 times)
+#
+
+[Unit]
+Description=Jarvis V6 Server - AI Operating System Backend
+Documentation=https://github.com/yosiwizman/jarvis-v5-os
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/<USERNAME>/jarvis-v5-os
+Environment="NODE_ENV=production"
+Environment="JARVIS_UBUNTU_MODE=kiosk"
+Environment="PATH=/usr/bin:/usr/local/bin"
+
+# Start command - adjust based on your setup
+# Option 1: Development mode (requires terminal, not recommended for kiosk)
+# ExecStart=/usr/bin/npm start
+
+# Option 2: Production mode (recommended for kiosk)
+# First run 'npm run build' once manually, then use:
+ExecStart=/usr/bin/npm run start:ci
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+StartLimitBurst=5
+StartLimitIntervalSec=60s
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jarvis-server
+
+# Resource limits (optional - adjust based on your hardware)
+# MemoryMax=2G
+# CPUQuota=200%
+
+[Install]
+WantedBy=default.target

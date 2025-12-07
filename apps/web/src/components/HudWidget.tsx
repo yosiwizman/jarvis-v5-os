@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSystemMetrics } from '@/hooks/useSystemMetrics';
 import { useWeather } from '@/hooks/useWeather';
+import { useNotifications } from '@/context/NotificationContext';
+import { HudNotificationDropdown } from './HudNotificationDropdown';
 
 // Map OpenWeather icon codes to simple emoji
 function getWeatherEmoji(iconCode: string): string {
@@ -24,8 +26,12 @@ function getWeatherEmoji(iconCode: string): string {
 export function HudWidget() {
   const [systemTime, setSystemTime] = useState(new Date());
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { metrics, isLoading, error, isOnline } = useSystemMetrics();
   const { data: weather, integrationDisabled: weatherDisabled } = useWeather();
+  const { unreadCount, loadHistory } = useNotifications();
+
+  const hasUnread = unreadCount > 0;
 
   // Update time every second
   useEffect(() => {
@@ -80,6 +86,14 @@ export function HudWidget() {
   const memoryUsedPct = metrics?.memoryUsedPct ?? 0;
   const memoryUsedGB = metrics?.memoryUsedGB ?? 0;
 
+  // Handle notification dropdown toggle
+  const handleToggleNotifications = () => {
+    if (!isNotificationsOpen) {
+      loadHistory();
+    }
+    setIsNotificationsOpen(prev => !prev);
+  };
+
   return (
     <div className="fixed right-6 top-6 z-[70] pointer-events-auto">
       <div className="flex items-start gap-2">
@@ -102,12 +116,12 @@ export function HudWidget() {
 
         {/* HUD Panel */}
         <div
-          className={`transition-all duration-300 ${
+          className={`relative transition-all duration-300 ${
             isCollapsed ? 'w-0 opacity-0' : 'w-48 opacity-100'
-          } overflow-hidden`}
+          } overflow-visible`}
         >
           <div className="bg-[rgba(var(--jarvis-panel-surface),0.3)] backdrop-blur-md border border-[rgba(var(--jarvis-accent),0.2)] rounded-lg p-4 shadow-lg">
-            {/* Date & Status */}
+            {/* Header: Date, Status, and Notifications Bell */}
             <div className="flex justify-between items-center mb-3">
               <div 
                 className="text-sm"
@@ -115,17 +129,58 @@ export function HudWidget() {
               >
                 {formattedDate}
               </div>
-              <div className="flex items-center">
-                <div 
-                  className={`w-1.5 h-1.5 rounded-full mr-1.5 ${connectionStatus === 'SYNCED' ? 'animate-pulse' : ''}`}
-                  style={{ backgroundColor: statusColor }}
-                ></div>
-                <div 
-                  className="text-xs"
-                  style={{ color: statusColor.replace('0.8', '0.6') }}
-                >
-                  {connectionStatus}
+              <div className="flex items-center gap-2">
+                {/* Connection Status */}
+                <div className="flex items-center">
+                  <div 
+                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${connectionStatus === 'SYNCED' ? 'animate-pulse' : ''}`}
+                    style={{ backgroundColor: statusColor }}
+                  ></div>
+                  <div 
+                    className="text-xs"
+                    style={{ color: statusColor.replace('0.8', '0.6') }}
+                  >
+                    {connectionStatus}
+                  </div>
                 </div>
+                
+                {/* Notifications Bell */}
+                <button
+                  data-hud-notification-bell
+                  onClick={handleToggleNotifications}
+                  className="relative p-1 hover:bg-white/10 rounded transition-colors"
+                  aria-label="Open notifications"
+                  aria-expanded={isNotificationsOpen}
+                  title="Notifications"
+                >
+                  {/* Bell Icon */}
+                  <svg
+                    className="w-4 h-4"
+                    style={{ color: `rgba(var(--jarvis-accent), 0.7)` }}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  
+                  {/* Unread Badge */}
+                  {hasUnread && (
+                    <span 
+                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: 'rgb(239, 68, 68)',
+                        boxShadow: '0 0 8px rgba(239, 68, 68, 0.9)'
+                      }}
+                      aria-label={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
+                    />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -248,6 +303,12 @@ export function HudWidget() {
               </>
             )}
           </div>
+          
+          {/* Notification Dropdown (attached to HUD) */}
+          <HudNotificationDropdown 
+            isOpen={isNotificationsOpen} 
+            onClose={() => setIsNotificationsOpen(false)} 
+          />
         </div>
       </div>
     </div>

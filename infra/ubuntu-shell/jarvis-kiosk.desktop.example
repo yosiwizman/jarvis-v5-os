@@ -1,0 +1,56 @@
+# Jarvis V6 Kiosk - Desktop Autostart Entry
+#
+# This is an alternative to systemd user services for launching
+# the Jarvis kiosk browser on login. Use this if you prefer
+# the traditional .desktop autostart method.
+#
+# INSTALLATION INSTRUCTIONS:
+#
+# 1. Ensure Jarvis server is running (either via systemd or manually)
+#
+# 2. Copy this file to autostart directory:
+#    mkdir -p ~/.config/autostart
+#    cp jarvis-kiosk.desktop.example ~/.config/autostart/jarvis-kiosk.desktop
+#
+# 3. Edit the file and replace placeholders:
+#    - Change browser path if needed
+#    - Adjust URL if accessing remotely
+#
+# 4. Make executable (optional, but recommended):
+#    chmod +x ~/.config/autostart/jarvis-kiosk.desktop
+#
+# 5. Log out and log back in to test
+#
+# NOTES:
+# - This method is simpler than systemd but less robust
+# - No automatic restart on failure
+# - No dependency management (server must be started separately)
+# - For production kiosk, systemd services are recommended
+#
+# DISABLING:
+# To disable, simply remove or rename the file:
+#   rm ~/.config/autostart/jarvis-kiosk.desktop
+#
+
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Jarvis V6 Kiosk
+Comment=Launch Jarvis AI Operating System in full-screen kiosk mode
+Icon=chromium-browser
+Terminal=false
+Categories=System;
+
+# Chromium kiosk mode (default)
+Exec=/usr/bin/chromium-browser --kiosk --app=https://localhost:3000 --noerrdialogs --disable-infobars --no-first-run --autoplay-policy=no-user-gesture-required
+
+# Alternative: Google Chrome (uncomment and comment out above)
+# Exec=/usr/bin/google-chrome --kiosk --app=https://localhost:3000 --noerrdialogs --disable-infobars --no-first-run
+
+# Alternative: With delay to ensure server is ready (add 'bash -c "sleep 5 && ..."')
+# Exec=bash -c "sleep 5 && /usr/bin/chromium-browser --kiosk --app=https://localhost:3000"
+
+# X11 properties
+StartupNotify=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5

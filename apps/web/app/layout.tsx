@@ -8,7 +8,6 @@ import { HudWidget } from '@/components/HudWidget';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { NotificationToast } from '@/components/NotificationToast';
-import { NotificationBell } from '@/components/NotificationBell';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
@@ -21,12 +20,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [isJarvisOpen, setIsJarvisOpen] = useState(false);
   const pathname = usePathname();
 
+  // Detect Ubuntu Shell / Kiosk Mode
+  const isUbuntuShellMode = process.env.NEXT_PUBLIC_JARVIS_UBUNTU_MODE === 'kiosk';
+
   // Load settings from server on app mount
   useEffect(() => {
     loadSettingsFromServer().catch(err => {
       console.error('Failed to load settings from server:', err);
     });
-  }, []);
+
+    // Log kiosk mode status (for debugging)
+    if (isUbuntuShellMode) {
+      console.log('[Jarvis] Ubuntu Shell / Kiosk Mode: ACTIVE');
+    }
+  }, [isUbuntuShellMode]);
 
   // Don't show floating icon on the dedicated Jarvis page
   const showFloatingJarvis = pathname !== '/jarvis';
@@ -104,11 +111,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         
         <main className={`relative p-8 space-y-6 transition-all duration-300 ${isCollapsed ? 'ml-0' : 'ml-[260px]'}`}>
-          {/* Top Header Bar with Notification Bell */}
-          <div className="fixed top-4 right-6 z-50 flex items-center gap-3">
-            <NotificationBell />
-          </div>
-          
           <NavigationBridge />
           {children}
         </main>
