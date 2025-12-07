@@ -48,3 +48,35 @@ export type ModelJob = {
   metadata?: ModelJobMetadata;
   error?: string;
 };
+
+// Camera Settings Configuration
+export interface CameraSettings {
+  cameraId: string;
+  enabled: boolean;
+  friendlyName: string;
+  motionDetection: {
+    enabled: boolean;
+    sensitivity: number;  // 1-100
+    cooldownSeconds: number;  // seconds between alerts
+  };
+  motionZones?: MotionZone[];  // future feature
+}
+
+export interface MotionZone {
+  id: string;
+  name: string;
+  enabled: boolean;
+  coordinates: { x: number; y: number; width: number; height: number };
+}
+
+// Lockdown Mode State
+export interface LockdownState {
+  active: boolean;
+  activatedAt: number | null;
+  activatedBy: 'manual' | 'auto' | null;
+  features: {
+    doorsLocked: boolean;
+    alarmArmed: boolean;
+    camerasSecured: boolean;
+  };
+}

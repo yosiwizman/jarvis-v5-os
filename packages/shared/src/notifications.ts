@@ -52,6 +52,7 @@ export interface ScheduleNotificationResponse {
  */
 export type NotificationType =
   | 'calendar_reminder'
+  | 'email_notification'
   | 'printer_alert'
   | 'camera_alert'
   | 'system_update'

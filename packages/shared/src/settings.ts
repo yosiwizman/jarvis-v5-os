@@ -42,6 +42,7 @@ export type ImageGenerationSettings = {
 
 export type NotificationPreferences = {
   calendar_reminder?: boolean;
+  email_notification?: boolean;
   printer_alert?: boolean;
   camera_alert?: boolean;
   system_update?: boolean;
@@ -57,6 +58,8 @@ export type AppSettings = {
   integrations: import('./integrations').IntegrationSettings;
   notificationPreferences?: NotificationPreferences;
   useServerProxy?: boolean;
+  cameras?: import('./types').CameraSettings[];
+  lockdownState?: import('./types').LockdownState;
   // Legacy field for backward compat during migration
   weather?: {
     enabled?: boolean;
@@ -107,16 +110,28 @@ const defaultSettings: AppSettings = {
     quality: 'standard',
     partialImages: 0
   },
-  integrations: require('./integrations').defaultIntegrationSettings,
+  integrations: {} as import('./integrations').IntegrationSettings,
   notificationPreferences: {
     calendar_reminder: true,
+    email_notification: true,
     printer_alert: true,
     camera_alert: true,
     system_update: true,
     integration_error: true,
     custom: true
   },
-  useServerProxy: true
+  useServerProxy: true,
+  cameras: [],
+  lockdownState: {
+    active: false,
+    activatedAt: null,
+    activatedBy: null,
+    features: {
+      doorsLocked: false,
+      alarmArmed: false,
+      camerasSecured: false
+    }
+  }
 };
 
 /**
@@ -147,7 +162,9 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
       textChat: { ...defaultSettings.textChat, ...(serverSettings?.textChat ?? {}) },
       imageGeneration: { ...defaultSettings.imageGeneration, ...(serverSettings?.imageGeneration ?? {}) },
       integrations: { ...defaultSettings.integrations, ...(serverSettings?.integrations ?? {}) },
-      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(serverSettings?.notificationPreferences ?? {}) }
+      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(serverSettings?.notificationPreferences ?? {}) },
+      cameras: serverSettings?.cameras ?? defaultSettings.cameras,
+      lockdownState: serverSettings?.lockdownState ?? defaultSettings.lockdownState
     } satisfies AppSettings;
     
     // Cache in memory
@@ -178,7 +195,9 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
         textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
         imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
         integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) },
-        notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) }
+        notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) },
+        cameras: parsed?.cameras ?? defaultSettings.cameras,
+        lockdownState: parsed?.lockdownState ?? defaultSettings.lockdownState
       } satisfies AppSettings;
       
       settingsCache = merged;
@@ -217,7 +236,9 @@ export function readSettings(): AppSettings {
       textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
       imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
       integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) },
-      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) }
+      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) },
+      cameras: parsed?.cameras ?? defaultSettings.cameras,
+      lockdownState: parsed?.lockdownState ?? defaultSettings.lockdownState
     } satisfies AppSettings;
   } catch (error) {
     console.warn('Failed to read settings', error);
@@ -303,8 +324,38 @@ export function updateIntegration<K extends import('./integrations').Integration
   writeSettings(updated);
 }
 
+export function updateCameras(cameras: import('./types').CameraSettings[]) {
+  const current = readSettings();
+  writeSettings({ ...current, cameras });
+}
+
+export function updateCamera(cameraId: string, patch: Partial<import('./types').CameraSettings>) {
+  const current = readSettings();
+  const cameras = current.cameras ?? [];
+  const existingIndex = cameras.findIndex(c => c.cameraId === cameraId);
+  
+  if (existingIndex >= 0) {
+    // Update existing camera
+    cameras[existingIndex] = { ...cameras[existingIndex], ...patch };
+  } else {
+    // Add new camera
+    cameras.push({ cameraId, enabled: true, friendlyName: '', motionDetection: { enabled: false, sensitivity: 50, cooldownSeconds: 30 }, ...patch } as import('./types').CameraSettings);
+  }
+  
+  writeSettings({ ...current, cameras });
+}
+
+export function updateLockdownState(partial: Partial<import('./types').LockdownState>) {
+  const current = readSettings();
+  const lockdownState = { ...current.lockdownState, ...partial } as import('./types').LockdownState;
+  writeSettings({ ...current, lockdownState });
+}
+
 export { defaultSettings as defaultAppSettings };
 
 // Re-export integrations module for convenience
 export type { IntegrationId, IntegrationSettings, WeatherIntegrationConfig } from './integrations';
 export { defaultIntegrationSettings, integrationMetadata, isIntegrationConnected } from './integrations';
+
+// Re-export types for convenience
+export type { CameraSettings, MotionZone, LockdownState } from './types';

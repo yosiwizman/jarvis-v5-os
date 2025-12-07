@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getSecuritySocket, type CameraPresence, type SecurityFramePayload } from '@/lib/socket';
+import { getSecuritySocket, getRootSocket, type CameraPresence, type SecurityFramePayload } from '@/lib/socket';
+import type { LockdownState } from '@shared/settings';
 
 const CAMERA_TTL_MS = 30_000;
 const RTC_CONFIGURATION: RTCConfiguration = {
@@ -33,6 +34,7 @@ export default function SecurityPage() {
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [hasRemoteStream, setHasRemoteStream] = useState(false);
+  const [lockdownState, setLockdownState] = useState<LockdownState | null>(null);
   const socketRef = useRef(getSecuritySocket());
   const subscribedRef = useRef(new Set<string>());
   const peerRef = useRef<RTCPeerConnection | null>(null);
@@ -43,6 +45,33 @@ export default function SecurityPage() {
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 5_000);
     return () => window.clearInterval(interval);
+  }, []);
+
+  // Listen for lockdown state updates
+  useEffect(() => {
+    const rootSocket = getRootSocket();
+    if (!rootSocket) return;
+
+    const handleLockdownState = (state: LockdownState) => {
+      console.log('[Security] Received lockdown state update:', state);
+      setLockdownState(state);
+    };
+
+    rootSocket.on('lockdown:state', handleLockdownState);
+
+    // Request initial lockdown status
+    fetch('/api/lockdown/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.state) {
+          setLockdownState(data.state);
+        }
+      })
+      .catch(error => console.error('[Security] Failed to fetch lockdown status:', error));
+
+    return () => {
+      rootSocket.off('lockdown:state', handleLockdownState);
+    };
   }, []);
 
   useEffect(() => {
@@ -286,6 +315,43 @@ export default function SecurityPage() {
           <p className="text-sm text-white/60">Live camera wall with automatic discovery and realtime streaming.</p>
         </div>
       </div>
+
+      {/* Lockdown Status Banner */}
+      {lockdownState?.active && (
+        <div className="border border-red-500/50 bg-red-500/10 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
+              <div>
+                <div className="font-semibold text-red-400">🔒 Lockdown Mode Active</div>
+                <div className="text-sm text-white/70 mt-1">
+                  Activated {new Date(lockdownState.activatedAt || Date.now()).toLocaleTimeString()} via {lockdownState.activatedBy}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 text-xs">
+              {lockdownState.features.doorsLocked && (
+                <div className="flex items-center gap-1.5 bg-red-500/20 px-3 py-1.5 rounded">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                  <span>Doors Locked</span>
+                </div>
+              )}
+              {lockdownState.features.alarmArmed && (
+                <div className="flex items-center gap-1.5 bg-red-500/20 px-3 py-1.5 rounded">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                  <span>Alarm Armed</span>
+                </div>
+              )}
+              {lockdownState.features.camerasSecured && (
+                <div className="flex items-center gap-1.5 bg-red-500/20 px-3 py-1.5 rounded">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                  <span>Cameras Secured</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {cameraList.length === 0 ? (
         <div className="card p-6 text-center text-sm text-white/60">

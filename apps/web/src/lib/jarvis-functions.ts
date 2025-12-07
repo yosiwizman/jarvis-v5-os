@@ -188,6 +188,433 @@ export const jarvisFunctions: JarvisFunction[] = [
     handler: async (args) => {
       return { success: true, message: 'Analyzing camera view...', data: args };
     }
+  },
+  // Email
+  {
+    name: 'compose_email',
+    description: 'Compose and send an email using Gmail. Use this when the user asks to send an email, email someone, or compose a message. Extract recipient email address, subject, and body from user\'s request.',
+    parameters: {
+      type: 'object',
+      properties: {
+        to: {
+          type: 'string',
+          description: 'Recipient email address (e.g., "john@example.com")'
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line'
+        },
+        body: {
+          type: 'string',
+          description: 'The main content/body of the email'
+        },
+        cc: {
+          type: 'string',
+          description: 'Optional CC email addresses (comma-separated if multiple)'
+        },
+        bcc: {
+          type: 'string',
+          description: 'Optional BCC email addresses (comma-separated if multiple)'
+        }
+      },
+      required: ['to', 'subject', 'body'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Composing email...', data: args };
+    }
+  },
+  {
+    name: 'check_email',
+    description: 'Check and list recent emails from Gmail inbox. Use this when the user asks to check their email, read emails, or see new messages.',
+    parameters: {
+      type: 'object',
+      properties: {
+        count: {
+          type: 'number',
+          description: 'Number of recent emails to retrieve (default: 5, max: 20)'
+        }
+      },
+      required: [],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Checking email...', data: args };
+    }
+  },
+  // Weather
+  {
+    name: 'get_weather',
+    description: 'Get current weather information for a specific location. Use this when the user asks about weather, temperature, or weather conditions.',
+    parameters: {
+      type: 'object',
+      properties: {
+        location: {
+          type: 'string',
+          description: 'Location to get weather for (e.g., "Miami", "London,GB", "Tokyo,JP"). If not specified, uses user\'s default location.'
+        }
+      },
+      required: [],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Getting weather...', data: args };
+    }
+  },
+  // Notes
+  {
+    name: 'create_note',
+    description: 'Create a quick note. Use this when the user says things like "take a note", "remember this", or "write down".',
+    parameters: {
+      type: 'object',
+      properties: {
+        content: {
+          type: 'string',
+          description: 'The content of the note'
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional tags to categorize the note'
+        }
+      },
+      required: ['content'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Creating note...', data: args };
+    }
+  },
+  {
+    name: 'list_notes',
+    description: 'List all saved notes. Use this when the user asks to "show my notes", "what are my notes", or "read my notes".',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Retrieving notes...', data: args };
+    }
+  },
+  {
+    name: 'delete_note',
+    description: 'Delete a specific note. Use this when the user says "delete note", "remove my last note", etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        note_id: {
+          type: 'string',
+          description: 'The ID of the note to delete. Use "last" to delete the most recent note.'
+        }
+      },
+      required: ['note_id'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Deleting note...', data: args };
+    }
+  },
+  // Reminders
+  {
+    name: 'set_reminder',
+    description: 'Set a reminder for a specific time. Use this when the user says "remind me to", "set a reminder", etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          description: 'What to be reminded about'
+        },
+        time_expression: {
+          type: 'string',
+          description: 'When to be reminded (e.g., "in 30 minutes", "at 6 PM", "tomorrow at 9 AM")'
+        }
+      },
+      required: ['message', 'time_expression'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Setting reminder...', data: args };
+    }
+  },
+  {
+    name: 'list_reminders',
+    description: 'List all active reminders. Use this when the user asks to "show my reminders" or "what reminders do I have".',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Retrieving reminders...', data: args };
+    }
+  },
+  {
+    name: 'cancel_reminder',
+    description: 'Cancel a specific reminder. Use this when the user says "cancel the reminder" or "delete my reminder".',
+    parameters: {
+      type: 'object',
+      properties: {
+        reminder_id: {
+          type: 'string',
+          description: 'The ID of the reminder to cancel'
+        }
+      },
+      required: ['reminder_id'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Cancelling reminder...', data: args };
+    }
+  },
+  // Alarms
+  {
+    name: 'set_alarm',
+    description: 'Set an alarm. Use this when the user says "set an alarm", "wake me up", or "alert me".',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Name/description of the alarm'
+        },
+        type: {
+          type: 'string',
+          enum: ['time', 'motion'],
+          description: 'Type of alarm: "time" for time-based, "motion" for camera motion detection'
+        },
+        time_expression: {
+          type: 'string',
+          description: 'When the alarm should trigger (for time-based alarms, e.g., "7 AM", "tomorrow at 6:30")'
+        },
+        location: {
+          type: 'string',
+          description: 'Location for motion-based alarms (e.g., "backyard", "front door")'
+        }
+      },
+      required: ['name', 'type'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Setting alarm...', data: args };
+    }
+  },
+  {
+    name: 'list_alarms',
+    description: 'List all alarms. Use this when the user asks to "show my alarms" or "what alarms do I have".',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Retrieving alarms...', data: args };
+    }
+  },
+  {
+    name: 'toggle_alarm',
+    description: 'Enable or disable an alarm. Use this when the user says "turn off the alarm" or "enable my alarm".',
+    parameters: {
+      type: 'object',
+      properties: {
+        alarm_id: {
+          type: 'string',
+          description: 'The ID of the alarm to toggle'
+        }
+      },
+      required: ['alarm_id'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Toggling alarm...', data: args };
+    }
+  },
+  {
+    name: 'delete_alarm',
+    description: 'Delete an alarm permanently. Use this when the user says "delete the alarm" or "remove my alarm".',
+    parameters: {
+      type: 'object',
+      properties: {
+        alarm_id: {
+          type: 'string',
+          description: 'The ID of the alarm to delete'
+        }
+      },
+      required: ['alarm_id'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Deleting alarm...', data: args };
+    }
+  },
+  // Smart Home - Lights
+  {
+    name: 'control_lights',
+    description: 'Control smart lights (Philips Hue, LIFX). Turn lights on/off, adjust brightness, or change colors. Use this when the user asks to "turn on the lights", "dim the lights", "set bedroom lights to 50%", etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['on', 'off', 'toggle', 'brightness', 'color'],
+          description: 'Action to perform: "on", "off", "toggle", "brightness" (adjust brightness), "color" (change color)'
+        },
+        room: {
+          type: 'string',
+          description: 'Optional room or light name (e.g., "living room", "bedroom", "kitchen"). If not specified, controls all lights.'
+        },
+        brightness: {
+          type: 'number',
+          description: 'Brightness level 0-100 (only used when action is "brightness" or "on")'
+        },
+        color: {
+          type: 'string',
+          description: 'Color name or hex code (e.g., "red", "blue", "#FF5733") - only used when action is "color"'
+        }
+      },
+      required: ['action'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Controlling lights...', data: args };
+    }
+  },
+  // Smart Home - Thermostat
+  {
+    name: 'control_thermostat',
+    description: 'Control Nest thermostat temperature and mode. Use this when the user asks to "set the temperature to 72", "turn on the heat", "what\'s the temperature", etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['set_temperature', 'get_temperature', 'set_mode'],
+          description: 'Action: "set_temperature" (change temp), "get_temperature" (check current temp), "set_mode" (change heating/cooling mode)'
+        },
+        temperature: {
+          type: 'number',
+          description: 'Target temperature (used with "set_temperature" action)'
+        },
+        unit: {
+          type: 'string',
+          enum: ['F', 'C'],
+          description: 'Temperature unit: "F" for Fahrenheit, "C" for Celsius (default: F)'
+        },
+        mode: {
+          type: 'string',
+          enum: ['HEAT', 'COOL', 'HEATCOOL', 'OFF'],
+          description: 'Thermostat mode (used with "set_mode" action): HEAT, COOL, HEATCOOL (auto), or OFF'
+        }
+      },
+      required: ['action'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Controlling thermostat...', data: args };
+    }
+  },
+  // Smart Home - Vacuum
+  {
+    name: 'control_vacuum',
+    description: 'Control iRobot Roomba vacuum cleaner. Use this when the user says "start the vacuum", "stop cleaning", "send the robot to dock", "where is the vacuum", etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['start', 'pause', 'dock', 'status'],
+          description: 'Action: "start" (begin cleaning), "pause" (stop cleaning), "dock" (return to charging station), "status" (check current status)'
+        },
+        room: {
+          type: 'string',
+          description: 'Optional: specific room or area to clean (e.g., "kitchen", "bedroom")'
+        }
+      },
+      required: ['action'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Controlling vacuum...', data: args };
+    }
+  },
+  // Memory & Context Recall
+  {
+    name: 'recall_memory',
+    description: 'Search through past conversations and actions to recall previous interactions, generated content, or events. Use this when the user asks about past conversations, previous requests, what was discussed before, or to find something they created/did earlier. Examples: "What did we discuss yesterday?", "Show me images I generated last week", "What was that 3D model I made?", "Did I already create something similar?"',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Search query to find in past conversations and actions (e.g., "hammer", "image generation", "discussion about AI")'
+        },
+        time_range: {
+          type: 'string',
+          enum: ['today', 'yesterday', 'last_week', 'last_month', 'all_time'],
+          description: 'Time range to search within. Default is "all_time" if not specified.'
+        },
+        content_type: {
+          type: 'string',
+          enum: ['all', 'conversations', 'actions', 'images', '3d_models'],
+          description: 'Type of content to search. Default is "all" for both conversations and actions.'
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of results to return (default: 10, max: 50)'
+        }
+      },
+      required: ['query'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Searching memories...', data: args };
+    }
+  },
+  // Smart Home - Alexa Devices
+  {
+    name: 'control_alexa_device',
+    description: 'Control Alexa-enabled smart home devices. Use this for generic device control like "turn on the fan", "lock the door", "turn off the TV", etc.',
+    parameters: {
+      type: 'object',
+      properties: {
+        device_name: {
+          type: 'string',
+          description: 'Name of the device to control (e.g., "fan", "door lock", "TV", "plug")'
+        },
+        action: {
+          type: 'string',
+          enum: ['turn_on', 'turn_off', 'lock', 'unlock'],
+          description: 'Action to perform on the device'
+        }
+      },
+      required: ['device_name', 'action'],
+      additionalProperties: false
+    },
+    strict: true,
+    handler: async (args) => {
+      return { success: true, message: 'Controlling device...', data: args };
+    }
   }
 ];
 

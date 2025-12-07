@@ -8,6 +8,7 @@ import { DraggableApp } from '@/components/holomat/DraggableApp';
 import { ClockApp } from '@/components/holomat/ClockApp';
 import { CalendarApp } from '@/components/holomat/CalendarApp';
 import { CalculatorApp } from '@/components/holomat/CalculatorApp';
+import { EmailApp } from '@/components/holomat/EmailApp';
 import { ModelViewerApp } from '@/components/holomat/ModelViewerApp';
 import { ModelCreatorApp as ModelCreator } from '@/components/holomat/ModelCreatorApp';
 import { FilesApp, SecurityApp } from '@/components/holomat/DummyApps';
@@ -47,6 +48,13 @@ export default function ScanPage() {
       icon: '📅',
       color: '#3b82f6',
       component: CalendarApp,
+    },
+    {
+      id: 'email',
+      name: 'EMAIL',
+      icon: '📧',
+      color: '#8b5cf6',
+      component: EmailApp,
     },
     {
       id: 'calculator',

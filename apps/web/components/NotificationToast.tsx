@@ -9,6 +9,8 @@ const NotificationIcon = ({ type }: { type: string }) => {
   switch (type) {
     case 'calendar_reminder':
       return <span className="text-2xl">📅</span>;
+    case 'email_notification':
+      return <span className="text-2xl">📧</span>;
     case 'printer_alert':
       return <span className="text-2xl">🖨️</span>;
     case 'camera_alert':
@@ -29,6 +31,8 @@ const getNotificationColor = (type: string): string => {
   switch (type) {
     case 'calendar_reminder':
       return 'bg-blue-500/20 border-blue-500/40';
+    case 'email_notification':
+      return 'bg-purple-500/20 border-purple-500/40';
     case 'printer_alert':
       return 'bg-purple-500/20 border-purple-500/40';
     case 'camera_alert':
@@ -59,6 +63,10 @@ const formatPayload = (payload: Record<string, unknown>): string => {
   }
   if (payload.text) {
     return String(payload.text);
+  }
+  // Email notifications: show from + subject if available
+  if (payload.from && payload.subject) {
+    return `From: ${String(payload.from)} - ${String(payload.subject)}`;
   }
   if (payload.eventName) {
     return `${payload.eventName}${payload.location ? ` @ ${payload.location}` : ''}`;

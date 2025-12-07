@@ -10,7 +10,319 @@
       "createdAt": "2025-12-06T08:22:56.952Z",
       "fired": true,
       "firedAt": "2025-12-06T08:28:29.162Z"
+    },
+    {
+      "id": "58ecfb36-1b76-458d-9c02-55c269e133ca",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T14:44:36.734Z",
+      "createdAt": "2025-12-06T14:44:35.734Z",
+      "fired": true,
+      "firedAt": "2025-12-06T14:45:00.184Z"
+    },
+    {
+      "id": "0320a73b-e31a-4d57-8ea2-576cbc87aaad",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T14:44:36.735Z",
+      "createdAt": "2025-12-06T14:44:35.735Z",
+      "fired": true,
+      "firedAt": "2025-12-06T14:45:00.184Z"
+    },
+    {
+      "id": "10d95181-ce55-4cd3-aa9c-7aa6286d12ee",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T14:44:45.567Z",
+      "createdAt": "2025-12-06T14:44:44.567Z",
+      "fired": true,
+      "firedAt": "2025-12-06T14:45:00.185Z"
+    },
+    {
+      "id": "170b4ba8-0799-4c1b-80cf-bf92d44480b7",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T14:45:52.008Z",
+      "createdAt": "2025-12-06T14:45:51.008Z",
+      "fired": true,
+      "firedAt": "2025-12-06T14:46:00.200Z"
+    },
+    {
+      "id": "85eb08f0-f9a5-4454-8332-43b11608f8e9",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T14:45:52.009Z",
+      "createdAt": "2025-12-06T14:45:51.009Z",
+      "fired": true,
+      "firedAt": "2025-12-06T14:46:00.200Z"
+    },
+    {
+      "id": "d97d6464-b664-436b-bf4f-c3be88dfcc27",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T14:45:57.547Z",
+      "createdAt": "2025-12-06T14:45:56.547Z",
+      "fired": true,
+      "firedAt": "2025-12-06T14:46:00.200Z"
+    },
+    {
+      "id": "5879938e-b052-4f80-a144-e1fafe341236",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T16:16:33.595Z",
+      "createdAt": "2025-12-06T16:16:32.596Z",
+      "fired": true,
+      "firedAt": "2025-12-06T16:17:10.347Z"
+    },
+    {
+      "id": "57931920-3792-432a-a058-4cd0e510544c",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T16:16:33.596Z",
+      "createdAt": "2025-12-06T16:16:32.596Z",
+      "fired": true,
+      "firedAt": "2025-12-06T16:17:10.347Z"
+    },
+    {
+      "id": "787d000c-7922-47eb-8e0e-021a61e85868",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T16:16:49.094Z",
+      "createdAt": "2025-12-06T16:16:48.094Z",
+      "fired": true,
+      "firedAt": "2025-12-06T16:17:10.347Z"
+    },
+    {
+      "id": "6714447a-5fd0-4b88-9eb8-d0e7c108a86d",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T17:45:44.077Z",
+      "createdAt": "2025-12-06T17:45:43.077Z",
+      "fired": true,
+      "firedAt": "2025-12-06T17:46:20.498Z"
+    },
+    {
+      "id": "6efa1ca9-c09b-4a75-9b4a-3adc1ede7123",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T17:45:44.078Z",
+      "createdAt": "2025-12-06T17:45:43.078Z",
+      "fired": true,
+      "firedAt": "2025-12-06T17:46:20.498Z"
+    },
+    {
+      "id": "f1b39fd7-eb1d-402c-8302-f16fe9fe0d61",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T17:45:50.060Z",
+      "createdAt": "2025-12-06T17:45:49.060Z",
+      "fired": true,
+      "firedAt": "2025-12-06T17:46:20.498Z"
+    },
+    {
+      "id": "959894c8-187b-4846-b14c-a2b5c2167767",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T20:25:14.842Z",
+      "createdAt": "2025-12-06T20:25:13.842Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:25:22.524Z"
+    },
+    {
+      "id": "2cb85586-23b5-4eb4-84f0-571a8b8a392c",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T20:25:14.843Z",
+      "createdAt": "2025-12-06T20:25:13.843Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:25:22.524Z"
+    },
+    {
+      "id": "1715b396-9ae4-4e49-ac5d-cc7e3487630d",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T20:25:35.634Z",
+      "createdAt": "2025-12-06T20:25:34.634Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:26:22.537Z"
+    },
+    {
+      "id": "f814718b-6fd2-4a18-9d17-d6ae2fd98e5d",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T20:37:10.439Z",
+      "createdAt": "2025-12-06T20:37:09.439Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:37:28.703Z"
+    },
+    {
+      "id": "7595b13a-e6de-4b19-86e4-bdd189c912a8",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T20:37:10.441Z",
+      "createdAt": "2025-12-06T20:37:09.441Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:37:28.703Z"
+    },
+    {
+      "id": "14a4d36b-83cb-4795-a43b-50f70ed9e329",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T20:37:23.815Z",
+      "createdAt": "2025-12-06T20:37:22.815Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:37:28.703Z"
+    },
+    {
+      "id": "805ecbc0-d6c9-4646-bdae-27353003e126",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T20:38:27.334Z",
+      "createdAt": "2025-12-06T20:38:26.334Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:38:28.705Z"
+    },
+    {
+      "id": "39334816-bef7-477a-8b72-49268dba8a46",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T20:38:27.336Z",
+      "createdAt": "2025-12-06T20:38:26.336Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:38:28.705Z"
+    },
+    {
+      "id": "dadf2a4b-a146-4bf8-965f-a080738b9aae",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T20:38:32.688Z",
+      "createdAt": "2025-12-06T20:38:31.688Z",
+      "fired": true,
+      "firedAt": "2025-12-06T20:39:28.719Z"
+    },
+    {
+      "id": "d4259a25-6dbf-4a22-abbb-bce3d9d55269",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T23:50:28.983Z",
+      "createdAt": "2025-12-06T23:50:27.983Z",
+      "fired": true,
+      "firedAt": "2025-12-06T23:50:39.308Z"
+    },
+    {
+      "id": "1154a81d-1b33-4652-91e4-4b107d27fab5",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" connected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "connected"
+      },
+      "triggerAt": "2025-12-06T23:50:28.984Z",
+      "createdAt": "2025-12-06T23:50:27.984Z",
+      "fired": true,
+      "firedAt": "2025-12-06T23:50:39.309Z"
+    },
+    {
+      "id": "20b26951-2b4e-480c-86cd-589265a5602e",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-CA2F\" disconnected",
+        "cameraId": "ca2ff0a2-4f3c-4c50-bfbd-8126ed78694c",
+        "action": "disconnected"
+      },
+      "triggerAt": "2025-12-06T23:50:42.700Z",
+      "createdAt": "2025-12-06T23:50:41.700Z",
+      "fired": true,
+      "firedAt": "2025-12-07T03:46:04.007Z"
     }
   ],
-  "lastUpdated": "2025-12-06T08:28:29.162Z"
+  "lastUpdated": "2025-12-07T03:46:04.008Z"
 }

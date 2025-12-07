@@ -3,6 +3,7 @@ import { io, type Socket } from 'socket.io-client';
 type RootEvents = {
   'ui:navigate': (payload: { path?: string }) => void;
   'keys:update': (meta: any) => void;
+  'lockdown:state': (state: any) => void;
 };
 
 export type CameraPresence = {

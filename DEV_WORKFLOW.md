@@ -636,6 +636,295 @@ The notification system is now **fully complete** with history and preferences. 
 
 ---
 
+## 6. Local Memory & Enhanced Logging System
+
+### Overview
+
+Jarvis includes a comprehensive local memory and logging infrastructure designed to:
+- Store conversation history for context-aware interactions
+- Track all user and system actions for auditing and debugging
+- Provide structured logging with rotation and retention policies
+- Enable users to view and search through their interaction history
+
+### Architecture
+
+**Storage Systems:**
+- **Conversations:** JSON-based storage with indexed metadata for fast searching
+- **Actions:** Rolling history with 10,000-item limit and automatic cleanup
+- **Logs:** Structured pino-based logging with daily rotation and compression
+
+**Data Directories:**
+```
+data/
+├── conversations/         # Conversation storage
+│   ├── index.json        # Conversation metadata index
+│   └── {uuid}.json       # Individual conversation files
+├── actions/              # Action tracking
+│   ├── index.json        # Action index
+│   └── {yyyy-mm-dd}.json # Daily action logs
+└── logs/                 # System logs
+    ├── app.log           # Application logs
+    ├── error.log         # Error-only logs
+    ├── security.log      # Security events
+    └── actions.log       # User action logs
+```
+
+### Backend Components
+
+**Conversation Store** (`apps/server/src/storage/conversationStore.ts`):
+- Stores conversations with messages, metadata, tags, and timestamps
+- Supports three sources: chat, voice, realtime
+- Full-text search across messages and metadata
+- Automatic indexing for performance
+- Statistics API for analytics
+
+**Action Store** (`apps/server/src/storage/actionStore.ts`):
+- Tracks 14 action types including:
+  - User actions: message_sent, voice_command, settings_changed, integration_toggled
+  - System events: notification_scheduled, notification_delivered, notification_failed
+  - Function executions: 3d_model_generated, image_generated, email_sent, calendar_event_created
+  - Security: camera_connected, camera_disconnected, motion_detected
+- Automatic cleanup of old actions (keeps most recent 10,000)
+- Filtering by type, source, and date range
+
+**Logging System** (`apps/server/src/utils/logger.ts`):
+- Pino-based structured JSON logging
+- Multiple log streams:
+  - `app.log`: All application logs (INFO, WARN, ERROR)
+  - `error.log`: ERROR-level only
+  - `security.log`: Security-related events
+  - `actions.log`: User action logs
+- Daily rotation with automatic gzip compression
+- 30-day retention policy
+- Pretty console output in development
+
+### API Endpoints
+
+**Conversations:**
+```bash
+# Save a conversation
+POST /api/conversations/save
+{
+  "source": "chat",
+  "messages": [{"role": "user", "content": "Hello"}],
+  "metadata": {"title": "Greeting"},
+  "tags": ["casual"]
+}
+
+# Get a conversation by ID
+GET /api/conversations/{id}
+
+# List all conversations with filters
+GET /api/conversations?source=chat&limit=50&offset=0
+
+# Search conversations
+GET /api/conversations?search=reminder&source=voice
+
+# Delete a conversation
+DELETE /api/conversations/{id}
+
+# Get conversation statistics
+GET /api/conversations/stats
+```
+
+**Actions:**
+```bash
+# Record an action
+POST /api/actions/record
+{
+  "type": "message_sent",
+  "source": "user",
+  "metadata": {"messageId": "abc123", "contentLength": 42}
+}
+
+# Get an action by ID
+GET /api/actions/{id}
+
+# List actions with filters
+GET /api/actions?type=notification_scheduled&limit=100
+
+# Get action statistics
+GET /api/actions/stats
+
+# Cleanup old actions
+POST /api/actions/cleanup
+```
+
+### Frontend Components
+
+**Conversation History** (`apps/web/components/ConversationHistory.tsx`):
+- Master-detail layout with conversation list and message viewer
+- Source indicators: 💬 Chat, 🎙️ Voice, ⚡ Real-time
+- Full-text search and filtering by source
+- Tag display and management
+- Delete conversations with confirmation
+- Smart date formatting (relative for recent, absolute for old)
+- Pagination support (50 items per page)
+
+**Action Timeline** (`apps/web/components/ActionTimeline.tsx`):
+- Chronological timeline view with date grouping
+- Visual timeline connector line
+- 14 action types with custom icons:
+  - 💬 Message Sent
+  - 🎙️ Voice Command
+  - ⚙️ Settings Changed
+  - 🔌 Integration Toggled
+  - 🔔 Notification Scheduled
+  - ✅ Notification Delivered
+  - ❌ Notification Failed
+  - 🎨 3D Model Generated
+  - 🖼️ Image Generated
+  - 📧 Email Sent
+  - 📅 Calendar Event
+  - 📹 Camera Connected
+  - 📹 Camera Disconnected
+  - 🚨 Motion Detected
+- Color-coded source badges (User/System/Integration)
+- JSON metadata viewer in detail panel
+- Filtering by action type and source
+- Pagination support
+
+**Log Viewer** (`apps/web/components/LogViewer.tsx`):
+- Demo UI with sample data (live log retrieval API pending)
+- Color-coded log levels (Info/Warn/Error/Debug)
+- Category filtering (App/Error/Security/Actions)
+- Full-text search functionality
+- Detail view with JSON context
+- Export/download buttons (placeholder)
+- Info banner indicating demo mode
+
+**Settings Integration** (`apps/web/app/settings/page.tsx`):
+- New "Memory & Logs" section with tabbed interface
+- Three tabs:
+  - 💬 Conversations: Browse conversation history
+  - ⚡ Actions: View action timeline
+  - 📋 System Logs: Access system logs
+- Section headers with descriptions
+- Consistent design with other settings sections
+- Responsive layout
+
+### Usage Examples
+
+**Accessing Memory & Logs:**
+1. Open J.A.R.V.I.S. settings page
+2. Scroll to "Memory & Logs" section
+3. Click on desired tab (Conversations, Actions, or System Logs)
+4. Use filters and search to find specific information
+
+**Viewing Conversation History:**
+- Select a conversation from the list to view full message history
+- Use the search bar to find conversations by content
+- Filter by source (Chat, Voice, Real-time)
+- Delete unwanted conversations
+
+**Browsing Action Timeline:**
+- View chronological timeline of all actions
+- Filter by action type to see specific events
+- Filter by source (User, System, Integration)
+- Click on an action to view detailed metadata
+
+**Reviewing System Logs:**
+- Filter by log level (Info, Warn, Error)
+- Filter by category (App, Error, Security, Actions)
+- Search for specific log messages
+- View detailed context for each log entry
+
+### Integration Points
+
+**Chat Integration** (Pending):
+- Update `apps/web/app/chat/page.tsx` to save conversations
+- Update `apps/web/src/components/JarvisAssistant.tsx` for realtime conversations
+- Add "New Conversation" button to start fresh sessions
+- Load previous conversation on mount (optional continuation)
+- Track function executions as actions
+
+**Context Recall** (Pending):
+- Create `recall_memory` function in `apps/web/lib/jarvis-functions.ts`
+- Implement search across conversations and actions
+- Add time range filtering support
+- Enable J.A.R.V.I.S. to answer questions about past interactions
+- Examples: "What did we discuss yesterday?", "Show images I generated last week"
+
+**Logging Integration** (Pending):
+- Replace all `fastify.log` calls with new logger
+- Add logging middleware to track API requests with duration
+- Log notification events (scheduled, delivered, failed)
+- Log conversation starts/ends in chat endpoints
+- Log function executions (image generation, 3D models, navigation)
+- Log security events from camera system
+
+### Performance Considerations
+
+**Storage Optimization:**
+- Conversations are indexed for fast searching
+- Actions limited to 10,000 most recent items
+- Logs compressed daily to save disk space
+- Automatic cleanup of old data
+
+**Retrieval Optimization:**
+- Pagination support for large datasets
+- Indexed metadata for fast filtering
+- Minimal memory footprint for large conversation lists
+- Lazy loading of conversation details
+
+### Future Enhancements
+
+**Context-Aware J.A.R.V.I.S.:**
+- Automatic context injection based on conversation history
+- Smart suggestions based on past interactions
+- Personalized responses based on user preferences
+
+**Advanced Analytics:**
+- Conversation analytics dashboard
+- Action frequency charts
+- Usage patterns visualization
+- Export reports in various formats
+
+**Log Retrieval API:**
+- Backend endpoint to fetch real log files
+- Stream logs in real-time
+- Advanced filtering and aggregation
+- Download logs as ZIP archives
+
+### Implementation Files
+
+**Backend:**
+- **Conversation Store:** `apps/server/src/storage/conversationStore.ts` (409 lines)
+- **Action Store:** `apps/server/src/storage/actionStore.ts` (385 lines)
+- **Logger:** `apps/server/src/utils/logger.ts` (268 lines)
+- **API Endpoints:** `apps/server/src/index.ts` (11 new endpoints)
+- **Types:** `packages/shared/src/types.ts` (extended with memory types)
+
+**Frontend:**
+- **Conversation History:** `apps/web/components/ConversationHistory.tsx` (408 lines)
+- **Action Timeline:** `apps/web/components/ActionTimeline.tsx` (373 lines)
+- **Log Viewer:** `apps/web/components/LogViewer.tsx` (309 lines)
+- **Settings Integration:** `apps/web/app/settings/page.tsx` (updated with Memory & Logs section)
+
+**Documentation:**
+- **API Documentation:** `API_DOCUMENTATION.md` (693 lines)
+- This section in `DEV_WORKFLOW.md`
+
+### Dependencies
+
+```json
+{
+  "pino": "^8.16.1",
+  "pino-pretty": "^10.2.3",
+  "rotating-file-stream": "^3.1.1"
+}
+```
+
+### Design Decisions
+
+- **Why JSON storage over SQLite?** Simpler for MVP, no DB setup required, easy to debug and backup
+- **Why pino over Winston?** Better performance, structured logging, native JSON output
+- **Why file-based logs?** Standard practice for server applications, easy to integrate with log aggregation tools
+- **Why 10,000 action limit?** Balances storage usage with useful history (covers several months of normal use)
+- **Why separate components?** Modular design allows independent usage and maintenance
+
+---
+
 ## References
 
 - **CI Workflow:** `.github/workflows/jarvis-ci.yml`

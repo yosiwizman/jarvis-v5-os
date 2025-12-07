@@ -18,6 +18,8 @@ Everything runs locally with secure HTTPS via mkcert and a dev TLS proxy.
 
 **For detailed technical architecture**, see `JARVIS_V5_ARCHITECTURE.md` in this repo.
 
+**For Ubuntu shell integration and kiosk mode**, see `JARVIS_V5_UBUNTU_SHELL_PLAN.md` for the architecture and migration plan.
+
 ---
 
 ## Folder map (high level)
