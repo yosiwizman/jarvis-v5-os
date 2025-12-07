@@ -89,8 +89,9 @@ Here's a summary of each major version released:
 - **v5.8.0** (December 2025) – Gmail integration skeleton (OAuth2 refresh token config, backend test endpoint, Settings card, CI smoke test)
 - **v5.9.0** (December 2025) – Google Calendar integration skeleton (OAuth2 refresh token config, upcoming events fetch endpoint, Settings card with calendar ID, CI smoke test)
 - **v6.0.0** (December 2025) – **Notification Foundation**: Event scheduler with persistent storage, REST + SSE endpoints, toast UI, TypeScript zero-error codebase, enhanced action logging
+- **v6.1.0** (December 2025) – **Notification Drawer & History UI**: Bell icon with unread badge, sliding drawer panel, read/unread tracking, mark-as-read controls, complete notification history UI
 
-For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md` or `JARVIS_V6_RELEASE_NOTES_v6.0.0.md` files in the repository root.
+For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md`, `JARVIS_V6_RELEASE_NOTES_v6.0.0.md`, or `JARVIS_V6_RELEASE_NOTES_v6.1.0.md` files in the repository root.
 
 ---
 

@@ -1,14 +1,14 @@
-# Jarvis V6 OS – Test Plan (v6.0.0)
+# Jarvis V6 OS – Test Plan (v6.1.0)
 
 **For:** Mr. W  
-**Version:** v6.0.0  
+**Version:** v6.1.0  
 **Date:** 2025-12-07
 
 ---
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V6.0.0** – the Notification Foundation release. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, all v5.x integrations still work (Web Search, Local LLM, TTS, Spotify, Gmail, Calendar), and the NEW notification system (scheduled notifications + toast UI) works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **Jarvis V6.1.0** – the Notification Drawer & History UI release. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, all v5.x integrations still work (Web Search, Local LLM, TTS, Spotify, Gmail, Calendar), the v6.0.0 notification system (scheduled notifications + toast UI) works correctly, and the NEW notification drawer UI (bell icon, badge, history panel, read/unread tracking) works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -1257,6 +1257,219 @@ This tests the new notification system with event scheduler, REST API, and real-
 - [ ] User preferences filter notifications correctly
 
 **Expected Result:** Notification system is fully functional and user-facing.
+
+---
+
+## Notification Drawer & History UI Tests (V6.1.0 New Feature)
+
+This tests the new notification drawer UI, bell icon with badge, and read/unread tracking:
+
+### Prerequisites
+
+**No special setup required** – the drawer is automatically available on all pages.
+
+### Bell Icon & Badge Test
+
+1. **Verify Bell Icon Appears**
+   - [ ] Open any Jarvis page (https://localhost:3000/jarvis or /chat)
+   - [ ] Look for a **bell icon** in the **top-right corner** of the page
+   - [ ] Bell icon should be visible and styled in gray/white
+   - [ ] Hover over the bell icon – it should change to white
+
+2. **Test Badge with Unread Notifications**
+   - [ ] Schedule a test notification (use PowerShell command from v6.0.0 section above)
+   - [ ] Wait for notification to fire (toast appears)
+   - [ ] **Check bell icon** – a **red badge** with count "1" should appear on the icon
+   - [ ] Schedule another notification
+   - [ ] Badge should update to "2"
+
+3. **Test Badge Maximum Display**
+   - [ ] Schedule 10+ notifications with 1-second intervals
+   - [ ] **Expected:** Badge shows "9+" when 10 or more unread notifications exist
+
+### Drawer Opening & Closing Test
+
+1. **Open Drawer**
+   - [ ] Click the bell icon
+   - [ ] A **drawer panel slides in from the right side** of the screen
+   - [ ] Drawer has:
+     - Header: "Notifications" with count (e.g., "Notifications (2)")
+     - Close button (X) in header
+     - Action buttons: "Mark all as read", "Clear all"
+     - List of notifications below
+
+2. **Close Drawer (Multiple Methods)**
+   - [ ] Click the **X button** in header – drawer slides out and closes
+   - [ ] Reopen drawer, click the **dark backdrop** behind the drawer – drawer closes
+   - [ ] Reopen drawer, press **Escape key** – drawer closes
+
+3. **Drawer Responsiveness**
+   - [ ] On desktop: Drawer is 480px wide from right edge
+   - [ ] On mobile/small screen: Drawer is full-screen width
+   - [ ] Animation is smooth (0.3s slide-in)
+
+### Notification List Display Test
+
+1. **Verify Notification Items**
+   - [ ] Open drawer with 2-3 notifications
+   - [ ] Each notification shows:
+     - Type icon (📅, 🖨️, 📹, ⚙️, etc.)
+     - Title (formatted from type, e.g., "System Update")
+     - Message/payload text (truncated if long)
+     - Relative timestamp ("2m ago", "Just now", "3d ago")
+     - Blue dot indicator for unread notifications
+
+2. **Verify Sort Order**
+   - [ ] Notifications are displayed **newest first**
+   - [ ] Most recent notification is at the top
+
+3. **Test Empty State**
+   - [ ] Clear all notifications (see section below)
+   - [ ] Drawer shows empty state:
+     - Large bell icon (🔔)
+     - Message: "No notifications"
+     - Subtext: "Notifications will appear here when they arrive"
+
+### Read/Unread Tracking Test
+
+1. **Mark Single Notification as Read**
+   - [ ] Open drawer with unread notifications (blue dots visible)
+   - [ ] **Click on an unread notification**
+   - [ ] **Expected:**
+     - Blue dot disappears
+     - Notification text becomes slightly grayed out
+     - Badge count decreases by 1
+   - [ ] Click on the same notification again – nothing changes (already read)
+
+2. **Mark All as Read**
+   - [ ] Open drawer with multiple unread notifications
+   - [ ] Click **"Mark all as read"** button
+   - [ ] **Expected:**
+     - All blue dots disappear
+     - All notification text becomes grayed out
+     - Bell badge disappears (count = 0)
+
+3. **Clear All Notifications**
+   - [ ] Open drawer with notifications
+   - [ ] Click **"Clear all"** button
+   - [ ] **Expected:**
+     - Drawer shows empty state
+     - All notifications removed from drawer
+     - Bell badge disappears
+   - [ ] **Note:** This does NOT delete server history (test history loading below)
+
+### History Loading Test
+
+1. **Test Initial History Load**
+   - [ ] Schedule 3-5 notifications and wait for them to fire
+   - [ ] **Refresh the page** (F5) to clear client state
+   - [ ] Open the drawer for the **first time**
+   - [ ] **Expected:**
+     - Drawer loads notification history from server
+     - Past notifications appear in the list (may take 1-2 seconds)
+     - History notifications are marked as **read** (no blue dots, grayed text)
+
+2. **Test History Caching**
+   - [ ] Close the drawer
+   - [ ] Reopen the drawer
+   - [ ] **Expected:**
+     - History is NOT fetched again (already cached)
+     - Same notifications appear instantly
+
+3. **Test Live + History Merge**
+   - [ ] With drawer open showing history
+   - [ ] Schedule a new notification (should fire immediately)
+   - [ ] **Expected:**
+     - New notification appears at the **top** of the list (prepended)
+     - New notification is marked as **unread** (blue dot)
+     - Badge updates to show unread count
+     - Both toast and drawer update simultaneously
+
+### Drawer + Toast Interaction Test
+
+1. **Test Independent Behavior**
+   - [ ] Open drawer
+   - [ ] Schedule a notification
+   - [ ] **Expected:**
+     - Toast appears in **top-right** (separate from drawer)
+     - Notification also appears in drawer list
+     - Toast auto-dismisses after 10 seconds
+     - Notification **stays** in drawer (does not disappear)
+
+2. **Test Badge Update Flow**
+   - [ ] Start with zero notifications
+   - [ ] Schedule 3 notifications with 2-second delays
+   - [ ] Watch the **badge count**:
+     - [ ] Badge appears with "1" when first notification fires
+     - [ ] Badge updates to "2" when second fires
+     - [ ] Badge updates to "3" when third fires
+   - [ ] Open drawer and click "Mark all as read"
+   - [ ] Badge disappears
+
+### Accessibility & Keyboard Test
+
+1. **Test Keyboard Navigation**
+   - [ ] Press **Tab** key multiple times to focus the bell icon
+   - [ ] Press **Enter** or **Space** key
+   - [ ] **Expected:** Drawer opens
+   - [ ] Press **Escape** key
+   - [ ] **Expected:** Drawer closes
+
+2. **Test ARIA Labels**
+   - [ ] Right-click bell icon → Inspect
+   - [ ] Verify `aria-label="Open notifications"` exists
+   - [ ] When drawer is open, verify `aria-expanded="true"`
+   - [ ] When drawer is closed, verify `aria-expanded="false"`
+
+### Theme Consistency Test
+
+1. **Test Dark Mode Styling**
+   - [ ] Open drawer in dark mode (default)
+   - [ ] Verify:
+     - Dark background (`#0b0f14`)
+     - White text with opacity variants
+     - Glassmorphism backdrop blur
+     - Border is white/10 opacity
+
+2. **Test Different Accent Colors**
+   - [ ] Go to Settings → Appearance
+   - [ ] Switch to different theme (Midnight Purple, Solar Flare, etc.)
+   - [ ] Open notification drawer
+   - [ ] **Expected:** Drawer styling adapts to current theme accent color
+
+### Performance Test
+
+1. **Test with Many Notifications**
+   - [ ] Schedule 50+ notifications with 0.5-second intervals
+   - [ ] Let them all fire
+   - [ ] Open drawer
+   - [ ] **Expected:**
+     - Drawer opens smoothly (no lag)
+     - Scrolling is smooth
+     - No browser console errors
+     - All 50+ notifications are visible in the list
+
+### Expected Result Summary
+
+- [ ] Bell icon is visible and responsive on all pages
+- [ ] Badge shows unread count (1-9, "9+" for 10+)
+- [ ] Drawer slides in/out smoothly with animation
+- [ ] Drawer can be closed with X button, backdrop click, or Escape key
+- [ ] Notifications display with icons, titles, messages, and timestamps
+- [ ] Notifications are sorted newest-first
+- [ ] Unread notifications show blue dot indicator
+- [ ] Clicking unread notification marks it as read
+- [ ] "Mark all as read" button updates all notifications and clears badge
+- [ ] "Clear all" button removes all notifications from drawer (client-side only)
+- [ ] History loads on first drawer open (limit 50 notifications)
+- [ ] History notifications are marked as read by default
+- [ ] Live notifications merge with history without duplicates
+- [ ] Toast and drawer update independently
+- [ ] Keyboard navigation works (Tab, Enter, Escape)
+- [ ] ARIA labels are present for accessibility
+- [ ] Drawer styling is theme-aware and consistent
+
+**Expected Result:** Notification drawer provides complete UI experience for managing and reviewing notifications.
 
 ---
 

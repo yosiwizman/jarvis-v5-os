@@ -1,6 +1,6 @@
 # Jarvis Control Center
 
-> **Current Version:** Jarvis V6.0.0 (Notification System + Google Calendar + Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
+> **Current Version:** Jarvis V6.1.0 (Notification Drawer & History UI + Complete Notification System + Google Calendar + Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
 
 ![Jarvis Voice Assistant](Screenshots/Jarvis.png)
 
