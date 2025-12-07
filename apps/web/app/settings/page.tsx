@@ -8,15 +8,29 @@ import {
   updateTextChatSettings,
   updateIntegration,
   updateSettings,
+  updateCamera,
+  updateCameras,
+  updateLockdownState,
   type AppSettings,
   type TextChatSettings,
   type IntegrationId,
+  type CameraSettings,
+  type LockdownState,
   integrationMetadata,
   isIntegrationConnected
 } from '@shared/settings';
 import { buildServerUrl } from '@/lib/api';
 import { getRootSocket } from '@/lib/socket';
 import { useTheme } from '@/context/ThemeContext';
+import { ConversationHistory } from '@/components/ConversationHistory';
+import { ActionTimeline } from '@/components/ActionTimeline';
+import { LogViewer } from '@/components/LogViewer';
+import {
+  testAlexaIntegration,
+  testIRobotIntegration,
+  testNestIntegration,
+  testSmartLightsIntegration
+} from '@/lib/integrations';
 
 type KeyName = 'openai' | 'meshy';
 type KeyMetaState = Record<KeyName, { present: boolean }>;
@@ -38,7 +52,13 @@ export default function SettingsPage() {
   const [bambuCode, setBambuCode] = useState('');
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [bambuAuthStatus, setBambuAuthStatus] = useState<'success' | 'error' | ''>('');
+  
+  // Memory & Logs active tab state
+  const [activeMemoryTab, setActiveMemoryTab] = useState<'conversations' | 'actions' | 'logs'>('conversations');
   const [bambuAuthMessage, setBambuAuthMessage] = useState('');
+  
+  // Smart Home integration test state
+  const [smarthomeTestResults, setSmarthomeTestResults] = useState<Record<string, { type: 'success' | 'error'; message: string } | undefined>>({});
 
   useEffect(() => {
     setSettings(readSettings());
@@ -76,6 +96,24 @@ export default function SettingsPage() {
       socket.off('keys:update', handler);
     };
   }, [refreshMeta]);
+
+  // Listen for real-time lockdown state updates
+  useEffect(() => {
+    const socket = getRootSocket();
+    if (!socket) return;
+
+    const handleLockdownState = (state: LockdownState) => {
+      console.log('[Settings] Received lockdown state update:', state);
+      updateLockdownState(state);
+      setSettings(readSettings());
+    };
+
+    socket.on('lockdown:state', handleLockdownState);
+
+    return () => {
+      socket.off('lockdown:state', handleLockdownState);
+    };
+  }, []);
 
   function bind<K extends keyof AppSettings['jarvis']>(key: K) {
     return {
@@ -258,6 +296,125 @@ export default function SettingsPage() {
       setBambuAuthMessage(err instanceof Error ? err.message : 'Verification error');
     }
     setIsVerifyingCode(false);
+  };
+
+  // Camera management handlers
+  const handleAddCamera = () => {
+    const newCameraId = `camera_${Date.now()}`;
+    const newCamera: CameraSettings = {
+      cameraId: newCameraId,
+      enabled: true,
+      friendlyName: `Camera ${(settings?.cameras?.length ?? 0) + 1}`,
+      motionDetection: {
+        enabled: false,
+        sensitivity: 50,
+        cooldownSeconds: 30
+      },
+      motionZones: []
+    };
+    
+    const cameras = settings?.cameras ?? [];
+    updateCameras([...cameras, newCamera]);
+    setSettings(readSettings());
+  };
+  
+  const handleDeleteCamera = (cameraId: string) => {
+    const cameras = settings?.cameras ?? [];
+    updateCameras(cameras.filter(c => c.cameraId !== cameraId));
+    setSettings(readSettings());
+  };
+  
+  const handleToggleLockdown = async () => {
+    const lockdownState = settings?.lockdownState;
+    if (!lockdownState) return;
+    
+    try {
+      // Call backend API to toggle lockdown
+      const endpoint = lockdownState.active ? '/api/lockdown/deactivate' : '/api/lockdown/activate';
+      const response = await fetch(buildServerUrl(endpoint), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activatedBy: 'manual' })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('[Settings] Failed to toggle lockdown:', error);
+        alert(`Failed to ${lockdownState.active ? 'deactivate' : 'activate'} lockdown: ${error.error || 'Unknown error'}`);
+        return;
+      }
+
+      const result = await response.json();
+      console.log('[Settings] Lockdown toggled successfully:', result);
+
+      // State will be updated via Socket.io listener
+      // But also update immediately for responsive UI
+      if (result.state) {
+        updateLockdownState(result.state);
+        setSettings(readSettings());
+      }
+
+      // Show warnings if any
+      if (result.warnings && result.warnings.length > 0) {
+        console.warn('[Settings] Lockdown warnings:', result.warnings);
+      }
+    } catch (error) {
+      console.error('[Settings] Error toggling lockdown:', error);
+      alert(`Failed to toggle lockdown: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Smart Home integration test handlers
+  const handleTestSmartHome = async (integration: 'alexa' | 'irobot' | 'nest' | 'smartLights') => {
+    setSmarthomeTestResults(prev => ({ ...prev, [integration]: undefined }));
+    
+    try {
+      // Get the integration config from settings
+      const integrationConfig = settings?.integrations?.[integration];
+      if (!integrationConfig) {
+        setSmarthomeTestResults(prev => ({
+          ...prev,
+          [integration]: { type: 'error', message: 'Integration not configured' }
+        }));
+        return;
+      }
+      
+      let result;
+      switch (integration) {
+        case 'alexa':
+          result = await testAlexaIntegration(integrationConfig as any);
+          break;
+        case 'irobot':
+          result = await testIRobotIntegration(integrationConfig as any);
+          break;
+        case 'nest':
+          result = await testNestIntegration(integrationConfig as any);
+          break;
+        case 'smartLights':
+          result = await testSmartLightsIntegration(integrationConfig as any);
+          break;
+      }
+      
+      if (result.success) {
+        setSmarthomeTestResults(prev => ({
+          ...prev,
+          [integration]: { type: 'success', message: result.message }
+        }));
+      } else {
+        setSmarthomeTestResults(prev => ({
+          ...prev,
+          [integration]: { type: 'error', message: result.message }
+        }));
+      }
+    } catch (error) {
+      setSmarthomeTestResults(prev => ({
+        ...prev,
+        [integration]: {
+          type: 'error',
+          message: error instanceof Error ? error.message : 'Test failed'
+        }
+      }));
+    }
   };
 
   function keyStatusLabel(name: KeyName) {
@@ -1610,6 +1767,621 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+
+          {/* Amazon Alexa Card */}
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('alexa', settings?.integrations?.alexa)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.alexa.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.alexa.description}</div>
+              </div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('alexa', settings?.integrations?.alexa)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('alexa', settings?.integrations?.alexa) ? 'Connected' : 'Not connected'}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.alexa?.enabled}
+                onChange={(e) => { updateIntegration('alexa', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.alexa?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.alexa?.clientId ?? ''}
+                    onChange={(e) => { updateIntegration('alexa', { clientId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="amzn1.application-client.xxx" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client Secret</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.alexa?.clientSecret ?? ''}
+                    onChange={(e) => { updateIntegration('alexa', { clientSecret: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="********" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Refresh Token</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.alexa?.refreshToken ?? ''}
+                    onChange={(e) => { updateIntegration('alexa', { refreshToken: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="Paste refresh token from OAuth flow" />
+                  <div className="text-xs text-white/40">Obtain via Amazon's Login with Amazon OAuth flow</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Region</div>
+                  <select className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.alexa?.region ?? 'us'}
+                    onChange={(e) => { updateIntegration('alexa', { region: e.target.value }); setSettings(readSettings()); }}>
+                    <option value="us">United States</option>
+                    <option value="eu">Europe</option>
+                    <option value="fe">Far East</option>
+                  </select>
+                  <div className="text-xs text-white/40">Select your Alexa device region</div>
+                </label>
+                <button
+                  className="btn w-full"
+                  onClick={() => handleTestSmartHome('alexa')}
+                  disabled={!settings?.integrations?.alexa?.clientId || !settings?.integrations?.alexa?.clientSecret}
+                >
+                  Test Connection
+                </button>
+                {smarthomeTestResults.alexa && (
+                  <p className={`text-xs ${
+                    smarthomeTestResults.alexa.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {smarthomeTestResults.alexa.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* iRobot Roomba Card */}
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('irobot', settings?.integrations?.irobot)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.irobot.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.irobot.description}</div>
+              </div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('irobot', settings?.integrations?.irobot)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('irobot', settings?.integrations?.irobot) ? 'Connected' : 'Not connected'}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.irobot?.enabled}
+                onChange={(e) => { updateIntegration('irobot', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.irobot?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Username (Email)</div>
+                  <input type="email" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.irobot?.username ?? ''}
+                    onChange={(e) => { updateIntegration('irobot', { username: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="your-email@example.com" />
+                  <div className="text-xs text-white/40">Your iRobot account email</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Password</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.irobot?.password ?? ''}
+                    onChange={(e) => { updateIntegration('irobot', { password: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="********" />
+                  <div className="text-xs text-white/40">Your iRobot account password</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Robot ID (optional)</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.irobot?.robotId ?? ''}
+                    onChange={(e) => { updateIntegration('irobot', { robotId: e.target.value || undefined }); setSettings(readSettings()); }}
+                    placeholder="robot-12345" />
+                  <div className="text-xs text-white/40">Leave empty to auto-detect or specify a specific robot</div>
+                </label>
+                <button
+                  className="btn w-full"
+                  onClick={() => handleTestSmartHome('irobot')}
+                  disabled={!settings?.integrations?.irobot?.username || !settings?.integrations?.irobot?.password}
+                >
+                  Test Connection
+                </button>
+                {smarthomeTestResults.irobot && (
+                  <p className={`text-xs ${
+                    smarthomeTestResults.irobot.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {smarthomeTestResults.irobot.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Google Nest Card */}
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('nest', settings?.integrations?.nest)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.nest.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.nest.description}</div>
+              </div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('nest', settings?.integrations?.nest)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('nest', settings?.integrations?.nest) ? 'Connected' : 'Not connected'}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.nest?.enabled}
+                onChange={(e) => { updateIntegration('nest', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.nest?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Project ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.nest?.projectId ?? ''}
+                    onChange={(e) => { updateIntegration('nest', { projectId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="your-nest-project-id" />
+                  <div className="text-xs text-white/40">From Google Cloud Console</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client ID</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.nest?.clientId ?? ''}
+                    onChange={(e) => { updateIntegration('nest', { clientId: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="your-nest-client-id.apps.googleusercontent.com" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Client Secret</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.nest?.clientSecret ?? ''}
+                    onChange={(e) => { updateIntegration('nest', { clientSecret: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="********" />
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Refresh Token</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.nest?.refreshToken ?? ''}
+                    onChange={(e) => { updateIntegration('nest', { refreshToken: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="Paste refresh token from OAuth flow" />
+                  <div className="text-xs text-white/40">Obtain via Google OAuth2 consent flow</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Device ID (optional)</div>
+                  <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.nest?.deviceId ?? ''}
+                    onChange={(e) => { updateIntegration('nest', { deviceId: e.target.value || undefined }); setSettings(readSettings()); }}
+                    placeholder="enterprises/xxx/devices/xxx" />
+                  <div className="text-xs text-white/40">Leave empty to auto-detect or specify a specific thermostat</div>
+                </label>
+                <button
+                  className="btn w-full"
+                  onClick={() => handleTestSmartHome('nest')}
+                  disabled={!settings?.integrations?.nest?.projectId || !settings?.integrations?.nest?.clientId}
+                >
+                  Test Connection
+                </button>
+                {smarthomeTestResults.nest && (
+                  <p className={`text-xs ${
+                    smarthomeTestResults.nest.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {smarthomeTestResults.nest.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Smart Lights Card */}
+          <div className={
+            `border rounded-xl p-4 space-y-3 ${
+              isIntegrationConnected('smartLights', settings?.integrations?.smartLights)
+                ? 'border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]'
+                : 'border-white/10'
+            }`
+          }>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-medium">{integrationMetadata.smartLights.name}</div>
+                <div className="text-xs text-white/50 mt-1">{integrationMetadata.smartLights.description}</div>
+              </div>
+              <div className={
+                `px-2 py-1 rounded text-xs ${
+                  isIntegrationConnected('smartLights', settings?.integrations?.smartLights)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 text-white/40'
+                }`
+              }>
+                {isIntegrationConnected('smartLights', settings?.integrations?.smartLights) ? 'Connected' : 'Not connected'}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!settings?.integrations?.smartLights?.enabled}
+                onChange={(e) => { updateIntegration('smartLights', { enabled: e.target.checked }); setSettings(readSettings()); }} />
+              Enable
+            </label>
+            {settings?.integrations?.smartLights?.enabled && (
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">Provider</div>
+                  <select className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.smartLights?.provider ?? 'hue'}
+                    onChange={(e) => { updateIntegration('smartLights', { provider: e.target.value as 'hue' | 'lifx' }); setSettings(readSettings()); }}>
+                    <option value="hue">Philips Hue</option>
+                    <option value="lifx">LIFX</option>
+                  </select>
+                  <div className="text-xs text-white/40">Select your smart light provider</div>
+                </label>
+                <label className="space-y-1">
+                  <div className="text-xs text-white/60">API Key</div>
+                  <input type="password" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                    value={settings?.integrations?.smartLights?.apiKey ?? ''}
+                    onChange={(e) => { updateIntegration('smartLights', { apiKey: e.target.value }); setSettings(readSettings()); }}
+                    placeholder="********" />
+                  <div className="text-xs text-white/40">
+                    {settings?.integrations?.smartLights?.provider === 'lifx' 
+                      ? 'Your LIFX Cloud API token'
+                      : 'Your Hue bridge username/API key'}
+                  </div>
+                </label>
+                {settings?.integrations?.smartLights?.provider === 'hue' && (
+                  <label className="space-y-1">
+                    <div className="text-xs text-white/60">Bridge IP</div>
+                    <input type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                      value={settings?.integrations?.smartLights?.bridgeIp ?? ''}
+                      onChange={(e) => { updateIntegration('smartLights', { bridgeIp: e.target.value || undefined }); setSettings(readSettings()); }}
+                      placeholder="192.168.1.xxx" />
+                    <div className="text-xs text-white/40">Local IP address of your Hue Bridge</div>
+                  </label>
+                )}
+                <button
+                  className="btn w-full"
+                  onClick={() => handleTestSmartHome('smartLights')}
+                  disabled={!settings?.integrations?.smartLights?.apiKey}
+                >
+                  Test Connection
+                </button>
+                {smarthomeTestResults.smartLights && (
+                  <p className={`text-xs ${
+                    smarthomeTestResults.smartLights.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {smarthomeTestResults.smartLights.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Camera & Security Section */}
+      <section className="card p-6 space-y-6">
+        <header>
+          <div className="text-lg font-semibold">Camera & Security</div>
+          <div className="text-white/60 text-sm">Configure cameras, motion detection, and lockdown mode</div>
+        </header>
+
+        {/* Lockdown Mode Toggle */}
+        <div className="border border-white/10 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium">🔒 Lockdown Mode</div>
+              <div className="text-xs text-white/50 mt-1">Secure all doors, arm alarms, and lock down cameras</div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className={
+                `px-3 py-1 rounded-full text-xs font-medium ${
+                  settings?.lockdownState?.active
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'bg-emerald-500/20 text-emerald-400'
+                }`
+              }>
+                {settings?.lockdownState?.active ? 'Active' : 'Inactive'}
+              </div>
+              <button
+                className={`btn px-4 py-2 text-sm ${
+                  settings?.lockdownState?.active
+                    ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                    : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                }`}
+                onClick={handleToggleLockdown}
+              >
+                {settings?.lockdownState?.active ? 'Deactivate' : 'Activate'}
+              </button>
+            </div>
+          </div>
+          {settings?.lockdownState?.active && (
+            <div className="pt-3 border-t border-white/10 grid grid-cols-3 gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${
+                  settings.lockdownState.features.doorsLocked ? 'bg-red-400' : 'bg-white/20'
+                }`} />
+                <span>Doors Locked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${
+                  settings.lockdownState.features.alarmArmed ? 'bg-red-400' : 'bg-white/20'
+                }`} />
+                <span>Alarm Armed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${
+                  settings.lockdownState.features.camerasSecured ? 'bg-red-400' : 'bg-white/20'
+                }`} />
+                <span>Cameras Secured</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Camera Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Registered Cameras</div>
+            <button
+              className="btn px-3 py-1 text-xs"
+              onClick={handleAddCamera}
+            >
+              + Add Camera
+            </button>
+          </div>
+
+          {settings?.cameras && settings.cameras.length > 0 ? (
+            <div className="space-y-3">
+              {settings.cameras.map((camera) => (
+                <div key={camera.cameraId} className="border border-white/10 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-3">
+                      {/* Camera Name */}
+                      <label className="space-y-1">
+                        <div className="text-xs text-white/60">Camera Name</div>
+                        <input
+                          type="text"
+                          className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                          value={camera.friendlyName}
+                          onChange={(e) => {
+                            updateCamera(camera.cameraId, { friendlyName: e.target.value });
+                            setSettings(readSettings());
+                          }}
+                          placeholder="e.g. Front Door, Living Room"
+                        />
+                      </label>
+
+                      {/* Enable/Disable Toggle */}
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={camera.enabled}
+                          onChange={(e) => {
+                            updateCamera(camera.cameraId, { enabled: e.target.checked });
+                            setSettings(readSettings());
+                          }}
+                        />
+                        <span>Camera Enabled</span>
+                      </label>
+
+                      {/* Motion Detection Settings */}
+                      <div className="space-y-3 pt-3 border-t border-white/10">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={camera.motionDetection.enabled}
+                            onChange={(e) => {
+                              updateCamera(camera.cameraId, {
+                                motionDetection: {
+                                  ...camera.motionDetection,
+                                  enabled: e.target.checked
+                                }
+                              });
+                              setSettings(readSettings());
+                            }}
+                          />
+                          <span>Motion Detection</span>
+                        </label>
+
+                        {camera.motionDetection.enabled && (
+                          <>
+                            {/* Sensitivity Slider */}
+                            <label className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-white/60">Sensitivity</span>
+                                <span className="text-white/80">{camera.motionDetection.sensitivity}</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="1"
+                                max="100"
+                                className="w-full"
+                                value={camera.motionDetection.sensitivity}
+                                onChange={(e) => {
+                                  updateCamera(camera.cameraId, {
+                                    motionDetection: {
+                                      ...camera.motionDetection,
+                                      sensitivity: parseInt(e.target.value)
+                                    }
+                                  });
+                                  setSettings(readSettings());
+                                }}
+                              />
+                              <div className="flex justify-between text-xs text-white/40">
+                                <span>Low</span>
+                                <span>High</span>
+                              </div>
+                            </label>
+
+                            {/* Cooldown Period */}
+                            <label className="space-y-1">
+                              <div className="text-xs text-white/60">Cooldown Period (seconds)</div>
+                              <input
+                                type="number"
+                                min="5"
+                                max="300"
+                                step="5"
+                                className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
+                                value={camera.motionDetection.cooldownSeconds}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value);
+                                  if (!isNaN(value)) {
+                                    updateCamera(camera.cameraId, {
+                                      motionDetection: {
+                                        ...camera.motionDetection,
+                                        cooldownSeconds: Math.max(5, Math.min(300, value))
+                                      }
+                                    });
+                                    setSettings(readSettings());
+                                  }
+                                }}
+                              />
+                              <div className="text-xs text-white/40">Minimum time between motion alerts</div>
+                            </label>
+
+                            {/* Motion Zones Placeholder */}
+                            <div className="pt-2 border-t border-white/10">
+                              <div className="text-xs text-white/60 mb-2">Motion Zones (Coming Soon)</div>
+                              <div className="bg-white/5 border border-white/10 rounded p-3 text-center">
+                                <div className="text-xs text-white/40">
+                                  📐 Zone-based motion detection will be available in a future update.
+                                  Configure specific areas of the camera view to monitor.
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delete Button */}
+                    <button
+                      className="btn btn-secondary px-3 py-1 text-xs ml-4"
+                      onClick={() => handleDeleteCamera(camera.cameraId)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="border border-white/10 rounded-xl p-6 text-center text-sm text-white/60">
+              No cameras configured. Click "Add Camera" to register a new camera device.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Memory & Logs Section */}
+      <section className="card p-6 space-y-6">
+        <header>
+          <div className="text-lg font-semibold">Memory & Logs</div>
+          <div className="text-white/60 text-sm">View conversation history, action timeline, and system logs</div>
+        </header>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 border-b border-white/10">
+          <button
+            onClick={() => setActiveMemoryTab('conversations')}
+            className={`px-4 py-2 text-sm transition-all border-b-2 ${
+              activeMemoryTab === 'conversations'
+                ? 'border-[color:rgb(var(--jarvis-accent))] text-white'
+                : 'border-transparent text-white/50 hover:text-white/70'
+            }`}
+          >
+            💬 Conversations
+          </button>
+          <button
+            onClick={() => setActiveMemoryTab('actions')}
+            className={`px-4 py-2 text-sm transition-all border-b-2 ${
+              activeMemoryTab === 'actions'
+                ? 'border-[color:rgb(var(--jarvis-accent))] text-white'
+                : 'border-transparent text-white/50 hover:text-white/70'
+            }`}
+          >
+            ⚡ Actions
+          </button>
+          <button
+            onClick={() => setActiveMemoryTab('logs')}
+            className={`px-4 py-2 text-sm transition-all border-b-2 ${
+              activeMemoryTab === 'logs'
+                ? 'border-[color:rgb(var(--jarvis-accent))] text-white'
+                : 'border-transparent text-white/50 hover:text-white/70'
+            }`}
+          >
+            📋 System Logs
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="min-h-[500px]">
+          {activeMemoryTab === 'conversations' && (
+            <div>
+              <div className="mb-4">
+                <h3 className="text-base font-medium mb-1">Conversation History</h3>
+                <p className="text-sm text-white/50">
+                  Browse and search through your past conversations with J.A.R.V.I.S.
+                </p>
+              </div>
+              <ConversationHistory />
+            </div>
+          )}
+
+          {activeMemoryTab === 'actions' && (
+            <div>
+              <div className="mb-4">
+                <h3 className="text-base font-medium mb-1">Action Timeline</h3>
+                <p className="text-sm text-white/50">
+                  View a chronological timeline of all actions performed by J.A.R.V.I.S. and user interactions.
+                </p>
+              </div>
+              <ActionTimeline />
+            </div>
+          )}
+
+          {activeMemoryTab === 'logs' && (
+            <div>
+              <div className="mb-4">
+                <h3 className="text-base font-medium mb-1">System Logs</h3>
+                <p className="text-sm text-white/50">
+                  Access system logs for debugging and monitoring application events.
+                </p>
+              </div>
+              <LogViewer />
+            </div>
+          )}
         </div>
       </section>
     </div>

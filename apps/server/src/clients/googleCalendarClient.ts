@@ -18,6 +18,8 @@ export interface GoogleCalendarEventSummary {
   summary: string | null;
   start: string | null; // ISO string
   end: string | null;   // ISO string
+  location?: string | null;
+  description?: string | null;
 }
 
 export interface GoogleCalendarTestResult {
@@ -82,10 +84,11 @@ async function fetchAccessToken(config: GoogleCalendarClientConfig, timeoutMs: n
 /**
  * Fetch upcoming events from Google Calendar API
  */
-async function fetchUpcomingEvents(
+export async function fetchUpcomingEvents(
   config: GoogleCalendarClientConfig,
   accessToken: string,
-  timeoutMs: number = 20000
+  timeoutMs: number = 20000,
+  maxResults: number = 10
 ): Promise<GoogleCalendarEventSummary[]> {
   try {
     console.log(`[GoogleCalendar] Fetching upcoming events from calendar: ${config.calendarId}`);
@@ -96,7 +99,7 @@ async function fetchUpcomingEvents(
     // Build query params
     const now = new Date().toISOString();
     const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events`);
-    url.searchParams.set('maxResults', '5');
+    url.searchParams.set('maxResults', String(Math.max(1, Math.min(50, maxResults))));
     url.searchParams.set('orderBy', 'startTime');
     url.searchParams.set('singleEvents', 'true');
     url.searchParams.set('timeMin', now);
@@ -128,7 +131,9 @@ async function fetchUpcomingEvents(
       id: item.id || '',
       summary: item.summary || null,
       start: item.start?.dateTime || item.start?.date || null,
-      end: item.end?.dateTime || item.end?.date || null
+      end: item.end?.dateTime || item.end?.date || null,
+      location: item.location || null,
+      description: item.description || null
     }));
 
     return events;

@@ -67,15 +67,15 @@
       "clientSecret": ""
     },
     "gmail": {
-      "enabled": false,
+      "enabled": true,
       "clientId": null,
       "clientSecret": null,
       "redirectUri": null,
       "refreshToken": null,
-      "userEmail": null
+      "userEmail": "phase38_test@example.com"
     },
     "googleCalendar": {
-      "enabled": false,
+      "enabled": true,
       "clientId": null,
       "clientSecret": null,
       "redirectUri": null,
@@ -83,5 +83,25 @@
       "calendarId": "primary"
     }
   },
-  "useServerProxy": true
+  "notificationPreferences": {
+    "calendar_reminder": true,
+    "email_notification": true,
+    "printer_alert": true,
+    "camera_alert": true,
+    "system_update": true,
+    "integration_error": true,
+    "custom": true
+  },
+  "useServerProxy": true,
+  "cameras": [],
+  "lockdownState": {
+    "active": false,
+    "activatedAt": null,
+    "activatedBy": null,
+    "features": {
+      "doorsLocked": false,
+      "alarmArmed": false,
+      "camerasSecured": false
+    }
+  }
 }

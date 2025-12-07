@@ -48,6 +48,7 @@ export default function ChatPage() {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [chatSettings, setChatSettings] = useState<TextChatSettings>(() => readSettings().textChat);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -78,6 +79,24 @@ export default function ChatPage() {
     [chatSettings?.verbosity]
   );
 
+  // Record action to backend
+  const recordAction = useCallback(async (type: string, metadata: any) => {
+    try {
+      await fetch(buildServerUrl('/api/actions/record'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          source: 'user',
+          metadata
+        })
+      });
+      console.log(`📊 Action recorded: ${type}`);
+    } catch (error) {
+      console.error(`❌ Error recording action (${type}):`, error);
+    }
+  }, []);
+
   // Function execution handlers (same as JarvisAssistant)
   async function executeFunction(name: string, args: any): Promise<{ success: boolean; message: string; data?: any; imageUrl?: string }> {
     console.log(`Executing function: ${name}`, args);
@@ -96,6 +115,8 @@ export default function ChatPage() {
           return await handleCaptureImages(args);
         case 'analyze_camera_view':
           return await handleAnalyzeCameraView(args);
+        case 'recall_memory':
+          return await handleRecallMemory(args);
         default:
           return { success: false, message: `Unknown function: ${name}` };
       }
@@ -190,6 +211,8 @@ export default function ChatPage() {
 
       if (imageUrl) {
         console.log('✅ Image generation completed successfully');
+        // Record action
+        recordAction('image_generated', { prompt, size, model: imageSettings.model });
         return { 
           success: true, 
           message: 'I\'ve created your image. Here it is:', 
@@ -234,6 +257,9 @@ export default function ChatPage() {
 
       const { id: jobId } = await createResponse.json();
       console.log('🎲 Job created:', jobId);
+      
+      // Record action
+      recordAction('3d_model_generated', { prompt, jobId });
       
       return {
         success: true,
@@ -420,6 +446,142 @@ export default function ChatPage() {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to analyze camera view.'
+      };
+    }
+  }
+
+  async function handleRecallMemory(args: { query: string; time_range?: string; content_type?: string; limit?: number }) {
+    const { query, time_range = 'all_time', content_type = 'all', limit = 10 } = args;
+    
+    try {
+      console.log('🧠 Recalling memories:', query, time_range, content_type);
+      
+      // Calculate date range based on time_range parameter
+      const now = new Date();
+      let startDate: Date | null = null;
+      
+      switch (time_range) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'yesterday':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+          break;
+        case 'last_week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'last_month':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = null; // all_time
+      }
+      
+      const results: any[] = [];
+      
+      // Search conversations if needed
+      if (content_type === 'all' || content_type === 'conversations') {
+        try {
+          const convResponse = await fetch(
+            buildServerUrl(`/api/conversations?search=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}`)
+          );
+          
+          if (convResponse.ok) {
+            const convData = await convResponse.json();
+            const filteredConvs = startDate
+              ? convData.conversations.filter((c: any) => new Date(c.timestamp) >= startDate)
+              : convData.conversations;
+            
+            results.push(...filteredConvs.map((c: any) => ({
+              type: 'conversation',
+              id: c.id,
+              timestamp: c.timestamp,
+              title: c.metadata?.title || 'Untitled conversation',
+              preview: c.messages?.[0]?.content?.substring(0, 100) || '',
+              source: c.source
+            })));
+          }
+        } catch (error) {
+          console.error('Error searching conversations:', error);
+        }
+      }
+      
+      // Search actions if needed
+      if (content_type === 'all' || content_type === 'actions' || content_type === 'images' || content_type === '3d_models') {
+        try {
+          // Filter action types based on content_type
+          let actionType = '';
+          if (content_type === 'images') actionType = 'image_generated';
+          else if (content_type === '3d_models') actionType = '3d_model_generated';
+          
+          const actionUrl = actionType
+            ? buildServerUrl(`/api/actions?type=${actionType}&limit=${Math.min(limit, 50)}`)
+            : buildServerUrl(`/api/actions?limit=${Math.min(limit, 50)}`);
+          
+          const actionResponse = await fetch(actionUrl);
+          
+          if (actionResponse.ok) {
+            const actionData = await actionResponse.json();
+            const filteredActions = startDate
+              ? actionData.actions.filter((a: any) => new Date(a.timestamp) >= startDate)
+              : actionData.actions;
+            
+            // Further filter actions by query in metadata
+            const matchingActions = filteredActions.filter((a: any) => {
+              const metadataStr = JSON.stringify(a.metadata || {}).toLowerCase();
+              return metadataStr.includes(query.toLowerCase());
+            });
+            
+            results.push(...matchingActions.map((a: any) => ({
+              type: 'action',
+              actionType: a.type,
+              timestamp: a.timestamp,
+              metadata: a.metadata,
+              source: a.source
+            })));
+          }
+        } catch (error) {
+          console.error('Error searching actions:', error);
+        }
+      }
+      
+      // Sort by timestamp descending and limit results
+      results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const limitedResults = results.slice(0, limit);
+      
+      if (limitedResults.length === 0) {
+        return {
+          success: true,
+          message: `I couldn't find any memories matching "${query}" in the ${time_range.replace('_', ' ')} period. Try a different search term or time range.`,
+          data: { results: [], query, time_range, content_type }
+        };
+      }
+      
+      // Format results into a readable message
+      let message = `I found ${limitedResults.length} matching memor${limitedResults.length === 1 ? 'y' : 'ies'} for "${query}":\n\n`;
+      
+      limitedResults.forEach((result, index) => {
+        const date = new Date(result.timestamp).toLocaleDateString();
+        
+        if (result.type === 'conversation') {
+          message += `${index + 1}. 💬 Conversation from ${date} (${result.source})\n   "${result.preview}..."\n\n`;
+        } else if (result.type === 'action') {
+          const actionLabel = result.actionType.replace('_', ' ');
+          const details = result.metadata?.prompt || result.metadata?.messageId || 'No details';
+          message += `${index + 1}. ⚡ ${actionLabel} on ${date}\n   ${details}\n\n`;
+        }
+      });
+      
+      return {
+        success: true,
+        message: message.trim(),
+        data: { results: limitedResults, query, time_range, content_type }
+      };
+    } catch (error) {
+      console.error('Error recalling memories:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to recall memories'
       };
     }
   }
@@ -615,6 +777,13 @@ export default function ChatPage() {
     setInput('');
     setError(null);
     setIsSending(true);
+    
+    // Record user message as action
+    recordAction('message_sent', { 
+      messageId: userMessage.id, 
+      contentLength: trimmed.length,
+      source: 'text-chat'
+    });
 
     try {
       const response = await fetch(buildServerUrl('/openai/text-chat'), {
@@ -705,16 +874,68 @@ export default function ChatPage() {
     [sendMessage]
   );
 
-  const clearConversation = useCallback(() => {
+  // Save conversation to backend
+  const saveConversation = useCallback(async () => {
+    if (messages.length === 0) return;
+    
+    try {
+      // Filter out pending and function messages for cleaner storage
+      const messagesToSave = messages
+        .filter(m => m.status !== 'pending' && m.role !== 'function')
+        .map(m => ({
+          role: m.role,
+          content: m.content
+        }));
+      
+      if (messagesToSave.length === 0) return;
+      
+      // Generate a title from the first user message
+      const firstUserMessage = messagesToSave.find(m => m.role === 'user');
+      const title = firstUserMessage 
+        ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
+        : 'Chat conversation';
+      
+      const response = await fetch(buildServerUrl('/api/conversations/save'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'chat',
+          messages: messagesToSave,
+          metadata: { 
+            title,
+            model: chatSettings?.model || 'gpt-5',
+            messageCount: messagesToSave.length
+          },
+          tags: ['text-chat']
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConversationId(data.id);
+        console.log('💾 Conversation saved:', data.id);
+      } else {
+        console.warn('⚠️ Failed to save conversation:', response.statusText);
+      }
+    } catch (error) {
+      console.error('❌ Error saving conversation:', error);
+    }
+  }, [messages, chatSettings]);
+
+  const clearConversation = useCallback(async () => {
+    // Save conversation before clearing
+    await saveConversation();
+    
     setMessages([]);
     setResponseId(null);
     setError(null);
+    setConversationId(null);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
     setSpeakingMessageId(null);
-  }, []);
+  }, [saveConversation]);
 
   // Determine active TTS provider and endpoint
   const getActiveTtsProvider = useCallback((): { endpoint: string; name: string } | null => {

@@ -3,6 +3,7 @@ import mqtt from 'mqtt';
 import { promises as fsp } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -230,10 +231,10 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
     await loadBambuToken();
     
     if (bambuToken && bambuToken.accessToken && bambuToken.tokenExpiration > Date.now()) {
-      fastify.log.info('Valid Bambu token found, connecting to Cloud MQTT');
+      logger.info('Valid Bambu token found, connecting to Cloud MQTT');
       await connectMqttCloudClients(fastify.log);
     } else {
-      fastify.log.info('No valid Bambu token found, skipping Cloud MQTT');
+      logger.info('No valid Bambu token found, skipping Cloud MQTT');
     }
   })();
 
@@ -245,7 +246,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'Username and password are required' });
     }
     
-    fastify.log.info({
+    logger.info({
       username,
       hasPassword: !!password
     }, 'API /api/3dprint/login called');
@@ -258,21 +259,21 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
       });
 
       // Log the HTTP status
-      fastify.log.info({ status: authResponse.status }, 'Bambu Labs login response status');
+      logger.info({ status: authResponse.status }, 'Bambu Labs login response status');
 
       let authData;
       try {
         authData = await authResponse.json();
         // Log what Bambu actually returned
-        fastify.log.info({ authData }, 'Bambu Labs auth response data');
+        logger.info({ authData }, 'Bambu Labs auth response data');
       } catch (e) {
-        fastify.log.error({ err: e }, 'Failed to parse login response');
+        logger.error({ err: e }, 'Failed to parse login response');
         return reply.status(500).send({ error: 'Invalid login response' });
       }
 
       // Direct login success (password was correct)
       if (authData.success) {
-        fastify.log.info('Direct login successful (password authenticated)');
+        logger.info('Direct login successful (password authenticated)');
         const tokenInfo: BambuToken = {
           accessToken: authData.accessToken,
           refreshToken: authData.refreshToken,
@@ -283,9 +284,9 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
         // Connect to Cloud MQTT
         try {
           await connectMqttCloudClients(fastify.log);
-          fastify.log.info('Cloud MQTT client started after login');
+          logger.info('Cloud MQTT client started after login');
         } catch (e) {
-          fastify.log.error({ err: e }, 'Error starting Cloud MQTT after login');
+          logger.error({ err: e }, 'Error starting Cloud MQTT after login');
         }
 
         return reply.send({ success: true });
@@ -293,7 +294,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
 
       // Verification code required flow
       if (authData.loginType === 'verifyCode') {
-        fastify.log.info('Verification code required - sending email');
+        logger.info('Verification code required - sending email');
         
         // Trigger verification code email
         const codeResp = await fetch(`${API_BASE}/v1/user-service/user/sendemail/code`, {
@@ -302,14 +303,14 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
           body: JSON.stringify({ email: username, type: 'codeLogin' })
         });
 
-        fastify.log.info({ status: codeResp.status }, 'Verification email send status');
+        logger.info({ status: codeResp.status }, 'Verification email send status');
 
         if (codeResp.ok) {
-          fastify.log.info('Verification code email sent successfully');
+          logger.info('Verification code email sent successfully');
           return reply.status(401).send({ error: 'Verification code required' });
         } else {
           const txt = await codeResp.text();
-          fastify.log.error({ response: txt, status: codeResp.status }, 'Failed to send verification code email');
+          logger.error({ response: txt, status: codeResp.status }, 'Failed to send verification code email');
           // Return the ACTUAL error from Bambu Labs, not a generic message
           return reply.status(500).send({ error: txt || 'Failed to send verification code' });
         }
@@ -317,23 +318,23 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
 
       // If authData has an error message, return it
       if (authData.error) {
-        fastify.log.error({ error: authData.error }, 'Bambu Labs returned error');
+        logger.error({ error: authData.error }, 'Bambu Labs returned error');
         return reply.status(403).send({ error: authData.error });
       }
 
       // Other login types (e.g., two-factor)
       if (authData.loginType) {
-        fastify.log.warn({ loginType: authData.loginType }, 'Unsupported login type');
+        logger.warn({ loginType: authData.loginType }, 'Unsupported login type');
         return reply.status(403).send({ error: `Login type '${authData.loginType}' not supported` });
       }
 
       // Return the full auth data for debugging if nothing else matches
-      fastify.log.error({ authData }, 'Unexpected auth response structure');
+      logger.error({ authData }, 'Unexpected auth response structure');
       return reply.status(403).send({ 
         error: authData.message || authData.error || 'Login failed - invalid credentials' 
       });
     } catch (err) {
-      fastify.log.error({ err }, 'Error during login');
+      logger.error({ err }, 'Error during login');
       return reply.status(500).send({ error: 'Login error' });
     }
   });
@@ -342,7 +343,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
   fastify.post('/api/3dprint/verify', async (req, reply) => {
     const { email, code } = req.body as any;
     
-    fastify.log.info({
+    logger.info({
       email,
       codeLength: code?.length
     }, 'API /api/3dprint/verify called - verifying email code');
@@ -357,18 +358,18 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        fastify.log.error({ error: errorText }, 'Verification code rejected by Bambu Labs');
+        logger.error({ error: errorText }, 'Verification code rejected by Bambu Labs');
         return reply.status(401).send({ error: 'Invalid verification code' });
       }
 
       const data = await response.json();
       
       if (!data.accessToken) {
-        fastify.log.error('No access token in verification response');
+        logger.error('No access token in verification response');
         return reply.status(500).send({ error: 'Invalid response from Bambu Labs' });
       }
 
-      fastify.log.info('Verification successful - passwordless login complete');
+      logger.info('Verification successful - passwordless login complete');
 
       const tokenInfo: BambuToken = {
         accessToken: data.accessToken,
@@ -380,14 +381,14 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
       // Connect to Cloud MQTT
       try {
         await connectMqttCloudClients(fastify.log);
-        fastify.log.info('Cloud MQTT client started after verification');
+        logger.info('Cloud MQTT client started after verification');
       } catch (e) {
-        fastify.log.error({ err: e }, 'Error starting Cloud MQTT after verification');
+        logger.error({ err: e }, 'Error starting Cloud MQTT after verification');
       }
 
       reply.send({ success: true });
     } catch (err) {
-      fastify.log.error({ err }, 'Error during verification');
+      logger.error({ err }, 'Error during verification');
       reply.status(500).send({ error: 'Verification failed' });
     }
   });
@@ -435,7 +436,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
     }
 
     cloudClient.publish(req_topic, JSON.stringify(message));
-    fastify.log.info(`Sent ${cmd} command to ${sn}`);
+    logger.info(`Sent ${cmd} command to ${sn}`);
     
     reply.send({ success: true });
   });
@@ -459,7 +460,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
       const data = await res.json();
       reply.send(data.hits || []);
     } catch (e) {
-      fastify.log.error({ err: e }, 'Error fetching tasks');
+      logger.error({ err: e }, 'Error fetching tasks');
       reply.send([]);
     }
   });

@@ -11,11 +11,40 @@ import { z } from 'zod';
 import type { ModelJob, ModelJobOutputs } from '@shared/core';
 import { registerKeyRoutes } from './routes/keys.routes';
 import { register3DPrintRoutes } from './routes/3dprint.routes';
+import { registerSmartHomeRoutes } from './routes/smarthome.routes.js';
+import { registerLockdownRoutes } from './routes/lockdown.routes.js';
+import { initializeLockdownService } from './services/lockdownService.js';
 import { readSecrets } from './storage/secretStore';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { notificationScheduler } from './notificationScheduler.js';
 import type { ScheduleNotificationRequest, ScheduleNotificationResponse } from '@shared/core';
+import { logger, logSystemEvent, logApiRequest, createRequestLogger } from './utils/logger.js';
+import { 
+  initConversationStore, 
+  saveConversation, 
+  getConversation, 
+  listConversations, 
+  searchConversations,
+  deleteConversation,
+  createConversation,
+  addMessage,
+  getStats as getConversationStats,
+  type Conversation,
+  type SearchQuery as ConversationSearchQuery
+} from './storage/conversationStore.js';
+import { 
+  initActionStore,
+  recordAction,
+  queryActions,
+  getAction,
+  cleanupOldActions,
+  getActionStats,
+  recordNotificationScheduled,
+  recordNotificationDelivered,
+  type Action,
+  type ActionQuery
+} from './storage/actionStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,11 +100,11 @@ const fastify = Fastify({
 });
 
 if (!hasCertificates) {
-  fastify.log.warn(
+  logger.warn(
     `HTTPS certificates not found (looked for key at "${resolvedKeyPath}" and cert at "${resolvedCertPath}"). Falling back to HTTP. Configure SERVER_TLS_CERT_NAME/CERT_NAME, SERVER_TLS_KEY_PATH/CERT_KEY, or SERVER_TLS_CERT_PATH/CERT_CRT to point to valid certificates.`
   );
 } else {
-  fastify.log.info({ keyPath: resolvedKeyPath, certPath: resolvedCertPath }, 'Loaded TLS certificates');
+  logger.info({ keyPath: resolvedKeyPath, certPath: resolvedCertPath }, 'Loaded TLS certificates');
 }
 
 const io = new IOServer(fastify.server, {
@@ -84,6 +113,10 @@ const io = new IOServer(fastify.server, {
     credentials: true
   }
 });
+
+// Initialize Lockdown Service with Socket.io
+initializeLockdownService(io);
+logger.info('Lockdown service initialized');
 
 await fastify.register(fastifyCors, {
   origin: (origin, cb) => {
@@ -117,9 +150,64 @@ fastify.get('/config', async () => ({
   }
 }));
 
+// Initialize storage systems
+logSystemEvent('server_starting');
+
+// Define data directory and settings file path
+const DATA_DIR = path.join(process.cwd(), 'data');
+if (!existsSync(DATA_DIR)) {
+  mkdirSync(DATA_DIR, { recursive: true });
+}
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+
+// Initialize conversation store
+await initConversationStore();
+logger.info('Conversation store initialized');
+
+// Initialize action store
+await initActionStore();
+logger.info('Action store initialized');
+
 // Initialize notification scheduler
 await notificationScheduler.initialize();
-fastify.log.info('Notification scheduler initialized');
+logger.info('Notification scheduler initialized');
+
+// Initialize email notification system (if Gmail is configured)
+try {
+  if (existsSync(SETTINGS_FILE)) {
+    const settingsContent = await readFile(SETTINGS_FILE, 'utf-8');
+    const settings = JSON.parse(settingsContent);
+    const gmailConfig = settings?.integrations?.gmail;
+    const emailNotifConfig = settings?.email_notifications;
+    
+    if (
+      gmailConfig?.enabled &&
+      gmailConfig?.clientId &&
+      gmailConfig?.clientSecret &&
+      gmailConfig?.refreshToken &&
+      gmailConfig?.userEmail
+    ) {
+      const { initializeEmailNotifications } = await import('./integrations/email-notifications.js');
+      await initializeEmailNotifications(
+        {
+          clientId: gmailConfig.clientId,
+          clientSecret: gmailConfig.clientSecret,
+          refreshToken: gmailConfig.refreshToken,
+          userEmail: gmailConfig.userEmail
+        },
+        emailNotifConfig
+      );
+      logger.info('Email notification system initialized');
+    } else {
+      logger.info('Email notification system not initialized (Gmail not configured)');
+    }
+  }
+} catch (error) {
+  logger.error({ error }, 'Failed to initialize email notification system');
+}
+
+// Add request logging middleware
+fastify.addHook('onRequest', createRequestLogger());
 
 // Notification API: Schedule a notification
 fastify.post('/api/notifications/schedule', async (req, reply) => {
@@ -151,11 +239,14 @@ fastify.post('/api/notifications/schedule', async (req, reply) => {
       body.triggerAt
     );
 
-    fastify.log.info({ eventId, type: body.type, triggerAt: body.triggerAt }, 'Notification scheduled');
+    // Record action
+    await recordNotificationScheduled(eventId, body.type, body.triggerAt, body.payload);
+
+    logger.info({ eventId, type: body.type, triggerAt: body.triggerAt }, 'Notification scheduled');
 
     return reply.send({ ok: true, eventId } as ScheduleNotificationResponse);
   } catch (error) {
-    fastify.log.error({ error, type: body.type }, 'Failed to schedule notification');
+    logger.error({ error, type: body.type }, 'Failed to schedule notification');
     return reply.status(500).send({ ok: false, error: 'failed_to_schedule_notification' } as ScheduleNotificationResponse);
   }
 });
@@ -187,7 +278,7 @@ fastify.get('/api/notifications/history', async (req, reply) => {
     const total = firedEvents.length;
     const paginated = firedEvents.slice(offset, offset + limit);
     
-    fastify.log.info({ total, type, limit, offset, returned: paginated.length }, 'Notification history accessed');
+    logger.info({ total, type, limit, offset, returned: paginated.length }, 'Notification history accessed');
     
     return reply.send({
       ok: true,
@@ -197,7 +288,7 @@ fastify.get('/api/notifications/history', async (req, reply) => {
       offset
     });
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to retrieve notification history');
+    logger.error({ error }, 'Failed to retrieve notification history');
     return reply.status(500).send({ ok: false, error: 'failed_to_retrieve_history' });
   }
 });
@@ -219,11 +310,11 @@ fastify.get('/api/notifications/stream', async (req, reply) => {
     try {
       reply.raw.write(data);
     } catch (error) {
-      fastify.log.error({ clientId, error }, 'Failed to write SSE data to client');
+      logger.error({ clientId, error }, 'Failed to write SSE data to client');
     }
   });
 
-  fastify.log.info({ clientId }, 'SSE client connected to notification stream');
+  logger.info({ clientId }, 'SSE client connected to notification stream');
 
   // Send initial connection confirmation
   reply.raw.write(`data: ${JSON.stringify({ type: 'connection', payload: { status: 'connected', clientId }, triggeredAt: new Date().toISOString() })}\n\n`);
@@ -231,11 +322,254 @@ fastify.get('/api/notifications/stream', async (req, reply) => {
   // Handle client disconnect
   req.raw.on('close', () => {
     notificationScheduler.unregisterSSEClient(clientId);
-    fastify.log.info({ clientId }, 'SSE client disconnected from notification stream');
+    logger.info({ clientId }, 'SSE client disconnected from notification stream');
   });
 
   // Keep connection alive (don't await, let it stay open)
   return reply;
+});
+
+// ========================================
+// Conversation Management API
+// ========================================
+
+// Save a conversation
+fastify.post('/api/conversations/save', async (req, reply) => {
+  try {
+    const conversation = req.body as Partial<Conversation>;
+    
+    // Validate required fields
+    if (!conversation.id || !conversation.source) {
+      return reply.status(400).send({ ok: false, error: 'id and source are required' });
+    }
+    
+    if (!Array.isArray(conversation.messages)) {
+      return reply.status(400).send({ ok: false, error: 'messages must be an array' });
+    }
+    
+    await saveConversation(conversation as Conversation);
+    logger.info({ conversationId: conversation.id, messageCount: conversation.messages.length }, 'Conversation saved');
+    
+    return reply.send({ ok: true, conversationId: conversation.id });
+  } catch (error) {
+    logger.error({ error }, 'Failed to save conversation');
+    return reply.status(500).send({ ok: false, error: 'Failed to save conversation' });
+  }
+});
+
+// Get a conversation by ID
+fastify.get('/api/conversations/:id', async (req, reply) => {
+  try {
+    const { id } = req.params as { id: string };
+    
+    if (!id) {
+      return reply.status(400).send({ ok: false, error: 'Conversation ID is required' });
+    }
+    
+    const conversation = await getConversation(id);
+    
+    if (!conversation) {
+      return reply.status(404).send({ ok: false, error: 'Conversation not found' });
+    }
+    
+    logger.info({ conversationId: id }, 'Conversation retrieved');
+    return reply.send({ ok: true, conversation });
+  } catch (error) {
+    logger.error({ error }, 'Failed to retrieve conversation');
+    return reply.status(500).send({ ok: false, error: 'Failed to retrieve conversation' });
+  }
+});
+
+// List/Search conversations
+fastify.get('/api/conversations', async (req, reply) => {
+  try {
+    const query = req.query as {
+      query?: string;
+      tags?: string;
+      source?: 'chat' | 'voice' | 'realtime';
+      startDate?: string;
+      endDate?: string;
+      limit?: string;
+      offset?: string;
+    };
+    
+    const searchQuery: ConversationSearchQuery = {
+      query: query.query,
+      tags: query.tags ? query.tags.split(',') : undefined,
+      source: query.source,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      limit: query.limit ? parseInt(query.limit, 10) : 50,
+      offset: query.offset ? parseInt(query.offset, 10) : 0
+    };
+    
+    // If search query is provided, use search; otherwise use list
+    const result = searchQuery.query || searchQuery.tags || searchQuery.source || searchQuery.startDate
+      ? await searchConversations(searchQuery)
+      : await listConversations(searchQuery.limit, searchQuery.offset);
+    
+    logger.info({ total: result.total, returned: result.conversations.length }, 'Conversations listed');
+    
+    return reply.send({
+      ok: true,
+      ...result
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to list conversations');
+    return reply.status(500).send({ ok: false, error: 'Failed to list conversations' });
+  }
+});
+
+// Delete a conversation
+fastify.delete('/api/conversations/:id', async (req, reply) => {
+  try {
+    const { id } = req.params as { id: string };
+    
+    if (!id) {
+      return reply.status(400).send({ ok: false, error: 'Conversation ID is required' });
+    }
+    
+    const success = await deleteConversation(id);
+    
+    if (!success) {
+      return reply.status(404).send({ ok: false, error: 'Conversation not found' });
+    }
+    
+    logger.info({ conversationId: id }, 'Conversation deleted');
+    return reply.send({ ok: true });
+  } catch (error) {
+    logger.error({ error }, 'Failed to delete conversation');
+    return reply.status(500).send({ ok: false, error: 'Failed to delete conversation' });
+  }
+});
+
+// Get conversation statistics
+fastify.get('/api/conversations/stats', async (req, reply) => {
+  try {
+    const stats = await getConversationStats();
+    return reply.send({ ok: true, stats });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get conversation stats');
+    return reply.status(500).send({ ok: false, error: 'Failed to get statistics' });
+  }
+});
+
+// ========================================
+// Action Tracking API
+// ========================================
+
+// Record an action
+fastify.post('/api/actions/record', async (req, reply) => {
+  try {
+    const action = req.body as Partial<Action>;
+    
+    // Validate required fields
+    if (!action.type || !action.source || !action.metadata) {
+      return reply.status(400).send({ 
+        ok: false, 
+        error: 'type, source, and metadata are required' 
+      });
+    }
+    
+    const actionId = await recordAction(action as Omit<Action, 'id' | 'timestamp'>);
+    logger.info({ actionId, type: action.type }, 'Action recorded');
+    
+    return reply.send({ ok: true, actionId });
+  } catch (error) {
+    logger.error({ error }, 'Failed to record action');
+    return reply.status(500).send({ ok: false, error: 'Failed to record action' });
+  }
+});
+
+// Get an action by ID
+fastify.get('/api/actions/:id', async (req, reply) => {
+  try {
+    const { id } = req.params as { id: string };
+    
+    if (!id) {
+      return reply.status(400).send({ ok: false, error: 'Action ID is required' });
+    }
+    
+    const action = await getAction(id);
+    
+    if (!action) {
+      return reply.status(404).send({ ok: false, error: 'Action not found' });
+    }
+    
+    return reply.send({ ok: true, action });
+  } catch (error) {
+    logger.error({ error }, 'Failed to retrieve action');
+    return reply.status(500).send({ ok: false, error: 'Failed to retrieve action' });
+  }
+});
+
+// Query/List actions
+fastify.get('/api/actions', async (req, reply) => {
+  try {
+    const query = req.query as {
+      type?: string;
+      types?: string;
+      source?: 'user' | 'system' | 'integration';
+      userId?: string;
+      startDate?: string;
+      endDate?: string;
+      limit?: string;
+      offset?: string;
+    };
+    
+    const actionQuery: ActionQuery = {
+      type: query.types ? query.types.split(',') as any : query.type as any,
+      source: query.source,
+      userId: query.userId,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      limit: query.limit ? parseInt(query.limit, 10) : 50,
+      offset: query.offset ? parseInt(query.offset, 10) : 0
+    };
+    
+    const result = await queryActions(actionQuery);
+    
+    logger.info({ total: result.total, returned: result.actions.length }, 'Actions queried');
+    
+    return reply.send({
+      ok: true,
+      ...result
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to query actions');
+    return reply.status(500).send({ ok: false, error: 'Failed to query actions' });
+  }
+});
+
+// Get action statistics
+fastify.get('/api/actions/stats', async (req, reply) => {
+  try {
+    const stats = await getActionStats();
+    return reply.send({ ok: true, stats });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get action stats');
+    return reply.status(500).send({ ok: false, error: 'Failed to get statistics' });
+  }
+});
+
+// Cleanup old actions
+fastify.post('/api/actions/cleanup', async (req, reply) => {
+  try {
+    const { days } = req.body as { days?: number };
+    const daysToKeep = days || 90; // Default: keep 90 days
+    
+    if (daysToKeep < 1) {
+      return reply.status(400).send({ ok: false, error: 'days must be at least 1' });
+    }
+    
+    const deletedCount = await cleanupOldActions(daysToKeep);
+    logger.info({ deletedCount, daysToKeep }, 'Actions cleaned up');
+    
+    return reply.send({ ok: true, deletedCount });
+  } catch (error) {
+    logger.error({ error }, 'Failed to cleanup actions');
+    return reply.status(500).send({ ok: false, error: 'Failed to cleanup actions' });
+  }
 });
 
 // System metrics endpoint (note: /api prefix is stripped by dev-proxy)
@@ -270,7 +604,7 @@ fastify.get('/integrations/weather', async (req, reply) => {
   // Read API key from environment
   const apiKey = process.env.OPENWEATHER_API_KEY;
   if (!apiKey) {
-    fastify.log.warn('Weather API key not configured');
+    logger.warn('Weather API key not configured');
     return reply.status(503).send({ error: 'Weather API key not configured' });
   }
   
@@ -278,7 +612,7 @@ fastify.get('/integrations/weather', async (req, reply) => {
   const cityQuery = location || 'Miami,US';
   
   try {
-    fastify.log.info({ location: cityQuery }, 'Fetching weather data');
+    logger.info({ location: cityQuery }, 'Fetching weather data');
     
     // Call OpenWeather API
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityQuery)}&appid=${apiKey}&units=metric`;
@@ -286,7 +620,7 @@ fastify.get('/integrations/weather', async (req, reply) => {
     
     if (!response.ok) {
       const errorText = await response.text();
-      fastify.log.error({ status: response.status, error: errorText }, 'OpenWeather API error');
+      logger.error({ status: response.status, error: errorText }, 'OpenWeather API error');
       return reply.status(response.status).send({ error: 'Failed to fetch weather data' });
     }
     
@@ -305,11 +639,11 @@ fastify.get('/integrations/weather', async (req, reply) => {
       updatedAt: new Date().toISOString()
     };
     
-    fastify.log.info({ location: weatherResponse.location, temp: weatherResponse.temperatureC }, 'Weather data fetched');
+    logger.info({ location: weatherResponse.location, temp: weatherResponse.temperatureC }, 'Weather data fetched');
     
     return weatherResponse;
   } catch (error) {
-    fastify.log.error({ error, location: cityQuery }, 'Failed to fetch weather');
+    logger.error({ error, location: cityQuery }, 'Failed to fetch weather');
     return reply.status(500).send({ error: 'Failed to fetch weather data' });
   }
 });
@@ -357,7 +691,7 @@ fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
       settings = JSON.parse(content);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to load settings for ElevenLabs');
+    logger.error({ error }, 'Failed to load settings for ElevenLabs');
     return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
   }
   
@@ -365,7 +699,7 @@ fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
   
   // Check if configured
   if (!elevenLabsConfig?.enabled || !elevenLabsConfig?.apiKey || !elevenLabsConfig?.voiceId) {
-    fastify.log.warn('ElevenLabs TTS not configured');
+    logger.warn('ElevenLabs TTS not configured');
     return reply.status(503).send({ ok: false, error: 'elevenlabs_not_configured' });
   }
   
@@ -388,7 +722,7 @@ fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
     reply.header('Cache-Control', 'no-store');
     return reply.send(audioBuffer);
   } catch (error) {
-    fastify.log.error({ error }, 'ElevenLabs TTS synthesis failed');
+    logger.error({ error }, 'ElevenLabs TTS synthesis failed');
     return reply.status(502).send({ ok: false, error: 'elevenlabs_request_failed' });
   }
 });
@@ -409,7 +743,7 @@ fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
       settings = JSON.parse(content);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to load settings for Azure TTS');
+    logger.error({ error }, 'Failed to load settings for Azure TTS');
     return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
   }
   
@@ -417,7 +751,7 @@ fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
   
   // Check if configured
   if (!azureTtsConfig?.enabled || !azureTtsConfig?.apiKey || !azureTtsConfig?.region || !azureTtsConfig?.voiceName) {
-    fastify.log.warn('Azure TTS not configured');
+    logger.warn('Azure TTS not configured');
     return reply.status(503).send({ ok: false, error: 'azure_tts_not_configured' });
   }
   
@@ -442,7 +776,7 @@ fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
     reply.header('Cache-Control', 'no-store');
     return reply.send(audioBuffer);
   } catch (error) {
-    fastify.log.error({ error }, 'Azure TTS synthesis failed');
+    logger.error({ error }, 'Azure TTS synthesis failed');
     return reply.status(502).send({ ok: false, error: 'azure_tts_request_failed' });
   }
 });
@@ -463,7 +797,7 @@ fastify.post('/integrations/spotify/search', async (req, reply) => {
       settings = JSON.parse(content);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to load settings for Spotify');
+    logger.error({ error }, 'Failed to load settings for Spotify');
     return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
   }
   
@@ -471,7 +805,7 @@ fastify.post('/integrations/spotify/search', async (req, reply) => {
   
   // Check if configured
   if (!spotifyConfig?.enabled || !spotifyConfig?.clientId || !spotifyConfig?.clientSecret) {
-    fastify.log.warn('Spotify not configured');
+    logger.warn('Spotify not configured');
     return reply.status(503).send({ ok: false, error: 'spotify_not_configured' });
   }
   
@@ -491,7 +825,7 @@ fastify.post('/integrations/spotify/search', async (req, reply) => {
     
     return reply.send({ ok: true, results: tracks });
   } catch (error) {
-    fastify.log.error({ error }, 'Spotify search failed');
+    logger.error({ error }, 'Spotify search failed');
     return reply.status(502).send({ ok: false, error: 'spotify_request_failed' });
   }
 });
@@ -506,7 +840,7 @@ fastify.post('/integrations/gmail/test', async (req, reply) => {
       settings = JSON.parse(content);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to load settings for Gmail');
+    logger.error({ error }, 'Failed to load settings for Gmail');
     return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
   }
   
@@ -520,7 +854,7 @@ fastify.post('/integrations/gmail/test', async (req, reply) => {
     !gmailConfig?.refreshToken ||
     !gmailConfig?.userEmail
   ) {
-    fastify.log.warn('Gmail not configured');
+    logger.warn('Gmail not configured');
     return reply.status(503).send({ ok: false, error: 'gmail_not_configured' });
   }
   
@@ -547,14 +881,14 @@ fastify.post('/integrations/gmail/test', async (req, reply) => {
       return reply.status(502).send(result);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Gmail connection test failed');
+    logger.error({ error }, 'Gmail connection test failed');
     return reply.status(502).send({ ok: false, error: 'gmail_test_failed' });
   }
 });
 
-// Google Calendar sync reminders endpoint
-fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) => {
-  fastify.log.info('Calendar reminder sync requested');
+// Gmail fetch inbox endpoint
+fastify.get('/integrations/gmail/inbox', async (req, reply) => {
+  const query = req.query as { maxResults?: string; pageToken?: string };
   
   // Load settings
   let settings: any = null;
@@ -564,7 +898,248 @@ fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) 
       settings = JSON.parse(content);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to load settings for calendar sync');
+    logger.error({ error }, 'Failed to load settings for Gmail');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const gmailConfig = settings?.integrations?.gmail;
+  
+  // Check if configured
+  if (
+    !gmailConfig?.enabled ||
+    !gmailConfig?.clientId ||
+    !gmailConfig?.clientSecret ||
+    !gmailConfig?.refreshToken ||
+    !gmailConfig?.userEmail
+  ) {
+    logger.warn('Gmail not configured');
+    return reply.status(503).send({ ok: false, error: 'gmail_not_configured' });
+  }
+  
+  try {
+    const { fetchInboxMessages } = await import('./clients/gmailClient.js');
+    
+    const result = await fetchInboxMessages(
+      {
+        clientId: gmailConfig.clientId,
+        clientSecret: gmailConfig.clientSecret,
+        refreshToken: gmailConfig.refreshToken,
+        userEmail: gmailConfig.userEmail
+      },
+      {
+        maxResults: query.maxResults ? parseInt(query.maxResults, 10) : 20,
+        pageToken: query.pageToken || undefined,
+        timeoutMs: 30000
+      }
+    );
+    
+    if (result.ok) {
+      return reply.send(result);
+    } else {
+      return reply.status(502).send(result);
+    }
+  } catch (error) {
+    logger.error({ error }, 'Gmail inbox fetch failed');
+    return reply.status(502).send({ ok: false, error: 'gmail_inbox_fetch_failed' });
+  }
+});
+
+// Gmail fetch full message endpoint
+fastify.get('/integrations/gmail/message/:messageId', async (req, reply) => {
+  const { messageId } = req.params as { messageId: string };
+  
+  if (!messageId) {
+    return reply.status(400).send({ ok: false, error: 'message_id_required' });
+  }
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to load settings for Gmail');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const gmailConfig = settings?.integrations?.gmail;
+  
+  // Check if configured
+  if (
+    !gmailConfig?.enabled ||
+    !gmailConfig?.clientId ||
+    !gmailConfig?.clientSecret ||
+    !gmailConfig?.refreshToken ||
+    !gmailConfig?.userEmail
+  ) {
+    logger.warn('Gmail not configured');
+    return reply.status(503).send({ ok: false, error: 'gmail_not_configured' });
+  }
+  
+  try {
+    const { fetchFullMessage } = await import('./clients/gmailClient.js');
+    
+    const result = await fetchFullMessage(
+      {
+        clientId: gmailConfig.clientId,
+        clientSecret: gmailConfig.clientSecret,
+        refreshToken: gmailConfig.refreshToken,
+        userEmail: gmailConfig.userEmail
+      },
+      messageId,
+      20000
+    );
+    
+    if (result.ok) {
+      return reply.send(result);
+    } else {
+      return reply.status(502).send(result);
+    }
+  } catch (error) {
+    logger.error({ error, messageId }, 'Gmail message fetch failed');
+    return reply.status(502).send({ ok: false, error: 'gmail_message_fetch_failed' });
+  }
+});
+
+// Gmail send email endpoint
+fastify.post('/integrations/gmail/send', async (req, reply) => {
+  const body = req.body as { to?: string; subject?: string; body?: string; cc?: string; bcc?: string };
+  
+  // Validate required fields
+  if (!body.to || !body.subject || !body.body) {
+    return reply.status(400).send({ ok: false, error: 'to_subject_body_required' });
+  }
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to load settings for Gmail');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const gmailConfig = settings?.integrations?.gmail;
+  
+  // Check if configured
+  if (
+    !gmailConfig?.enabled ||
+    !gmailConfig?.clientId ||
+    !gmailConfig?.clientSecret ||
+    !gmailConfig?.refreshToken ||
+    !gmailConfig?.userEmail
+  ) {
+    logger.warn('Gmail not configured');
+    return reply.status(503).send({ ok: false, error: 'gmail_not_configured' });
+  }
+  
+  try {
+    const { sendEmail } = await import('./clients/gmailClient.js');
+    
+    const result = await sendEmail(
+      {
+        clientId: gmailConfig.clientId,
+        clientSecret: gmailConfig.clientSecret,
+        refreshToken: gmailConfig.refreshToken,
+        userEmail: gmailConfig.userEmail
+      },
+      {
+        to: body.to,
+        subject: body.subject,
+        body: body.body,
+        cc: body.cc,
+        bcc: body.bcc
+      },
+      20000
+    );
+    
+    if (result.ok) {
+      logger.info({ to: body.to, subject: body.subject }, 'Email sent successfully');
+      return reply.send(result);
+    } else {
+      return reply.status(502).send(result);
+    }
+  } catch (error) {
+    logger.error({ error, to: body.to }, 'Gmail send failed');
+    return reply.status(502).send({ ok: false, error: 'gmail_send_failed' });
+  }
+});
+
+// Google Calendar: fetch upcoming events (for UI)
+fastify.get('/integrations/google-calendar/sync-events', async (req, reply) => {
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to load settings for Google Calendar events');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+
+  const calendarConfig = settings?.integrations?.googleCalendar;
+
+  // Check if configured
+  if (
+    !calendarConfig?.enabled ||
+    !calendarConfig?.clientId ||
+    !calendarConfig?.clientSecret ||
+    !calendarConfig?.refreshToken ||
+    !calendarConfig?.calendarId
+  ) {
+    logger.warn('Google Calendar not configured');
+    return reply.status(503).send({ ok: false, error: 'google_calendar_not_configured' });
+  }
+
+  // Parse limit from query (default 10, max 50)
+  const { limit } = (req.query as { limit?: string }) ?? {};
+  const maxResults = Math.max(1, Math.min(50, limit ? parseInt(limit, 10) : 10));
+
+  try {
+    // Use testGoogleCalendarConnection which already handles token exchange and returns events
+    const { testGoogleCalendarConnection } = await import('./clients/googleCalendarClient.js');
+    
+    const result = await testGoogleCalendarConnection({
+      clientId: calendarConfig.clientId,
+      clientSecret: calendarConfig.clientSecret,
+      refreshToken: calendarConfig.refreshToken,
+      calendarId: calendarConfig.calendarId
+    });
+    
+    if (!result.ok || !result.events) {
+      return reply.status(502).send({ ok: false, error: result.error || 'calendar_api_request_failed' });
+    }
+    
+    // Return up to maxResults events
+    const events = result.events.slice(0, maxResults);
+    
+    return reply.send({ ok: true, events });
+  } catch (error) {
+    logger.error({ error }, 'Failed to fetch Google Calendar events');
+    return reply.status(502).send({ ok: false, error: 'calendar_events_fetch_failed' });
+  }
+});
+
+// Google Calendar sync reminders endpoint
+fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) => {
+  logger.info('Calendar reminder sync requested');
+  
+  // Load settings
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to load settings for calendar sync');
     return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
   }
   
@@ -578,7 +1153,7 @@ fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) 
     !calendarConfig?.refreshToken ||
     !calendarConfig?.calendarId
   ) {
-    fastify.log.warn('Google Calendar not configured');
+    logger.warn('Google Calendar not configured');
     return reply.status(503).send({ ok: false, error: 'google_calendar_not_configured' });
   }
   
@@ -593,7 +1168,7 @@ fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) 
     });
     
     if (!result.ok || !result.events) {
-      fastify.log.error({ result }, 'Failed to fetch calendar events');
+      logger.error({ result }, 'Failed to fetch calendar events');
       return reply.status(502).send({ ok: false, error: 'failed_to_fetch_events' });
     }
     
@@ -619,14 +1194,14 @@ fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) 
             reminderTime.toISOString()
           );
           scheduledCount++;
-          fastify.log.info({ eventId: event.id, summary: event.summary, reminderTime }, 'Scheduled calendar reminder');
+          logger.info({ eventId: event.id, summary: event.summary, reminderTime }, 'Scheduled calendar reminder');
         }
       } catch (scheduleError) {
-        fastify.log.error({ error: scheduleError, eventId: event.id }, 'Failed to schedule event reminder');
+        logger.error({ error: scheduleError, eventId: event.id }, 'Failed to schedule event reminder');
       }
     }
     
-    fastify.log.info({ eventsFound: result.events.length, scheduledCount }, 'Calendar reminder sync complete');
+    logger.info({ eventsFound: result.events.length, scheduledCount }, 'Calendar reminder sync complete');
     
     return reply.send({
       ok: true,
@@ -635,7 +1210,7 @@ fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) 
       message: `Scheduled ${scheduledCount} reminder(s) for upcoming events`
     });
   } catch (error) {
-    fastify.log.error({ error }, 'Calendar reminder sync failed');
+    logger.error({ error }, 'Calendar reminder sync failed');
     return reply.status(502).send({ ok: false, error: 'calendar_sync_failed' });
   }
 });
@@ -650,7 +1225,7 @@ fastify.post('/integrations/google-calendar/test', async (req, reply) => {
       settings = JSON.parse(content);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to load settings for Google Calendar');
+    logger.error({ error }, 'Failed to load settings for Google Calendar');
     return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
   }
   
@@ -664,7 +1239,7 @@ fastify.post('/integrations/google-calendar/test', async (req, reply) => {
     !calendarConfig?.refreshToken ||
     !calendarConfig?.calendarId
   ) {
-    fastify.log.warn('Google Calendar not configured');
+    logger.warn('Google Calendar not configured');
     return reply.status(503).send({ ok: false, error: 'google_calendar_not_configured' });
   }
   
@@ -685,8 +1260,96 @@ fastify.post('/integrations/google-calendar/test', async (req, reply) => {
       return reply.status(502).send(result);
     }
   } catch (error) {
-    fastify.log.error({ error }, 'Google Calendar connection test failed');
+    logger.error({ error }, 'Google Calendar connection test failed');
     return reply.status(502).send({ ok: false, error: 'google_calendar_test_failed' });
+  }
+});
+
+// Email Notification System Management Endpoints
+
+// Get email notification status and statistics
+fastify.get('/api/email-notifications/status', async (req, reply) => {
+  try {
+    const { getEmailNotificationChecker } = await import('./integrations/email-notifications.js');
+    const checker = getEmailNotificationChecker();
+    
+    if (!checker) {
+      return reply.send({
+        ok: true,
+        initialized: false,
+        message: 'Email notification system not initialized'
+      });
+    }
+    
+    const state = checker.getState();
+    const config = checker.getConfig();
+    
+    return reply.send({
+      ok: true,
+      initialized: true,
+      state,
+      config
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get email notification status');
+    return reply.status(500).send({ ok: false, error: 'failed_to_get_status' });
+  }
+});
+
+// Manually trigger email check
+fastify.post('/api/email-notifications/trigger', async (req, reply) => {
+  try {
+    const { getEmailNotificationChecker } = await import('./integrations/email-notifications.js');
+    const checker = getEmailNotificationChecker();
+    
+    if (!checker) {
+      return reply.status(503).send({ ok: false, error: 'email_notifications_not_initialized' });
+    }
+    
+    // Trigger check (non-blocking)
+    checker.triggerCheck();
+    
+    logger.info('Manual email check triggered');
+    return reply.send({ ok: true, message: 'Email check triggered' });
+  } catch (error) {
+    logger.error({ error }, 'Failed to trigger email check');
+    return reply.status(500).send({ ok: false, error: 'failed_to_trigger_check' });
+  }
+});
+
+// Update email notification configuration
+fastify.post('/api/email-notifications/config', async (req, reply) => {
+  try {
+    const body = req.body as { enabled?: boolean; checkIntervalMinutes?: number; filters?: any };
+    
+    const { getEmailNotificationChecker } = await import('./integrations/email-notifications.js');
+    const checker = getEmailNotificationChecker();
+    
+    if (!checker) {
+      return reply.status(503).send({ ok: false, error: 'email_notifications_not_initialized' });
+    }
+    
+    // Update configuration
+    checker.updateConfig(body);
+    
+    // Also update settings file
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      const settings = JSON.parse(content);
+      
+      settings.email_notifications = {
+        ...settings.email_notifications,
+        ...body
+      };
+      
+      await writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
+    }
+    
+    logger.info({ config: body }, 'Email notification configuration updated');
+    return reply.send({ ok: true, message: 'Configuration updated' });
+  } catch (error) {
+    logger.error({ error }, 'Failed to update email notification config');
+    return reply.status(500).send({ ok: false, error: 'failed_to_update_config' });
   }
 });
 
@@ -705,13 +1368,6 @@ fastify.get('/3dprint/token-status', async () => {
   };
 });
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-if (!existsSync(DATA_DIR)) {
-  mkdirSync(DATA_DIR, { recursive: true });
-}
-
-const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
-
 // GET /settings - Load settings from server
 fastify.get('/settings', async (req, reply) => {
   try {
@@ -723,7 +1379,7 @@ fastify.get('/settings', async (req, reply) => {
     // Return empty object if file doesn't exist yet
     return {};
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to read settings');
+    logger.error({ error }, 'Failed to read settings');
     reply.code(500);
     return { error: 'Failed to read settings' };
   }
@@ -734,14 +1390,375 @@ fastify.post('/settings', async (req, reply) => {
   try {
     const settings = req.body;
     await writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
-    fastify.log.info('Settings saved to server');
+    logger.info('Settings saved to server');
     return { success: true };
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to save settings');
+    logger.error({ error }, 'Failed to save settings');
     reply.code(500);
     return { error: 'Failed to save settings' };
   }
 });
+
+// =============================================================================
+// AGENT D: Notes, Reminders, Alarms, and Weather API Endpoints
+// =============================================================================
+
+// Weather API
+fastify.post('/api/integrations/weather/query', async (req, reply) => {
+  const body = req.body as { location?: string };
+  
+  // Load settings for default location
+  let settings: any = null;
+  try {
+    if (existsSync(SETTINGS_FILE)) {
+      const content = await readFile(SETTINGS_FILE, 'utf-8');
+      settings = JSON.parse(content);
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to load settings for weather query');
+    return reply.status(500).send({ ok: false, error: 'failed_to_load_settings' });
+  }
+  
+  const location = body.location || settings?.integrations?.weather?.location || 'Miami,US';
+  
+  // Get API key from environment
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  
+  if (!apiKey) {
+    logger.warn('Weather API key not configured');
+    return reply.status(503).send({ ok: false, error: 'weather_api_key_not_configured' });
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${apiKey}&units=metric`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Weather API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Format response
+    const weatherData = {
+      location: `${data.name}, ${data.sys.country}`,
+      temperatureC: Math.round(data.main.temp),
+      temperatureF: Math.round((data.main.temp * 9/5) + 32),
+      condition: data.weather[0]?.main || 'Unknown',
+      description: data.weather[0]?.description || '',
+      humidity: data.main.humidity,
+      windKph: Math.round(data.wind.speed * 3.6),
+      iconCode: data.weather[0]?.icon,
+      updatedAt: new Date().toISOString()
+    };
+    
+    logger.info({ location }, 'Weather data fetched successfully');
+    
+    return reply.send({ ok: true, data: weatherData });
+  } catch (error) {
+    logger.error({ error, location }, 'Failed to fetch weather');
+    return reply.status(502).send({ ok: false, error: 'weather_api_request_failed' });
+  }
+});
+
+// Notes API
+fastify.get('/api/notes', async (req, reply) => {
+  try {
+    const { getAllNotes } = await import('./storage/notesStore.js');
+    const notes = await getAllNotes();
+    
+    logger.info({ count: notes.length }, 'Retrieved all notes');
+    
+    return reply.send({ ok: true, notes });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get notes');
+    return reply.status(500).send({ ok: false, error: 'failed_to_get_notes' });
+  }
+});
+
+fastify.post('/api/notes', async (req, reply) => {
+  const body = req.body as { content?: string; tags?: string[] };
+  
+  if (!body.content || !body.content.trim()) {
+    return reply.status(400).send({ ok: false, error: 'content_required' });
+  }
+  
+  try {
+    const { createNote } = await import('./storage/notesStore.js');
+    const note = await createNote(body.content, body.tags);
+    
+    logger.info({ noteId: note.id, contentLength: note.content.length }, 'Note created');
+    
+    return reply.send({ ok: true, note });
+  } catch (error) {
+    logger.error({ error }, 'Failed to create note');
+    return reply.status(500).send({ ok: false, error: 'failed_to_create_note' });
+  }
+});
+
+fastify.get('/api/notes/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  
+  try {
+    const { getNoteById } = await import('./storage/notesStore.js');
+    const note = await getNoteById(id);
+    
+    if (!note) {
+      return reply.status(404).send({ ok: false, error: 'note_not_found' });
+    }
+    
+    return reply.send({ ok: true, note });
+  } catch (error) {
+    logger.error({ error, noteId: id }, 'Failed to get note');
+    return reply.status(500).send({ ok: false, error: 'failed_to_get_note' });
+  }
+});
+
+fastify.put('/api/notes/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  const body = req.body as { content?: string; tags?: string[] };
+  
+  if (!body.content || !body.content.trim()) {
+    return reply.status(400).send({ ok: false, error: 'content_required' });
+  }
+  
+  try {
+    const { updateNote } = await import('./storage/notesStore.js');
+    const note = await updateNote(id, body.content, body.tags);
+    
+    if (!note) {
+      return reply.status(404).send({ ok: false, error: 'note_not_found' });
+    }
+    
+    logger.info({ noteId: id }, 'Note updated');
+    
+    return reply.send({ ok: true, note });
+  } catch (error) {
+    logger.error({ error, noteId: id }, 'Failed to update note');
+    return reply.status(500).send({ ok: false, error: 'failed_to_update_note' });
+  }
+});
+
+fastify.delete('/api/notes/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  
+  try {
+    const { deleteNote, deleteLastNote } = await import('./storage/notesStore.js');
+    
+    // Special case: delete last note
+    if (id === 'last') {
+      const success = await deleteLastNote();
+      
+      if (!success) {
+        return reply.status(404).send({ ok: false, error: 'no_notes_found' });
+      }
+      
+      logger.info('Deleted last note');
+      return reply.send({ ok: true });
+    }
+    
+    // Delete specific note
+    const success = await deleteNote(id);
+    
+    if (!success) {
+      return reply.status(404).send({ ok: false, error: 'note_not_found' });
+    }
+    
+    logger.info({ noteId: id }, 'Note deleted');
+    
+    return reply.send({ ok: true });
+  } catch (error) {
+    logger.error({ error, noteId: id }, 'Failed to delete note');
+    return reply.status(500).send({ ok: false, error: 'failed_to_delete_note' });
+  }
+});
+
+// Reminders API
+fastify.get('/api/reminders', async (req, reply) => {
+  try {
+    const { getAllReminders } = await import('./storage/remindersStore.js');
+    const reminders = await getAllReminders();
+    
+    logger.info({ count: reminders.length }, 'Retrieved all reminders');
+    
+    return reply.send({ ok: true, reminders });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get reminders');
+    return reply.status(500).send({ ok: false, error: 'failed_to_get_reminders' });
+  }
+});
+
+fastify.post('/api/reminders', async (req, reply) => {
+  const body = req.body as { message?: string; triggerAt?: string };
+  
+  if (!body.message || !body.message.trim()) {
+    return reply.status(400).send({ ok: false, error: 'message_required' });
+  }
+  
+  if (!body.triggerAt) {
+    return reply.status(400).send({ ok: false, error: 'trigger_time_required' });
+  }
+  
+  // Validate ISO timestamp
+  const triggerDate = new Date(body.triggerAt);
+  if (isNaN(triggerDate.getTime())) {
+    return reply.status(400).send({ ok: false, error: 'invalid_trigger_time' });
+  }
+  
+  try {
+    const { createReminder, updateReminderNotificationId } = await import('./storage/remindersStore.js');
+    
+    // Create reminder in storage
+    const reminder = await createReminder(body.message, body.triggerAt);
+    
+    // Schedule notification event
+    const notificationId = await notificationScheduler.scheduleEvent(
+      'reminder',
+      {
+        reminderId: reminder.id,
+        message: reminder.message
+      },
+      reminder.triggerAt
+    );
+    
+    // Update reminder with notification ID
+    await updateReminderNotificationId(reminder.id, notificationId);
+    
+    logger.info({ reminderId: reminder.id, notificationId, triggerAt: body.triggerAt }, 'Reminder created and scheduled');
+    
+    return reply.send({ ok: true, reminder: { ...reminder, notificationId } });
+  } catch (error) {
+    logger.error({ error }, 'Failed to create reminder');
+    return reply.status(500).send({ ok: false, error: 'failed_to_create_reminder' });
+  }
+});
+
+fastify.delete('/api/reminders/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  
+  try {
+    const { deleteReminder } = await import('./storage/remindersStore.js');
+    const success = await deleteReminder(id);
+    
+    if (!success) {
+      return reply.status(404).send({ ok: false, error: 'reminder_not_found' });
+    }
+    
+    logger.info({ reminderId: id }, 'Reminder deleted');
+    
+    return reply.send({ ok: true });
+  } catch (error) {
+    logger.error({ error, reminderId: id }, 'Failed to delete reminder');
+    return reply.status(500).send({ ok: false, error: 'failed_to_delete_reminder' });
+  }
+});
+
+// Alarms API
+fastify.get('/api/alarms', async (req, reply) => {
+  try {
+    const { getAllAlarms } = await import('./storage/alarmsStore.js');
+    const alarms = await getAllAlarms();
+    
+    logger.info({ count: alarms.length }, 'Retrieved all alarms');
+    
+    return reply.send({ ok: true, alarms });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get alarms');
+    return reply.status(500).send({ ok: false, error: 'failed_to_get_alarms' });
+  }
+});
+
+fastify.post('/api/alarms', async (req, reply) => {
+  const body = req.body as {
+    name?: string;
+    type?: 'time' | 'motion' | 'event';
+    triggerTime?: string;
+    recurring?: boolean;
+    recurrencePattern?: string;
+    cameraId?: string;
+    location?: string;
+  };
+  
+  if (!body.name || !body.type) {
+    return reply.status(400).send({ ok: false, error: 'name_and_type_required' });
+  }
+  
+  // Validate based on alarm type
+  if (body.type === 'time' && !body.triggerTime) {
+    return reply.status(400).send({ ok: false, error: 'trigger_time_required_for_time_alarms' });
+  }
+  
+  if (body.type === 'motion' && !body.location && !body.cameraId) {
+    return reply.status(400).send({ ok: false, error: 'location_or_camera_id_required_for_motion_alarms' });
+  }
+  
+  try {
+    const { createAlarm } = await import('./storage/alarmsStore.js');
+    
+    const alarm = await createAlarm({
+      name: body.name,
+      type: body.type,
+      enabled: true,
+      triggerTime: body.triggerTime,
+      recurring: body.recurring,
+      recurrencePattern: body.recurrencePattern,
+      cameraId: body.cameraId,
+      location: body.location
+    });
+    
+    logger.info({ alarmId: alarm.id, type: alarm.type, name: alarm.name }, 'Alarm created');
+    
+    return reply.send({ ok: true, alarm });
+  } catch (error) {
+    logger.error({ error }, 'Failed to create alarm');
+    return reply.status(500).send({ ok: false, error: 'failed_to_create_alarm' });
+  }
+});
+
+fastify.put('/api/alarms/:id/toggle', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  
+  try {
+    const { toggleAlarm } = await import('./storage/alarmsStore.js');
+    const alarm = await toggleAlarm(id);
+    
+    if (!alarm) {
+      return reply.status(404).send({ ok: false, error: 'alarm_not_found' });
+    }
+    
+    logger.info({ alarmId: id, enabled: alarm.enabled }, 'Alarm toggled');
+    
+    return reply.send({ ok: true, alarm });
+  } catch (error) {
+    logger.error({ error, alarmId: id }, 'Failed to toggle alarm');
+    return reply.status(500).send({ ok: false, error: 'failed_to_toggle_alarm' });
+  }
+});
+
+fastify.delete('/api/alarms/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  
+  try {
+    const { deleteAlarm } = await import('./storage/alarmsStore.js');
+    const success = await deleteAlarm(id);
+    
+    if (!success) {
+      return reply.status(404).send({ ok: false, error: 'alarm_not_found' });
+    }
+    
+    logger.info({ alarmId: id }, 'Alarm deleted');
+    
+    return reply.send({ ok: true });
+  } catch (error) {
+    logger.error({ error, alarmId: id }, 'Failed to delete alarm');
+    return reply.status(500).send({ ok: false, error: 'failed_to_delete_alarm' });
+  }
+});
+
+// =============================================================================
+// END AGENT D API ENDPOINTS
+// =============================================================================
 
 const FILES_DIR = path.join(DATA_DIR, 'files');
 if (!existsSync(FILES_DIR)) {
@@ -904,7 +1921,7 @@ async function persistModelOutputs(
       const stored = await storeRemoteFile(url, `${baseHint}-${suffix}`, fallbackExt);
       (next as Record<string, any>)[key] = stored.url;
     } catch (error) {
-      fastify.log.error({ jobId, url, error }, 'Failed to persist model output file');
+      logger.error({ jobId, url, error }, 'Failed to persist model output file');
     }
   }
 
@@ -921,7 +1938,7 @@ async function persistModelOutputs(
         const stored = await storeRemoteFile(textureUrl, `${baseHint}-texture-${index}`, 'png');
         persistedTextures.push(stored.url);
       } catch (error) {
-        fastify.log.error({ jobId, url: textureUrl, error }, 'Failed to persist texture map');
+        logger.error({ jobId, url: textureUrl, error }, 'Failed to persist texture map');
       }
     }
     if (persistedTextures.length) {
@@ -933,6 +1950,8 @@ async function persistModelOutputs(
 }
 registerKeyRoutes(fastify, io);
 register3DPrintRoutes(fastify);
+registerSmartHomeRoutes(fastify);
+registerLockdownRoutes(fastify);
 
 const ReasoningEffortSchema = z.enum(['minimal', 'low', 'medium', 'high']);
 const VerbositySchema = z.enum(['low', 'medium', 'high']);
@@ -981,7 +2000,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
       serverSettings = JSON.parse(raw);
     }
   } catch (error) {
-    fastify.log.warn('Failed to load server settings for LLM routing');
+    logger.warn('Failed to load server settings for LLM routing');
   }
 
   // Check if we should use local LLM
@@ -1029,7 +2048,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
     });
 
     if (localResult.ok) {
-      fastify.log.info('[LocalLLM] Successfully used local model (primary)');
+      logger.info('[LocalLLM] Successfully used local model (primary)');
       return reply.send({
         message: localResult.message,
         responseId: null,
@@ -1038,7 +2057,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
     }
 
     // Local failed, fall back to cloud if configured
-    fastify.log.warn({ error: localResult.error }, '[LocalLLM] Local model failed, falling back to cloud');
+    logger.warn({ error: localResult.error }, '[LocalLLM] Local model failed, falling back to cloud');
     if (!cloudApiKey) {
       return reply.status(503).send({ error: 'Local LLM failed and cloud is not configured' });
     }
@@ -1104,11 +2123,11 @@ fastify.post('/openai/text-chat', async (req, reply) => {
         body: JSON.stringify(payload)
       });
     } catch (error) {
-      fastify.log.error({ error }, 'Failed to reach OpenAI Responses API');
+      logger.error({ error }, 'Failed to reach OpenAI Responses API');
       
       // If cloud fails and local is available as fallback, try local
       if (shouldTryLocal && !localLlmPrimary) {
-        fastify.log.warn('[LocalLLM] Cloud failed, trying local as fallback');
+        logger.warn('[LocalLLM] Cloud failed, trying local as fallback');
         const { callLocalLlm } = await import('./clients/localLlmClient.js');
         const localMessages = conversation.map(m => ({
           role: m.role as 'system' | 'user' | 'assistant',
@@ -1120,7 +2139,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
         });
 
         if (localResult.ok) {
-          fastify.log.info('[LocalLLM] Successfully used local model (fallback)');
+          logger.info('[LocalLLM] Successfully used local model (fallback)');
           return reply.send({
             message: localResult.message,
             responseId: null,
@@ -1148,11 +2167,11 @@ fastify.post('/openai/text-chat', async (req, reply) => {
         openaiPayload?.error ||
         raw ||
         'OpenAI text chat request failed';
-      fastify.log.error({ status: upstream.status, body: raw }, 'OpenAI text chat request failed');
+      logger.error({ status: upstream.status, body: raw }, 'OpenAI text chat request failed');
       
       // Try local LLM as fallback if cloud-primary mode
       if (shouldTryLocal && !localLlmPrimary) {
-        fastify.log.warn('[LocalLLM] Cloud returned error, trying local as fallback');
+        logger.warn('[LocalLLM] Cloud returned error, trying local as fallback');
         const { callLocalLlm } = await import('./clients/localLlmClient.js');
         const localMessages = conversation.map(m => ({
           role: m.role as 'system' | 'user' | 'assistant',
@@ -1164,7 +2183,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
         });
 
         if (localResult.ok) {
-          fastify.log.info('[LocalLLM] Successfully used local model (fallback after cloud error)');
+          logger.info('[LocalLLM] Successfully used local model (fallback after cloud error)');
           return reply.send({
             message: localResult.message,
             responseId: null,
@@ -1198,7 +2217,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
 
     // If there are tool calls, return them to the client
     if (toolCalls.length > 0) {
-      fastify.log.info({ toolCalls }, 'OpenAI response includes tool calls');
+      logger.info({ toolCalls }, 'OpenAI response includes tool calls');
       return reply.send({
         toolCalls,
         responseId: openaiPayload?.id ?? null
@@ -1208,7 +2227,7 @@ fastify.post('/openai/text-chat', async (req, reply) => {
     // Otherwise, extract and return the text
     const text = extractOutputText(openaiPayload);
     if (!text) {
-      fastify.log.error({ body: openaiPayload }, 'OpenAI response missing text output');
+      logger.error({ body: openaiPayload }, 'OpenAI response missing text output');
       return reply.status(502).send({ error: 'OpenAI response did not include text output' });
     }
 
@@ -1309,7 +2328,7 @@ fastify.post('/openai/text-chat/tool-result', async (req, reply) => {
       body: JSON.stringify(payload)
     });
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to reach OpenAI Responses API');
+    logger.error({ error }, 'Failed to reach OpenAI Responses API');
     return reply.status(502).send({ error: 'Failed to reach OpenAI Responses API' });
   }
 
@@ -1329,7 +2348,7 @@ fastify.post('/openai/text-chat/tool-result', async (req, reply) => {
       openaiPayload?.error ||
       raw ||
       'OpenAI text chat tool result request failed';
-    fastify.log.error({ status: upstream.status, body: raw }, 'OpenAI text chat tool result request failed');
+    logger.error({ status: upstream.status, body: raw }, 'OpenAI text chat tool result request failed');
     return reply.status(upstream.status).send({ error: message });
   }
 
@@ -1354,7 +2373,7 @@ fastify.post('/openai/text-chat/tool-result', async (req, reply) => {
 
   // If there are more tool calls, return them
   if (toolCalls.length > 0) {
-    fastify.log.info({ toolCalls }, 'OpenAI response includes more tool calls');
+    logger.info({ toolCalls }, 'OpenAI response includes more tool calls');
     return reply.send({
       toolCalls,
       responseId: openaiPayload?.id ?? null
@@ -1364,7 +2383,7 @@ fastify.post('/openai/text-chat/tool-result', async (req, reply) => {
   // Otherwise, extract and return the text
   const text = extractOutputText(openaiPayload);
   if (!text) {
-    fastify.log.error({ body: openaiPayload }, 'OpenAI response missing text output');
+    logger.error({ body: openaiPayload }, 'OpenAI response missing text output');
     return reply.status(502).send({ error: 'OpenAI response did not include text output' });
   }
 
@@ -1403,7 +2422,7 @@ fastify.post('/openai/realtime', async (req, reply) => {
       body: sdp
     });
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to reach OpenAI realtime API');
+    logger.error({ error }, 'Failed to reach OpenAI realtime API');
     return reply.status(502).send({ error: 'Failed to reach OpenAI realtime API' });
   }
 
@@ -1419,7 +2438,7 @@ fastify.post('/openai/realtime', async (req, reply) => {
     }
     
     // Log detailed error information
-    fastify.log.error({ 
+    logger.error({ 
       status: response.status, 
       body: text,
       headers: Object.fromEntries(response.headers.entries())
@@ -1427,12 +2446,12 @@ fastify.post('/openai/realtime', async (req, reply) => {
     
     // Check for rate limiting
     if (response.status === 429) {
-      fastify.log.error('🚨 RATE LIMIT EXCEEDED - OpenAI Realtime API rate limit hit');
+      logger.error('🚨 RATE LIMIT EXCEEDED - OpenAI Realtime API rate limit hit');
       const retryAfter = response.headers.get('retry-after');
       const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
       const rateLimitReset = response.headers.get('x-ratelimit-reset');
       
-      fastify.log.error({
+      logger.error({
         retryAfter,
         rateLimitRemaining,
         rateLimitReset,
@@ -1489,7 +2508,7 @@ fastify.post('/file-library/store-image', async (req, reply) => {
     const stored = await storeBuffer(buffer, ext, filename ?? prompt ?? 'image');
     return reply.send({ url: stored.url, filename: stored.filename });
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to store generated image');
+    logger.error({ error }, 'Failed to store generated image');
     return reply.status(500).send({ error: 'Failed to store image' });
   }
 });
@@ -1515,7 +2534,7 @@ fastify.post('/file-library/upload', async (req, reply) => {
     // Store the file
     const stored = await storeBuffer(buffer, ext, hint);
     
-    fastify.log.info({
+    logger.info({
       originalName,
       storedName: stored.filename,
       size: buffer.length,
@@ -1529,7 +2548,7 @@ fastify.post('/file-library/upload', async (req, reply) => {
       size: buffer.length
     });
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to upload file');
+    logger.error({ error }, 'Failed to upload file');
     return reply.status(500).send({ error: 'Failed to upload file' });
   }
 });
@@ -1577,7 +2596,7 @@ fastify.post('/openai/generate-image', async (req, reply) => {
   });
 
   try {
-    fastify.log.info({ model, size, quality, partialImages, prompt: prompt.substring(0, 50) }, 'Starting image generation');
+    logger.info({ model, size, quality, partialImages, prompt: prompt.substring(0, 50) }, 'Starting image generation');
 
     // Use REST API directly for better control over streaming
     const requestPayload: any = {
@@ -1618,7 +2637,7 @@ fastify.post('/openai/generate-image', async (req, reply) => {
       }
     }
 
-    fastify.log.info({ requestPayload }, 'Sending request to OpenAI');
+    logger.info({ requestPayload }, 'Sending request to OpenAI');
 
     const upstream = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -1631,7 +2650,7 @@ fastify.post('/openai/generate-image', async (req, reply) => {
 
     if (!upstream.ok) {
       const errorText = await upstream.text();
-      fastify.log.error({ status: upstream.status, body: errorText }, 'OpenAI request failed');
+      logger.error({ status: upstream.status, body: errorText }, 'OpenAI request failed');
       
       // Parse error to provide helpful messages
       let errorMessage = `OpenAI API error: ${errorText}`;
@@ -1665,7 +2684,7 @@ fastify.post('/openai/generate-image', async (req, reply) => {
     const contentType = upstream.headers.get('content-type') || '';
     const isStreaming = contentType.includes('text/event-stream') || requestPayload.stream;
 
-    fastify.log.info({ contentType, isStreaming }, 'Response received');
+    logger.info({ contentType, isStreaming }, 'Response received');
 
     if (isStreaming && upstream.body) {
       // Handle streaming response
@@ -1689,11 +2708,11 @@ fastify.post('/openai/generate-image', async (req, reply) => {
           try {
             const event = JSON.parse(data);
             eventCount++;
-            fastify.log.info({ eventCount, eventType: event.type, eventKeys: Object.keys(event) }, 'Stream event');
+            logger.info({ eventCount, eventType: event.type, eventKeys: Object.keys(event) }, 'Stream event');
 
             // Partial image
             if (event.type === 'image_generation.partial_image' || (event.partial_image_index !== undefined)) {
-              fastify.log.info({ index: event.partial_image_index, hasB64: !!event.b64_json, hasUrl: !!event.url }, 'Partial image');
+              logger.info({ index: event.partial_image_index, hasB64: !!event.b64_json, hasUrl: !!event.url }, 'Partial image');
               
               // Get image data - could be base64 or URL
               let imageData = event.b64_json;
@@ -1704,7 +2723,7 @@ fastify.post('/openai/generate-image', async (req, reply) => {
                   const buffer = await imgResponse.arrayBuffer();
                   imageData = Buffer.from(buffer).toString('base64');
                 } catch (err) {
-                  fastify.log.error({ err }, 'Failed to fetch image URL');
+                  logger.error({ err }, 'Failed to fetch image URL');
                 }
               }
               
@@ -1721,7 +2740,7 @@ fastify.post('/openai/generate-image', async (req, reply) => {
             // Final image
             else if (event.type === 'image_generation.complete' || event.data) {
               const imageData = event.data?.[0] || event;
-              fastify.log.info({ hasB64: !!imageData.b64_json, hasUrl: !!imageData.url }, 'Final image');
+              logger.info({ hasB64: !!imageData.b64_json, hasUrl: !!imageData.url }, 'Final image');
               
               let finalImageData = imageData.b64_json;
               if (!finalImageData && imageData.url) {
@@ -1731,12 +2750,12 @@ fastify.post('/openai/generate-image', async (req, reply) => {
                   const buffer = await imgResponse.arrayBuffer();
                   finalImageData = Buffer.from(buffer).toString('base64');
                 } catch (err) {
-                  fastify.log.error({ err }, 'Failed to fetch final image URL');
+                  logger.error({ err }, 'Failed to fetch final image URL');
                 }
               }
               
               if (finalImageData) {
-                fastify.log.info('Final image ready to send');
+                logger.info('Final image ready to send');
                 reply.raw.write(`data: ${JSON.stringify({
                   type: 'final_image',
                   image: finalImageData,
@@ -1745,21 +2764,21 @@ fastify.post('/openai/generate-image', async (req, reply) => {
               }
             }
           } catch (parseError) {
-            fastify.log.warn({ line, parseError }, 'Failed to parse SSE line');
+            logger.warn({ line, parseError }, 'Failed to parse SSE line');
           }
         }
       }
 
-      fastify.log.info({ eventCount }, 'Stream complete');
+      logger.info({ eventCount }, 'Stream complete');
       reply.raw.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } else {
       // Handle non-streaming response
       const responseData = await upstream.json();
-      fastify.log.info({ responseKeys: Object.keys(responseData) }, 'Non-streaming response received');
+      logger.info({ responseKeys: Object.keys(responseData) }, 'Non-streaming response received');
       
       if (responseData.data && responseData.data[0]) {
         const imageData = responseData.data[0];
-        fastify.log.info({ 
+        logger.info({ 
           hasB64: !!imageData.b64_json, 
           hasUrl: !!imageData.url,
           b64Length: imageData.b64_json?.length,
@@ -1769,14 +2788,14 @@ fastify.post('/openai/generate-image', async (req, reply) => {
         let finalImage = imageData.b64_json;
         if (!finalImage && imageData.url) {
           // Fetch URL and convert to base64
-          fastify.log.info({ url: imageData.url }, 'Fetching image from URL');
+          logger.info({ url: imageData.url }, 'Fetching image from URL');
           try {
             const imgResponse = await fetch(imageData.url);
             const buffer = await imgResponse.arrayBuffer();
             finalImage = Buffer.from(buffer).toString('base64');
-            fastify.log.info({ b64Length: finalImage.length }, 'Converted URL to base64');
+            logger.info({ b64Length: finalImage.length }, 'Converted URL to base64');
           } catch (err) {
-            fastify.log.error({ err }, 'Failed to fetch non-streaming image URL');
+            logger.error({ err }, 'Failed to fetch non-streaming image URL');
             throw new Error('Failed to fetch image from URL');
           }
         }
@@ -1787,22 +2806,22 @@ fastify.post('/openai/generate-image', async (req, reply) => {
             image: finalImage,
             revised_prompt: imageData.revised_prompt
           };
-          fastify.log.info({ imageLength: finalImage.length, hasRevisedPrompt: !!imageData.revised_prompt }, 'Sending final image to client');
+          logger.info({ imageLength: finalImage.length, hasRevisedPrompt: !!imageData.revised_prompt }, 'Sending final image to client');
           reply.raw.write(`data: ${JSON.stringify(payload)}\n\n`);
           reply.raw.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-          fastify.log.info('Sent done event');
+          logger.info('Sent done event');
         } else {
-          fastify.log.error({ imageData }, 'No image data (b64_json or url) in response');
+          logger.error({ imageData }, 'No image data (b64_json or url) in response');
           throw new Error('No image data (b64_json or url) in response');
         }
       } else {
-        fastify.log.error({ responseData }, 'No image data in response');
+        logger.error({ responseData }, 'No image data in response');
         throw new Error('No image data in response');
       }
     }
     
   } catch (error) {
-    fastify.log.error({ error, stack: error instanceof Error ? error.stack : undefined }, 'Error in image generation');
+    logger.error({ error, stack: error instanceof Error ? error.stack : undefined }, 'Error in image generation');
     reply.raw.write(`data: ${JSON.stringify({
       type: 'error',
       error: error instanceof Error ? error.message : 'Image generation failed'
@@ -1838,7 +2857,7 @@ fastify.post('/openai/vision', async (req, reply) => {
   }
 
   try {
-    fastify.log.info({ imageUrl, prompt }, 'Analyzing image with Vision AI');
+    logger.info({ imageUrl, prompt }, 'Analyzing image with Vision AI');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -1871,21 +2890,21 @@ fastify.post('/openai/vision', async (req, reply) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      fastify.log.error({ status: response.status, body: errorText }, 'Vision API request failed');
+      logger.error({ status: response.status, body: errorText }, 'Vision API request failed');
       return reply.status(response.status).send({ error: errorText });
     }
 
     const data = await response.json();
     const description = data.choices?.[0]?.message?.content || 'Unable to analyze image';
 
-    fastify.log.info({ description }, 'Vision analysis complete');
+    logger.info({ description }, 'Vision analysis complete');
     
     return reply.send({
       description,
       imageUrl
     });
   } catch (error) {
-    fastify.log.error({ error }, 'Error in vision analysis');
+    logger.error({ error }, 'Error in vision analysis');
     return reply.status(500).send({
       error: error instanceof Error ? error.message : 'Vision analysis failed'
     });
@@ -1924,7 +2943,7 @@ fastify.get('/images', async (req, reply) => {
     
     return reply.send({ images });
   } catch (error) {
-    fastify.log.error({ error }, 'Failed to list images');
+    logger.error({ error }, 'Failed to list images');
     return reply.status(500).send({ error: 'Failed to list images' });
   }
 });
@@ -2000,9 +3019,9 @@ function updateJob(id: string, patch: Partial<ModelJob>) {
       },
       new Date(Date.now() + 1000).toISOString() // Fire in 1 second
     ).then(() => {
-      fastify.log.info({ jobId: id, prompt }, 'Scheduled printer completion notification');
+      logger.info({ jobId: id, prompt }, 'Scheduled printer completion notification');
     }).catch((err) => {
-      fastify.log.error({ error: err, jobId: id }, 'Failed to schedule printer completion notification');
+      logger.error({ error: err, jobId: id }, 'Failed to schedule printer completion notification');
     });
   } else if (patch.status === 'error' && existing.status !== 'error') {
     const errorMsg = patch.error || 'Unknown error';
@@ -2018,9 +3037,9 @@ function updateJob(id: string, patch: Partial<ModelJob>) {
       },
       new Date(Date.now() + 1000).toISOString() // Fire in 1 second
     ).then(() => {
-      fastify.log.info({ jobId: id, error: errorMsg }, 'Scheduled printer failure notification');
+      logger.info({ jobId: id, error: errorMsg }, 'Scheduled printer failure notification');
     }).catch((err) => {
-      fastify.log.error({ error: err, jobId: id }, 'Failed to schedule printer failure notification');
+      logger.error({ error: err, jobId: id }, 'Failed to schedule printer failure notification');
     });
   }
 }
@@ -2186,7 +3205,7 @@ async function runImageJob(id: string, body: CreateModelBody, apiKey: string) {
 
   updateJob(id, { status: 'running', progress: 5 });
 
-  fastify.log.info(
+  logger.info(
     {
       jobId: id,
       mode: body.mode,
@@ -2218,12 +3237,12 @@ async function runImageJob(id: string, body: CreateModelBody, apiKey: string) {
 
   if (!createResponse.ok) {
     const text = await createResponse.text();
-    fastify.log.error({ jobId: id, status: createResponse.status, body: text }, 'Meshy image-to-3d create failed');
+    logger.error({ jobId: id, status: createResponse.status, body: text }, 'Meshy image-to-3d create failed');
     throw new Error(`Meshy image-to-3d create failed (${createResponse.status}): ${text}`);
   }
 
   const { result: taskId } = (await createResponse.json()) as { result: string };
-  fastify.log.info({ jobId: id, taskId }, 'Meshy image-to-3d task created');
+  logger.info({ jobId: id, taskId }, 'Meshy image-to-3d task created');
   updateJob(id, { metadata: { previewTaskId: taskId } });
 
   const finalTask = await pollMeshyTask<any>(`https://api.meshy.ai/openapi/v1/image-to-3d/${taskId}`, apiKey, (payload) => {
@@ -2232,7 +3251,7 @@ async function runImageJob(id: string, body: CreateModelBody, apiKey: string) {
     }
   });
 
-  fastify.log.info({ jobId: id }, 'Meshy image-to-3d task succeeded');
+  logger.info({ jobId: id }, 'Meshy image-to-3d task succeeded');
 
   const outputs = extractOutputs(finalTask);
   const persisted = await persistModelOutputs(id, outputs, body.prompt ?? body.captureTag ?? body.mode, settings.outputFormat);
@@ -2249,7 +3268,7 @@ async function runTextJob(id: string, body: CreateModelBody, apiKey: string) {
     throw new Error('Text prompt is required for Text to 3D.');
   }
   const settings = normalizeSettings(body.settings);
-  fastify.log.info(
+  logger.info(
     {
       jobId: id,
       promptLength: body.prompt.length,
@@ -2286,12 +3305,12 @@ async function runTextJob(id: string, body: CreateModelBody, apiKey: string) {
 
   if (!previewResponse.ok) {
     const text = await previewResponse.text();
-    fastify.log.error({ jobId: id, status: previewResponse.status, body: text }, 'Meshy text-to-3d preview failed');
+    logger.error({ jobId: id, status: previewResponse.status, body: text }, 'Meshy text-to-3d preview failed');
     throw new Error(`Meshy text-to-3d preview failed (${previewResponse.status}): ${text}`);
   }
 
   const { result: previewTaskId } = (await previewResponse.json()) as { result: string };
-  fastify.log.info({ jobId: id, previewTaskId }, 'Meshy text-to-3d preview task created');
+  logger.info({ jobId: id, previewTaskId }, 'Meshy text-to-3d preview task created');
   updateJob(id, { metadata: { previewTaskId } });
 
   const previewTask = await pollMeshyTask<any>(`https://api.meshy.ai/openapi/v2/text-to-3d/${previewTaskId}`, apiKey, (payload) => {
@@ -2331,12 +3350,12 @@ async function runTextJob(id: string, body: CreateModelBody, apiKey: string) {
 
   if (!refineResponse.ok) {
     const text = await refineResponse.text();
-    fastify.log.error({ jobId: id, status: refineResponse.status, body: text }, 'Meshy text-to-3d refine failed');
+    logger.error({ jobId: id, status: refineResponse.status, body: text }, 'Meshy text-to-3d refine failed');
     throw new Error(`Meshy text-to-3d refine failed (${refineResponse.status}): ${text}`);
   }
 
   const { result: refineTaskId } = (await refineResponse.json()) as { result: string };
-  fastify.log.info({ jobId: id, refineTaskId }, 'Meshy text-to-3d refine task created');
+  logger.info({ jobId: id, refineTaskId }, 'Meshy text-to-3d refine task created');
   updateJob(id, { metadata: { refineTaskId } });
 
   const finalTask = await pollMeshyTask<any>(`https://api.meshy.ai/openapi/v2/text-to-3d/${refineTaskId}`, apiKey, (payload) => {
@@ -2346,7 +3365,7 @@ async function runTextJob(id: string, body: CreateModelBody, apiKey: string) {
     }
   });
 
-  fastify.log.info({ jobId: id }, 'Meshy text-to-3d task succeeded');
+  logger.info({ jobId: id }, 'Meshy text-to-3d task succeeded');
 
   const outputs = extractOutputs(finalTask);
   const persisted = await persistModelOutputs(id, outputs, body.prompt, settings.outputFormat);
@@ -2361,7 +3380,7 @@ async function runTextJob(id: string, body: CreateModelBody, apiKey: string) {
 async function processModelJob(id: string, body: CreateModelBody) {
   try {
     const apiKey = getMeshyApiKey();
-    fastify.log.info({ jobId: id, mode: body.mode }, 'Processing Meshy job');
+    logger.info({ jobId: id, mode: body.mode }, 'Processing Meshy job');
     if (body.mode === 'text') {
       await runTextJob(id, body, apiKey);
     } else {
@@ -2369,7 +3388,7 @@ async function processModelJob(id: string, body: CreateModelBody) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown Meshy error';
-    fastify.log.error(
+    logger.error(
       {
         jobId: id,
         error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error)
@@ -2386,7 +3405,7 @@ fastify.post('/models/create', async (req, reply) => {
     return reply.status(400).send({ error: 'mode is required' });
   }
 
-  fastify.log.info(
+  logger.info(
     {
       mode: body.mode,
       hasImageData: Boolean(body.imageData),
@@ -2416,7 +3435,7 @@ fastify.post('/models/create', async (req, reply) => {
   };
   jobs.set(id, job);
 
-  fastify.log.info({ jobId: id, mode: body.mode }, 'Queued Meshy model job');
+  logger.info({ jobId: id, mode: body.mode }, 'Queued Meshy model job');
 
   processModelJob(id, body);
 
@@ -2465,6 +3484,68 @@ function detectMotion(entry: CameraDirectoryInfo, newFrameBase64: string): boole
   return percentDiff > motionThreshold;
 }
 
+/**
+ * Check for active motion alarms matching the camera location
+ * and fire alarm notifications if found
+ */
+async function checkMotionAlarms(cameraId: string, cameraName: string): Promise<void> {
+  try {
+    const { getAllAlarms } = await import('./storage/alarmsStore.js');
+    const alarms = await getAllAlarms();
+    
+    // Filter for enabled motion alarms matching this camera
+    const matchingAlarms = alarms.filter((alarm) => {
+      if (alarm.type !== 'motion' || !alarm.enabled) {
+        return false;
+      }
+      
+      // Check if alarm matches by cameraId or location (friendly name)
+      if (alarm.cameraId === cameraId) {
+        return true;
+      }
+      
+      if (alarm.location) {
+        // Case-insensitive match on camera name
+        const normalizedLocation = alarm.location.toLowerCase().trim();
+        const normalizedName = cameraName.toLowerCase().trim();
+        return normalizedLocation === normalizedName || normalizedName.includes(normalizedLocation);
+      }
+      
+      return false;
+    });
+    
+    if (matchingAlarms.length === 0) {
+      logger.debug({ cameraId, cameraName }, 'No matching motion alarms found');
+      return;
+    }
+    
+    // Fire alarm notifications for each matching alarm
+    const now = Date.now();
+    for (const alarm of matchingAlarms) {
+      await notificationScheduler.scheduleEvent(
+        'alarm',
+        {
+          alarmId: alarm.id,
+          alarmName: alarm.name,
+          alarmType: 'motion',
+          message: `Motion alarm triggered: ${alarm.name} - Motion detected on camera "${cameraName}"`,
+          cameraId,
+          cameraName,
+          timestamp: now
+        },
+        new Date(now + 1000).toISOString() // Fire in 1 second
+      );
+      
+      logger.info(
+        { alarmId: alarm.id, alarmName: alarm.name, cameraId, cameraName },
+        'Motion alarm triggered'
+      );
+    }
+  } catch (error) {
+    logger.error({ error, cameraId, cameraName }, 'Failed to check motion alarms');
+  }
+}
+
 const cameras = io.of('/cameras');
 
 function emitCameraList() {
@@ -2485,7 +3566,7 @@ function removeCamera(cameraId: string) {
       { message: `Camera "${info.friendlyName}" disconnected`, cameraId, action: 'disconnected' },
       new Date(Date.now() + 1000).toISOString() // Fire in 1 second
     ).catch((err) => {
-      fastify.log.error({ error: err, cameraId }, 'Failed to schedule camera disconnected notification');
+      logger.error({ error: err, cameraId }, 'Failed to schedule camera disconnected notification');
     });
   }
 }
@@ -2526,7 +3607,7 @@ cameras.on('connection', (socket) => {
       { message: `Camera "${name}" connected`, cameraId, action: 'connected' },
       new Date(Date.now() + 1000).toISOString() // Fire in 1 second
     ).catch((err) => {
-      fastify.log.error({ error: err, cameraId }, 'Failed to schedule camera connected notification');
+      logger.error({ error: err, cameraId }, 'Failed to schedule camera connected notification');
     });
   });
 
@@ -2551,19 +3632,26 @@ cameras.on('connection', (socket) => {
       const cooldown = 30_000; // 30 seconds
       if (!entry.lastMotionAlertTs || (now - entry.lastMotionAlertTs) > cooldown) {
         entry.lastMotionAlertTs = now;
+        
+        // Check for active motion alarms matching this camera location
+        checkMotionAlarms(cameraId, entry.friendlyName).catch((err) => {
+          logger.error({ error: err, cameraId }, 'Failed to check motion alarms');
+        });
+        
+        // Standard motion notification
         notificationScheduler.scheduleEvent(
           'camera_alert',
           { 
-            message: `Motion detected on camera "${entry.friendlyName}"`, 
+            message: `Motion detected on camera \"${entry.friendlyName}\"`, 
             cameraId, 
             action: 'motion_detected',
             timestamp: now
           },
           new Date(now + 1000).toISOString() // Fire in 1 second
         ).then(() => {
-          fastify.log.info({ cameraId, friendlyName: entry.friendlyName }, 'Motion detected, notification scheduled');
+          logger.info({ cameraId, friendlyName: entry.friendlyName }, 'Motion detected, notification scheduled');
         }).catch((err) => {
-          fastify.log.error({ error: err, cameraId }, 'Failed to schedule motion detection notification');
+          logger.error({ error: err, cameraId }, 'Failed to schedule motion detection notification');
         });
       }
     }
@@ -2586,7 +3674,7 @@ cameras.on('connection', (socket) => {
     socket.join(room);
     socket.data.rtcRoom = room;
     socket.data.rtcRole = role;
-    fastify.log.info({ room, role }, 'RTC client joined');
+    logger.info({ room, role }, 'RTC client joined');
   });
 
   socket.on('leave', ({ room }: { room: string }) => {
@@ -2692,12 +3780,12 @@ fastify
     const protocol = hasCertificates ? 'https' : 'http';
     const displayHost = PUBLIC_HOST || (HOST === '0.0.0.0' ? 'localhost' : HOST);
     if (hasCertificates) {
-      fastify.log.warn(`HTTPS & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
+      logger.warn(`HTTPS & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
     } else {
-      fastify.log.warn(`HTTP & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
+      logger.warn(`HTTP & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
     }
   })
   .catch((err) => {
-    fastify.log.error(err, 'Failed to start server');
+    logger.error(err, 'Failed to start server');
     process.exit(1);
   });
