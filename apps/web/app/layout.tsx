@@ -21,12 +21,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [isJarvisOpen, setIsJarvisOpen] = useState(false);
   const pathname = usePathname();
 
+  // Detect Ubuntu Shell / Kiosk Mode
+  const isUbuntuShellMode = process.env.NEXT_PUBLIC_JARVIS_UBUNTU_MODE === 'kiosk';
+
   // Load settings from server on app mount
   useEffect(() => {
     loadSettingsFromServer().catch(err => {
       console.error('Failed to load settings from server:', err);
     });
-  }, []);
+
+    // Log kiosk mode status (for debugging)
+    if (isUbuntuShellMode) {
+      console.log('[Jarvis] Ubuntu Shell / Kiosk Mode: ACTIVE');
+    }
+  }, [isUbuntuShellMode]);
 
   // Don't show floating icon on the dedicated Jarvis page
   const showFloatingJarvis = pathname !== '/jarvis';

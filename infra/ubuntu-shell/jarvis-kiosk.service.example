@@ -1,0 +1,113 @@
+# Jarvis V6 Kiosk Browser - Systemd User Service Template
+#
+# This service launches a full-screen browser in kiosk/app mode
+# pointing to the Jarvis dashboard. It depends on jarvis-server.service
+# being started first.
+#
+# INSTALLATION INSTRUCTIONS:
+#
+# 1. Ensure jarvis-server.service is installed and running first
+#
+# 2. Copy this file to your systemd user directory:
+#    mkdir -p ~/.config/systemd/user
+#    cp jarvis-kiosk.service.example ~/.config/systemd/user/jarvis-kiosk.service
+#
+# 3. Edit the service file if needed:
+#    - Change browser path if using Google Chrome instead of Chromium
+#    - Change URL if accessing from different IP (e.g., https://192.168.1.100:3000)
+#    - Adjust kiosk flags based on your preferences
+#
+# 4. Reload systemd and enable the service:
+#    systemctl --user daemon-reload
+#    systemctl --user enable jarvis-kiosk.service
+#    systemctl --user start jarvis-kiosk.service
+#
+# 5. Check service status:
+#    systemctl --user status jarvis-kiosk.service
+#
+# 6. View logs:
+#    journalctl --user -u jarvis-kiosk.service -f
+#
+# BROWSER OPTIONS:
+#
+# Chromium (default):
+#   /usr/bin/chromium-browser or /usr/bin/chromium
+#
+# Google Chrome:
+#   /usr/bin/google-chrome
+#
+# Brave Browser:
+#   /usr/bin/brave-browser
+#
+# KIOSK FLAGS EXPLAINED:
+#
+# --kiosk                    Full-screen mode (F11-like)
+# --start-fullscreen         Alternative full-screen flag
+# --app=URL                  Launch as standalone app (no tabs/URL bar)
+# --noerrdialogs             Suppress error dialogs
+# --disable-infobars         Hide info bars ("Chrome is being controlled...")
+# --no-first-run             Skip first-run setup
+# --disable-session-crashed-bubble  No crash recovery bubbles
+# --disable-features=TranslateUI    No translate prompts
+# --autoplay-policy=no-user-gesture-required  Allow auto-play media
+# --check-for-update-interval=31536000  Reduce update checks (1 year)
+#
+# TROUBLESHOOTING:
+#
+# If browser doesn't start:
+# - Check display: echo $DISPLAY (should be :0 or :1)
+# - Test manually: chromium-browser --app=https://localhost:3000
+# - Check certificate: curl -k https://localhost:3000
+# - View logs: journalctl --user -u jarvis-kiosk.service -n 50
+#
+
+[Unit]
+Description=Jarvis V6 Kiosk Browser - Full-Screen Dashboard
+Documentation=https://github.com/yosiwizman/jarvis-v5-os
+After=graphical-session.target jarvis-server.service
+Requires=jarvis-server.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/<USERNAME>/.Xauthority"
+
+# Chromium kiosk mode (default)
+ExecStart=/usr/bin/chromium-browser \
+  --kiosk \
+  --start-fullscreen \
+  --app=https://localhost:3000 \
+  --noerrdialogs \
+  --disable-infobars \
+  --no-first-run \
+  --disable-session-crashed-bubble \
+  --disable-features=TranslateUI \
+  --autoplay-policy=no-user-gesture-required \
+  --check-for-update-interval=31536000
+
+# Alternative: Google Chrome (uncomment and comment out Chromium above)
+# ExecStart=/usr/bin/google-chrome \
+#   --kiosk \
+#   --start-fullscreen \
+#   --app=https://localhost:3000 \
+#   --noerrdialogs \
+#   --disable-infobars \
+#   --no-first-run \
+#   --disable-session-crashed-bubble \
+#   --disable-features=TranslateUI \
+#   --autoplay-policy=no-user-gesture-required
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+StartLimitBurst=3
+StartLimitIntervalSec=60s
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jarvis-kiosk
+
+[Install]
+WantedBy=graphical-session.target
