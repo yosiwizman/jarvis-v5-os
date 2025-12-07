@@ -1,6 +1,11 @@
 # Jarvis V6 Ubuntu Shell - Phase A Infrastructure
 
+**Version:** v6.2.0  
+**Release:** December 2025
+
 This directory contains systemd service templates, desktop files, and setup scripts for running Jarvis as an Ubuntu shell/kiosk.
+
+**📖 Full Release Notes:** [docs/releases/JARVIS_V6_RELEASE_NOTES_v6.2.0.md](../../docs/releases/JARVIS_V6_RELEASE_NOTES_v6.2.0.md)
 
 ## Contents
 

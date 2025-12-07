@@ -1,6 +1,51 @@
 {
   "actions": [
     {
+      "id": "e26d79de-6268-49c3-a101-7393bb579231",
+      "timestamp": "2025-12-07T18:18:02.891Z",
+      "type": "notification_scheduled",
+      "source": "system",
+      "metadata": {
+        "notificationId": "6a35f9ff-eb41-418c-88c8-55e48655ba49",
+        "notificationType": "system.test",
+        "triggerAt": "2025-12-07T18:23:02.846Z",
+        "payload": {
+          "message": "smoke test notification"
+        }
+      },
+      "description": "Scheduled system.test notification for 12/7/2025, 1:23:02 PM"
+    },
+    {
+      "id": "e60defce-fb8e-43af-864c-4d34da8749e6",
+      "timestamp": "2025-12-07T17:53:46.290Z",
+      "type": "notification_scheduled",
+      "source": "system",
+      "metadata": {
+        "notificationId": "cbf035fe-2b01-47c4-96a7-1ad72aff7119",
+        "notificationType": "system.test",
+        "triggerAt": "2025-12-07T17:58:46.248Z",
+        "payload": {
+          "message": "smoke test notification"
+        }
+      },
+      "description": "Scheduled system.test notification for 12/7/2025, 12:58:46 PM"
+    },
+    {
+      "id": "d71efe57-d93d-47a0-ab6e-0d6e3ef75a81",
+      "timestamp": "2025-12-07T17:04:02.096Z",
+      "type": "notification_scheduled",
+      "source": "system",
+      "metadata": {
+        "notificationId": "7b67e8d3-3f29-4a32-990a-2da40900477f",
+        "notificationType": "system.test",
+        "triggerAt": "2025-12-07T17:09:02.053Z",
+        "payload": {
+          "message": "smoke test notification"
+        }
+      },
+      "description": "Scheduled system.test notification for 12/7/2025, 12:09:02 PM"
+    },
+    {
       "id": "cfa48c21-a6c7-4ee8-9793-73aee58855a9",
       "timestamp": "2025-12-07T16:57:40.391Z",
       "type": "notification_scheduled",
@@ -43,5 +88,5 @@
       "description": "Automated test action"
     }
   ],
-  "lastUpdated": "2025-12-07T16:57:40.391Z"
+  "lastUpdated": "2025-12-07T18:18:02.891Z"
 }

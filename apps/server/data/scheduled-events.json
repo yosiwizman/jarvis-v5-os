@@ -342,9 +342,42 @@
       },
       "triggerAt": "2025-12-07T17:02:40.347Z",
       "createdAt": "2025-12-07T16:57:40.371Z",
+      "fired": true,
+      "firedAt": "2025-12-07T17:03:55.006Z"
+    },
+    {
+      "id": "7b67e8d3-3f29-4a32-990a-2da40900477f",
+      "type": "system.test",
+      "payload": {
+        "message": "smoke test notification"
+      },
+      "triggerAt": "2025-12-07T17:09:02.053Z",
+      "createdAt": "2025-12-07T17:04:02.076Z",
+      "fired": true,
+      "firedAt": "2025-12-07T17:10:19.764Z"
+    },
+    {
+      "id": "cbf035fe-2b01-47c4-96a7-1ad72aff7119",
+      "type": "system.test",
+      "payload": {
+        "message": "smoke test notification"
+      },
+      "triggerAt": "2025-12-07T17:58:46.248Z",
+      "createdAt": "2025-12-07T17:53:46.270Z",
+      "fired": true,
+      "firedAt": "2025-12-07T18:11:55.269Z"
+    },
+    {
+      "id": "6a35f9ff-eb41-418c-88c8-55e48655ba49",
+      "type": "system.test",
+      "payload": {
+        "message": "smoke test notification"
+      },
+      "triggerAt": "2025-12-07T18:23:02.846Z",
+      "createdAt": "2025-12-07T18:18:02.871Z",
       "fired": false,
       "firedAt": null
     }
   ],
-  "lastUpdated": "2025-12-07T16:57:40.371Z"
+  "lastUpdated": "2025-12-07T18:18:02.871Z"
 }
