@@ -10,9 +10,34 @@ on:
       - main
 
 jobs:
-  ci:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
+    # TODO: Make blocking once eslint-config-next workspace issue is resolved
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # NOTE: next lint has module resolution issues in npm workspaces
+      # eslint-config-next parser can't find next/dist/compiled/babel/eslint-parser
+      # Tracked for follow-up fix
+      - name: Lint (web)
+        working-directory: apps/web
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx || echo 'Lint failed - see workflow comment'
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,8 +54,42 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Build
         run: npm run build
+
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Smoke tests
         run: npm run ci:smoke
