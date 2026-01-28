@@ -13,9 +13,6 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    # NOTE: ESLint config incomplete in server app - tracking as follow-up
-    # Once fixed, remove continue-on-error
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      # Run lint only for apps/web (has ESLint config)
+      # Server app lint is a follow-up item (needs ESLint config)
+      - name: Lint (web)
+        working-directory: apps/web
         run: npm run lint
 
   typecheck:

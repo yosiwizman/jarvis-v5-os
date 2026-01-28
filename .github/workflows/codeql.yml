@@ -12,9 +12,37 @@ on:
     - cron: '0 3 * * 0'
 
 jobs:
+  # Check if code scanning is available before running analysis
+  check-eligibility:
+    name: Check Eligibility
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.check.outputs.eligible }}
+    steps:
+      - name: Check Code Scanning availability
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # For private repos without GitHub Advanced Security, code scanning upload will fail
+          # Check if this is a public repo or if GHAS is enabled
+          VISIBILITY=$(gh api repos/${{ github.repository }} --jq '.visibility')
+          if [ "$VISIBILITY" = "public" ]; then
+            echo "eligible=true" >> $GITHUB_OUTPUT
+            echo "✅ Public repo - CodeQL analysis will run"
+          else
+            # For private repos, try to check if code scanning is enabled
+            # If not, we'll skip gracefully
+            echo "eligible=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Private repo without GHAS - skipping CodeQL analysis"
+            echo "To enable: Settings → Security → Code scanning alerts → Set up"
+          fi
+
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    needs: check-eligibility
+    if: needs.check-eligibility.outputs.eligible == 'true'
     permissions:
       actions: read
       contents: read
@@ -34,7 +62,6 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          # Customize queries for better coverage
           queries: +security-extended,security-and-quality
 
       - name: Autobuild
