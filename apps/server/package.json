@@ -23,7 +23,7 @@
     "rotating-file-stream": "^3.2.7",
     "socket.io": "^4.7.5",
     "undici": "^6.18.0",
-    "zod": "^3.23.8"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
