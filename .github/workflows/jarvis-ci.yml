@@ -26,10 +26,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Install in apps/web to fix Next.js ESLint parser resolution
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm install
+
       # Run lint only for apps/web (has ESLint config)
       # Server app lint is a follow-up item (needs ESLint config)
       - name: Lint (web)
-        run: npm run lint -w @jarvis/web
+        working-directory: apps/web
+        run: npm run lint
 
   typecheck:
     name: Typecheck
