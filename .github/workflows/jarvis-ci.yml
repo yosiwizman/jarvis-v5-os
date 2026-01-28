@@ -13,8 +13,6 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    # TODO: Make blocking once eslint-config-next workspace issue is resolved
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,12 +26,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # NOTE: next lint has module resolution issues in npm workspaces
-      # eslint-config-next parser can't find next/dist/compiled/babel/eslint-parser
-      # Tracked for follow-up fix
+      # Fix for eslint-config-next module resolution in npm workspaces:
+      # NODE_PATH must include the workspace node_modules where 'next' is installed
       - name: Lint (web)
-        working-directory: apps/web
-        run: npx eslint . --ext .js,.jsx,.ts,.tsx || echo 'Lint failed - see workflow comment'
+        env:
+          NODE_PATH: ${{ github.workspace }}/apps/web/node_modules
+        run: npm run lint -w @jarvis/web
 
   typecheck:
     name: Typecheck
@@ -93,3 +91,41 @@ jobs:
 
       - name: Smoke tests
         run: npm run ci:smoke
+
+  # Security gate: npm audit for dependency vulnerabilities
+  # Soft gate due to pre-existing Next.js 14.2.3 critical vulnerability
+  # TODO: Make hard gate after Next.js upgrade to 14.2.35+
+  sca:
+    name: SCA (npm audit)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Fix auto-fixable vulnerabilities first
+      - name: Auto-fix vulnerabilities
+        run: npm audit fix || true
+
+      # Report vulnerabilities (fail on critical only, high are tracked)
+      # Known: Next.js 14.2.3 has vulnerabilities requiring breaking upgrade
+      # TODO: Upgrade Next.js to 14.2.35+ to fully pass audit
+      - name: Run npm audit
+        run: |
+          echo "=== npm audit report ==="
+          npm audit --audit-level=critical || {
+            echo ""
+            echo "⚠️ Critical vulnerabilities found."
+            echo "Known issue: Next.js 14.2.3 requires upgrade to 14.2.35+"
+            echo "Track: https://nextjs.org/blog/security-update-2025-12-11"
+            exit 1
+          }

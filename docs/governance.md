@@ -23,16 +23,17 @@ The following checks must pass before merging to `main`:
 
 | Check | Description |
 |-------|-------------|
+| `Lint` | ESLint code quality (apps/web) |
 | `Typecheck` | TypeScript type checking |
 | `Build` | Production build verification |
 | `Smoke Tests` | End-to-end smoke tests |
 | `Secret Scan` | Gitleaks secret detection |
 
-### Optional Checks (informational)
+### Informational Checks (soft gates)
 | Check | Description | Status |
 |-------|-------------|--------|
-| `Lint` | ESLint code quality | Pending ESLint config in server app |
-| `CodeQL` | Security vulnerability analysis | Requires repo settings enabled |
+| `SCA (npm audit)` | Dependency vulnerability scan | Soft gate - Next.js upgrade pending |
+| `CodeQL` | Static analysis | Skipped - requires GHAS for private repos |
 
 ## Local Development Commands
 
@@ -93,6 +94,11 @@ npm run dev
 ## Security
 
 - Dependabot monitors dependencies for vulnerabilities
-- CodeQL scans for security issues weekly and on PRs
+- npm audit runs on every PR (reports critical/high vulnerabilities)
 - Gitleaks prevents secret commits
 - Report security issues privately to maintainers
+
+### Known Security TODOs
+- [ ] Upgrade Next.js to 14.2.35+ to resolve critical vulnerabilities
+- [ ] Enable GitHub Advanced Security for CodeQL (if plan allows)
+- [ ] Make SCA a hard gate after Next.js upgrade
