@@ -1,5 +1,11 @@
 # Dependabot configuration
 # Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+#
+# Strategy:
+# - Group patch/minor updates to reduce PR noise
+# - Ignore major updates for high-risk packages (react, next, fastify, etc.)
+# - Keep open PR limit low to avoid spam
+# - Major upgrades tracked in issue #28
 
 version: 2
 updates:
@@ -9,11 +15,26 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
     labels:
       - "dependencies"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      prod-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Major upgrades require dedicated migration - tracked in #28
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Web app
   - package-ecosystem: "npm"
@@ -21,12 +42,21 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "deps(web)"
     labels:
       - "dependencies"
       - "web"
+    groups:
+      web-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Major upgrades require dedicated migration - tracked in #28
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Server app
   - package-ecosystem: "npm"
@@ -34,20 +64,34 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "deps(server)"
     labels:
       - "dependencies"
       - "server"
+    groups:
+      server-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Major upgrades require dedicated migration - tracked in #28
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "ci"
     labels:
       - "dependencies"
       - "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
