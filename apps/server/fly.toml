@@ -1,0 +1,50 @@
+# Fly.io configuration for Jarvis Server
+# https://fly.io/docs/reference/configuration/
+#
+# Deploy: flyctl deploy --config apps/server/fly.toml --dockerfile apps/server/Dockerfile
+#
+# Why Fly.io for server (not Vercel)?
+# - Vercel Functions are not intended for long-lived WebSocket connections
+# - Fly.io supports WebSockets natively with persistent connections
+# - Socket.IO requires persistent processes (not serverless)
+
+app = "jarvis-server"
+primary_region = "iad"  # Washington D.C. (adjust to your region)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "1234"
+
+[http_service]
+  internal_port = 1234
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  # WebSocket support
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 250
+    soft_limit = 200
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# Persistent volume for data storage (optional - remove if using external DB)
+# [[mounts]]
+#   source = "jarvis_data"
+#   destination = "/app/data"
