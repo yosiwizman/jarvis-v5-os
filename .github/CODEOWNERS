@@ -1,0 +1,16 @@
+# CODEOWNERS - defines who must review code changes
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files
+* @yosiwizman
+
+# Infrastructure and CI
+/.github/ @yosiwizman
+/infra/ @yosiwizman
+
+# Core applications
+/apps/server/ @yosiwizman
+/apps/web/ @yosiwizman
+
+# Shared packages
+/packages/ @yosiwizman
