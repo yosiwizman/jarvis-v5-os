@@ -150,6 +150,13 @@ fastify.get('/config', async () => ({
   }
 }));
 
+// Health check endpoint for container orchestration (Fly.io, K8s, etc.)
+fastify.get('/health', async () => ({
+  ok: true,
+  timestamp: new Date().toISOString(),
+  uptime: process.uptime()
+}));
+
 // Initialize storage systems
 logSystemEvent('server_starting');
 
