@@ -498,4 +498,4 @@ MIT
 
 ## Credits
 
-Built with ❤️ using OpenAI, Meshy.ai, and Bambu Labs APIs.
+Built with ❤️ 
