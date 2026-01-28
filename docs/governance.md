@@ -23,12 +23,16 @@ The following checks must pass before merging to `main`:
 
 | Check | Description |
 |-------|-------------|
-| `Lint` | ESLint code quality checks |
 | `Typecheck` | TypeScript type checking |
 | `Build` | Production build verification |
 | `Smoke Tests` | End-to-end smoke tests |
 | `Secret Scan` | Gitleaks secret detection |
-| `CodeQL` | Security vulnerability analysis |
+
+### Optional Checks (informational)
+| Check | Description | Status |
+|-------|-------------|--------|
+| `Lint` | ESLint code quality | Pending ESLint config in server app |
+| `CodeQL` | Security vulnerability analysis | Requires repo settings enabled |
 
 ## Local Development Commands
 
