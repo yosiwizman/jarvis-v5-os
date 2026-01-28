@@ -93,12 +93,10 @@ jobs:
         run: npm run ci:smoke
 
   # Security gate: npm audit for dependency vulnerabilities
-  # Soft gate due to pre-existing Next.js 14.2.3 critical vulnerability
-  # TODO: Make hard gate after Next.js upgrade to 14.2.35+
+  # Fails on CRITICAL vulnerabilities only (high/moderate are tracked separately)
   sca:
     name: SCA (npm audit)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,20 +110,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Fix auto-fixable vulnerabilities first
+      # Fix auto-fixable vulnerabilities without breaking changes
       - name: Auto-fix vulnerabilities
         run: npm audit fix || true
 
-      # Report vulnerabilities (fail on critical only, high are tracked)
-      # Known: Next.js 14.2.3 has vulnerabilities requiring breaking upgrade
-      # TODO: Upgrade Next.js to 14.2.35+ to fully pass audit
+      # Fail on critical vulnerabilities only
       - name: Run npm audit
-        run: |
-          echo "=== npm audit report ==="
-          npm audit --audit-level=critical || {
-            echo ""
-            echo "⚠️ Critical vulnerabilities found."
-            echo "Known issue: Next.js 14.2.3 requires upgrade to 14.2.35+"
-            echo "Track: https://nextjs.org/blog/security-update-2025-12-11"
-            exit 1
-          }
+        run: npm audit --audit-level=critical
