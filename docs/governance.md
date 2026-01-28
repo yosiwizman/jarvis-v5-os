@@ -28,11 +28,11 @@ The following checks must pass before merging to `main`:
 | `Build` | Production build verification |
 | `Smoke Tests` | End-to-end smoke tests |
 | `Secret Scan` | Gitleaks secret detection |
+| `SCA (npm audit)` | Dependency vulnerability scan (critical level) |
 
-### Informational Checks (soft gates)
+### Informational Checks (non-blocking)
 | Check | Description | Status |
 |-------|-------------|--------|
-| `SCA (npm audit)` | Dependency vulnerability scan | Soft gate - Next.js upgrade pending |
 | `CodeQL` | Static analysis | Skipped - requires GHAS for private repos |
 
 ## Local Development Commands
@@ -99,6 +99,7 @@ npm run dev
 - Report security issues privately to maintainers
 
 ### Known Security TODOs
-- [ ] Upgrade Next.js to 14.2.35+ to resolve critical vulnerabilities
+- [x] ~~Upgrade Next.js to 14.2.35+ to resolve critical vulnerabilities~~ (Done)
+- [x] ~~Make SCA a hard gate after Next.js upgrade~~ (Done)
 - [ ] Enable GitHub Advanced Security for CodeQL (if plan allows)
-- [ ] Make SCA a hard gate after Next.js upgrade
+- [ ] Address high-severity glob vulnerability when eslint-config-next updates
