@@ -226,7 +226,7 @@ export function ActionTimeline() {
           <div className="text-xs text-white/40 mt-1">
             {typeFilter !== 'all' || sourceFilter !== 'all'
               ? 'Try changing your filters'
-              : 'Actions will appear here as you use J.A.R.V.I.S.'}
+              : 'Actions will appear here as you use AKIOR'}
           </div>
         </div>
       ) : (

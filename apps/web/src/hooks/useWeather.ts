@@ -25,7 +25,7 @@ export function useWeather(): UseWeatherResult {
     const fetchWeather = async () => {
       // Check if weather integration is enabled
       const settings = readSettings();
-      const weatherSettings = settings.integrations.weather;
+      const weatherSettings = settings?.integrations?.weather;
 
       if (!weatherSettings?.enabled) {
         if (isMounted) {

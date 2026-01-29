@@ -36,6 +36,10 @@ export async function GET() {
     ok: serverHealth.ok,
     timestamp: new Date().toISOString(),
     uptime: serverHealth.ok ? (serverHealth as { uptime?: number }).uptime : undefined,
+    build: {
+      gitSha: process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
+      buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || 'unknown',
+    },
     web: {
       ok: true,
       responseTimeMs: responseTime
