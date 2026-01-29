@@ -624,7 +624,7 @@ export default function SettingsPage() {
             <textarea
               className="w-full h-24 bg-transparent border border-white/10 rounded-xl px-3 py-2"
               {...bind('initialPrompt')}
-              placeholder="You are Jarvis…"
+              placeholder="You are AKIOR…"
             />
           </label>
           <div className="md:col-span-2 rounded-xl border border-white/10 px-4 py-3">
@@ -739,10 +739,10 @@ export default function SettingsPage() {
             <textarea
               className="w-full h-32 bg-transparent border border-white/10 rounded-xl px-3 py-2 text-sm"
               {...bind('initialPrompt')}
-              placeholder="You are J.A.R.V.I.S., a sophisticated AI assistant..."
+              placeholder="You are AKIOR, a sophisticated AI assistant..."
             />
             <p className="text-xs text-white/40">
-              Define J.A.R.V.I.S.'s personality, tone, and behavior. This is sent at the start of each session.
+              Define AKIOR's personality, tone, and behavior. This is sent at the start of each session.
             </p>
           </label>
           <label className="space-y-2">
@@ -750,10 +750,10 @@ export default function SettingsPage() {
             <input
               className="w-full bg-transparent border border-white/10 rounded-xl px-3 py-2"
               {...bind('hotword')}
-              placeholder="jarvis"
+              placeholder="akior"
             />
             <p className="text-xs text-white/40">
-              Say "Hey &lt;trigger&gt;" to start a session. Example: "Hey jarvis".
+              Say "Hey &lt;trigger&gt;" to start a session. Example: "Hey akior".
             </p>
           </label>
         </div>
@@ -890,7 +890,7 @@ export default function SettingsPage() {
             <div>
               <div className="text-sm text-white/70">Use Local LLM when available</div>
               <p className="text-xs text-white/40 mt-1">
-                When enabled and Local LLM is connected, Jarvis will use the local model for text chat (with optional web search augmentation).
+                When enabled and Local LLM is connected, AKIOR will use the local model for text chat (with optional web search augmentation).
               </p>
             </div>
           </label>
@@ -946,7 +946,7 @@ export default function SettingsPage() {
           <div className="text-white/60 text-sm">Manage API credentials stored on the server</div>
         </header>
         <div className="space-y-6">
-          {renderKeyRow('openai', 'OpenAI API key', 'Used for Jarvis realtime voice sessions.')}
+{renderKeyRow('openai', 'OpenAI API key', 'Used for AKIOR realtime voice sessions.')}
           {renderKeyRow('meshy', 'Meshy API key', 'Required for Meshy 3D model generation.')}
         </div>
         <p className="text-xs text-white/40">
@@ -2352,7 +2352,7 @@ export default function SettingsPage() {
               <div className="mb-4">
                 <h3 className="text-base font-medium mb-1">Conversation History</h3>
                 <p className="text-sm text-white/50">
-                  Browse and search through your past conversations with J.A.R.V.I.S.
+                  Browse and search through your past conversations with AKIOR.
                 </p>
               </div>
               <ConversationHistory />
@@ -2364,7 +2364,7 @@ export default function SettingsPage() {
               <div className="mb-4">
                 <h3 className="text-base font-medium mb-1">Action Timeline</h3>
                 <p className="text-sm text-white/50">
-                  View a chronological timeline of all actions performed by J.A.R.V.I.S. and user interactions.
+                  View a chronological timeline of all actions performed by AKIOR and user interactions.
                 </p>
               </div>
               <ActionTimeline />

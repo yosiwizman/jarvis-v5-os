@@ -252,6 +252,13 @@ If HTTPS has issues, HTTP is still available on port 80:
 - `http://akior.local/` (shows insecure warning banner)
 - Camera/mic features will be disabled over HTTP
 
+## Branding
+
+- **Primary hostname:** `akior.local` - AKIOR is the official product name
+- **Alias:** `jarvis.local` - kept for backward compatibility only
+- **UI branding:** All user-facing text displays "AKIOR" (not "Jarvis")
+- **Internal code:** Some internal code/filenames may still use "jarvis" for compatibility
+
 ## Security Notes
 
 - Port 443 (HTTPS) and 80 (HTTP) are accessible to all devices on the same network

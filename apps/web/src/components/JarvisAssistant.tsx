@@ -1060,7 +1060,7 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
             >
               <Image
                 src="/assets/logo.png"
-                alt="Jarvis Logo"
+                alt="AKIOR Logo"
                 width={300}
                 height={300}
                 className="w-72 h-72 object-contain"
@@ -1103,7 +1103,7 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
                 'Establishing secure connection...'
               ) : status === 'active' ? (
                 <>
-                  J.A.R.V.I.S. is online. Say <span className="text-cyan-400 font-semibold">"thank you"</span> to disconnect
+                  AKIOR is online. Say <span className="text-cyan-400 font-semibold">"thank you"</span> to disconnect
                 </>
               ) : status === 'error' ? (
                 'Connection error. Click outside to close.'
@@ -1176,7 +1176,7 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
     <button
       onClick={onClick}
       className="group fixed bottom-6 right-6 z-30 w-32 h-32 hover:scale-110 transition-transform duration-200"
-      aria-label="Open Jarvis Assistant"
+      aria-label="Open AKIOR Assistant"
     >
       <div className="relative w-full h-full">
         {/* Ring 2 - Outer */}
@@ -1211,7 +1211,7 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <Image
             src="/assets/logo.png"
-            alt="Jarvis"
+            alt="AKIOR"
             width={86}
             height={86}
             className="w-[86px] h-[86px] object-contain group-hover:drop-shadow-[0_0_15px_rgba(34,211,238,0.9)]"
