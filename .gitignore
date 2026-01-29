@@ -14,6 +14,7 @@ dist
 .env.*.local
 !.env.example
 !.env.*.example
+deploy/jarvis.env
 infra/certs/*.pem
 !infra/certs/localhost.pem
 !infra/certs/localhost-key.pem
