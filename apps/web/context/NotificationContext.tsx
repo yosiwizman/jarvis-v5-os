@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import type { Notification } from '@shared/core';
+import type { Notification } from '@shared/notifications';
 import { readSettings } from '@shared/settings';
 
 interface NotificationWithReadState extends Notification {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useNotifications } from '@/context/NotificationContext';
-import type { Notification } from '@shared/core';
+import type { Notification } from '@shared/notifications';
 
 // Icon mapping for notification types
 const NotificationIcon = ({ type }: { type: string }) => {

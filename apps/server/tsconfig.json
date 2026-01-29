@@ -9,7 +9,12 @@
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@shared/core": ["../../packages/shared/dist/index"],
+      "@shared/core/*": ["../../packages/shared/dist/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
