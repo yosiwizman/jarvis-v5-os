@@ -6,8 +6,8 @@
  */
 
 import type { Server as SocketServer } from 'socket.io';
-import type { LockdownState, CameraSettings } from '@shared/settings';
-import { readSettings } from '@shared/settings';
+import type { LockdownState, CameraSettings } from '@shared/core';
+import { readSettings } from '@shared/core';
 import { controlDevice as controlAlexaDevice } from '../clients/alexaClient.js';
 import { setLightState } from '../clients/smartLightsClient.js';
 import { writeFile } from 'fs/promises';

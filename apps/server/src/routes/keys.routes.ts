@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { deleteSecret, readSecrets, upsertSecret } from '../storage/secretStore';
+import { deleteSecret, readSecrets, upsertSecret } from '../storage/secretStore.js';
 
 const PutSchema = z.object({
   meshy: z.string().optional(),
