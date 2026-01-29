@@ -1,0 +1,42 @@
+# JARVIS Caddy Reverse Proxy Configuration
+#
+# Routes requests to appropriate backend services:
+# - /socket.io/* -> server (WebSocket support)
+# - /api/*       -> server (strips /api prefix)
+# - /files/*     -> server (static files)
+# - /static/*    -> server (static assets)
+# - /*           -> web (Next.js frontend)
+
+:3000 {
+    # Socket.IO with WebSocket support
+    handle /socket.io/* {
+        reverse_proxy server:1234
+    }
+
+    # API routes - strip /api prefix when forwarding
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy server:1234
+    }
+
+    # Static files served by backend
+    handle /files/* {
+        reverse_proxy server:1234
+    }
+
+    handle /static/* {
+        reverse_proxy server:1234
+    }
+
+    # Everything else goes to Next.js web frontend
+    handle {
+        reverse_proxy web:3001
+    }
+
+    # Logging
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

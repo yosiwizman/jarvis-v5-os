@@ -1,0 +1,69 @@
+# JARVIS Web Frontend Dockerfile
+# Next.js standalone build for production deployment
+#
+# Build: docker build -f deploy/Dockerfile.web -t jarvis-web .
+# Run:   docker run -p 3001:3001 jarvis-web
+
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+
+# Copy workspace root files
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/web/package.json ./apps/web/
+
+# Install all dependencies
+RUN npm ci
+
+# Build the shared package and web app
+FROM base AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+
+# Copy source files
+COPY packages/shared ./packages/shared
+COPY apps/web ./apps/web
+COPY package.json package-lock.json ./
+
+# Build shared package first
+WORKDIR /app/packages/shared
+RUN npm run build --if-present || true
+
+# Build Next.js app
+WORKDIR /app/apps/web
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOSTNAME="0.0.0.0"
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy standalone build output
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
+
+USER nextjs
+
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/ || exit 1
+
+# Next.js standalone server
+CMD ["node", "apps/web/server.js"]
