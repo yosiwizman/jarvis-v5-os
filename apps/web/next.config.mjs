@@ -1,11 +1,15 @@
 import { execSync } from 'child_process';
 
-// Get git SHA at build time
+// Get git SHA at build time (with timeout to prevent CI hang)
 let gitSha = 'unknown';
 try {
-  gitSha = execSync('git rev-parse --short HEAD').toString().trim();
+  gitSha = execSync('git rev-parse --short HEAD', {
+    timeout: 5000,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore']
+  }).trim();
 } catch {
-  // Git not available or not a git repo
+  // Git not available, not a git repo, or timed out
 }
 
 /** @type {import('next').NextConfig} */
