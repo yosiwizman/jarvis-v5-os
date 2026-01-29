@@ -4,10 +4,11 @@ This guide explains how to access AKIOR from other machines on your local networ
 
 ## Quick Start
 
-After deployment, JARVIS is accessible at:
+After deployment, AKIOR is accessible at:
 
 ```
-http://<host-ip>/
+HTTPS (recommended): https://jarvis.local/
+HTTP (fallback):     http://<host-ip>/
 ```
 
 To find the host IP, run on the deployment host:
@@ -165,12 +166,9 @@ If the Settings page shows "Application error: a client-side exception has occur
 
 Camera requires HTTPS for browser security reasons. On the camera page, check the "Camera Diagnostics" panel at the bottom.
 
-**If accessing via HTTP on LAN:**
-- Camera will show "HTTPS Required" warning
-- Solutions:
-  - Access from the host machine via `http://localhost/camera`
-  - Use Tailscale for secure HTTPS access
-  - Set up Caddy with automatic HTTPS (requires a domain)
+**Solution: Enable HTTPS with Local Certificates**
+
+AKIOR supports HTTPS via mkcert-generated certificates. See "HTTPS Setup" section below.
 
 ### Login Page
 
@@ -180,8 +178,76 @@ AKIOR now shows a login page at `/login` by default:
 - Auth state is stored in `localStorage['akior.authenticated']`
 - To logout: `localStorage.removeItem('akior.authenticated')` and refresh
 
+## HTTPS Setup (For Camera/Mic)
+
+Browsers require HTTPS for camera and microphone access. AKIOR uses locally-trusted certificates via mkcert.
+
+### Step 1: Generate Certificates (On Host)
+
+```bash
+# Run the certificate setup script
+cd /path/to/jarvis-v5-os
+bash ops/setup/lan-https-certs.sh
+```
+
+This creates:
+- `deploy/certs/cert.pem` - certificate for jarvis.local, aifactory-lan, localhost
+- `deploy/certs/key.pem` - private key
+- `deploy/certs/rootCA.pem` - CA certificate for clients to trust
+
+### Step 2: Restart the Stack
+
+```bash
+docker compose -f deploy/compose.jarvis.yml down
+docker compose -f deploy/compose.jarvis.yml up -d
+```
+
+### Step 3: Trust CA on Client Machines
+
+Copy `deploy/certs/rootCA.pem` to each client machine, then:
+
+**Windows:**
+1. Double-click `rootCA.pem`
+2. Click "Install Certificate"
+3. Select "Local Machine" > Next
+4. Select "Place all certificates in the following store"
+5. Browse > "Trusted Root Certification Authorities" > OK
+6. Next > Finish
+7. Restart browser
+
+**macOS:**
+```bash
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain rootCA.pem
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo cp rootCA.pem /usr/local/share/ca-certificates/akior-local.crt
+sudo update-ca-certificates
+```
+
+### Step 4: Verify HTTPS
+
+```bash
+# From host
+bash ops/verify/https-ui-check.sh
+
+# From client
+curl -I https://jarvis.local/
+```
+
+Open `https://jarvis.local/camera` in browser - camera should now work.
+
+### HTTP Fallback
+
+If HTTPS has issues, HTTP is still available on port 80:
+- `http://jarvis.local/` (shows insecure warning banner)
+- Camera/mic features will be disabled over HTTP
+
 ## Security Notes
 
-- Port 80 is accessible to all devices on the same network
+- Port 443 (HTTPS) and 80 (HTTP) are accessible to all devices on the same network
 - Internal services (3001, 1234) are NOT exposed to the network
-- For internet access, use Tailscale or set up HTTPS with a proper certificate
+- Local certificates are NOT trusted by browsers until CA is installed
+- For internet access, use Tailscale or set up HTTPS with a public certificate
+

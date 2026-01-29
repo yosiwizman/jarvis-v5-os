@@ -1,0 +1,5 @@
+# Don't commit local certificates
+# Generate them using: ops/setup/lan-https-certs.sh
+*.pem
+*.crt
+*.key

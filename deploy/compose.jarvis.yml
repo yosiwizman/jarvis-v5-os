@@ -1,9 +1,15 @@
-# JARVIS V5/V6 Local Host Deployment
+# AKIOR V6 Local Host Deployment
 # 
 # Runs web + server with Caddy reverse proxy for same-origin routing.
 # Access methods:
-#   - LAN: http://<host-ip>/ (port 80)
+#   - HTTPS (secure): https://jarvis.local/ or https://aifactory-lan/ (camera works)
+#   - HTTP (fallback): http://<host-ip>/ (port 80)
 #   - Localhost: http://127.0.0.1:3000/ (for Tailscale Serve)
+#
+# HTTPS Setup:
+#   1. Generate certificates: ops/setup/lan-https-certs.sh
+#   2. Trust CA on client machines (see docs/runbook/lan-access.md)
+#   3. Restart containers
 #
 # Usage:
 #   docker compose -f deploy/compose.jarvis.yml up -d --build
@@ -11,16 +17,18 @@
 #   docker compose -f deploy/compose.jarvis.yml down
 
 services:
-  # Caddy reverse proxy - handles routing and WebSocket upgrades
+  # Caddy reverse proxy - handles routing, WebSocket upgrades, and TLS
   caddy:
     image: caddy:2-alpine
     container_name: jarvis-caddy
     restart: unless-stopped
     ports:
-      - "0.0.0.0:80:80"           # LAN HTTP access
+      - "0.0.0.0:443:443"         # LAN HTTPS access (secure, camera works)
+      - "0.0.0.0:80:80"           # LAN HTTP fallback (no camera)
       - "127.0.0.1:3000:3000"     # Localhost for Tailscale Serve
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/etc/caddy/certs:ro    # mkcert certificates
     networks:
       - jarvis-net
     depends_on:
