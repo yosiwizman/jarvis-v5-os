@@ -1,7 +1,21 @@
+import { execSync } from 'child_process';
+
+// Get git SHA at build time
+let gitSha = 'unknown';
+try {
+  gitSha = execSync('git rev-parse --short HEAD').toString().trim();
+} catch {
+  // Git not available or not a git repo
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_GIT_SHA: gitSha,
+    NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
+  },
   eslint: {
     // Disable ESLint during builds (run separately with npm run lint)
     ignoreDuringBuilds: true,

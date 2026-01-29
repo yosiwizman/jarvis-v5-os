@@ -259,6 +259,63 @@ If HTTPS has issues, HTTP is still available on port 80:
 - **UI branding:** All user-facing text displays "AKIOR" (not "Jarvis")
 - **Internal code:** Some internal code/filenames may still use "jarvis" for compatibility
 
+## Deploy Verification
+
+After deploying, verify the correct version is running:
+
+### Check Running SHA
+
+```bash
+# From host - check deployed version
+curl -s https://localhost/api/health | jq '.build'
+
+# Or from Windows
+curl -s https://akior.local/api/health | jq .build
+```
+
+Expected response:
+```json
+{
+  "gitSha": "abc1234",
+  "buildTime": "2025-01-29T12:00:00.000Z"
+}
+```
+
+### Automated Verification
+
+Use the verification script to compare deployed SHA against expected:
+
+```bash
+# Verify deployed SHA matches expected
+./ops/verify/sha-check.sh abc1234
+
+# Or verify against current HEAD
+./ops/verify/sha-check.sh $(git rev-parse --short HEAD)
+```
+
+The script exits 0 if SHAs match, 1 if they differ.
+
+### Troubleshooting Version Mismatches
+
+If the deployed SHA doesn't match expected:
+
+1. **Check if old container is cached:**
+   ```bash
+   docker compose -f deploy/compose.jarvis.yml down
+   docker compose -f deploy/compose.jarvis.yml build --no-cache
+   docker compose -f deploy/compose.jarvis.yml up -d
+   ```
+
+2. **Verify git state:**
+   ```bash
+   git log --oneline -1  # Should match deployed SHA
+   ```
+
+3. **Check container logs:**
+   ```bash
+   docker logs jarvis-web 2>&1 | head -20
+   ```
+
 ## Security Notes
 
 - Port 443 (HTTPS) and 80 (HTTP) are accessible to all devices on the same network

@@ -68,6 +68,8 @@ export type AppSettings = {
   };
 };
 
+import { defaultIntegrationSettings } from './integrations.js';
+
 const STORAGE_KEY = 'smartMirrorSettings';
 const SERVER_URL = '/api/settings';
 
@@ -110,7 +112,7 @@ const defaultSettings: AppSettings = {
     quality: 'standard',
     partialImages: 0
   },
-  integrations: {} as import('./integrations.js').IntegrationSettings,
+  integrations: defaultIntegrationSettings,
   notificationPreferences: {
     calendar_reminder: true,
     email_notification: true,
