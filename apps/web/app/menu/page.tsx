@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const cards = [
-  { href: '/jarvis', title: 'Jarvis (Voice)', desc: 'OpenAI Realtime voice assistant' },
+  { href: '/jarvis', title: 'Voice Assistant', desc: 'AKIOR realtime voice interface' },
   { href: '/3dmodel', title: '3D Model', desc: 'Create models from captured images' },
   { href: '/createimage', title: 'Create Image', desc: 'Generate images from prompts' },
   { href: '/3dprinters', title: '3D Printers', desc: 'Monitor and control Bambu Lab printers' },
@@ -10,7 +10,7 @@ const cards = [
   { href: '/security', title: 'Security', desc: 'Live dashboard for connected cameras' },
   { href: '/camera', title: 'Camera', desc: 'Register a device as a camera client' },
   { href: '/holomat', title: 'Holomat', desc: 'Futuristic scanning interface with camera sync' },
-  { href: '/settings', title: 'Settings', desc: 'Jarvis & Meshy configuration' }
+  { href: '/settings', title: 'Settings', desc: 'AKIOR system configuration' }
 ];
 
 export default function MenuPage() {

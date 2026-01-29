@@ -1155,7 +1155,7 @@ export default function JarvisPage() {
           >
             <Image
               src="/assets/logo.png"
-              alt="Jarvis Logo"
+              alt="AKIOR Logo"
               width={500}
               height={500}
               className="w-[500px] h-[500px] object-contain"
@@ -1197,7 +1197,7 @@ export default function JarvisPage() {
             {status === 'listening' ? (
               'Establishing secure connection...'
             ) : status === 'active' ? (
-              'J.A.R.V.I.S. is online and listening...'
+              'AKIOR is online and listening...'
             ) : status === 'error' ? (
               'Connection error. Refresh to try again.'
             ) : null}

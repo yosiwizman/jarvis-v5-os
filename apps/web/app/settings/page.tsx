@@ -482,7 +482,7 @@ export default function SettingsPage() {
       <section className="card p-6 space-y-6">
         <header>
           <div className="text-lg font-semibold">Appearance</div>
-          <div className="text-white/60 text-sm">Choose your interface theme for Jarvis and Holomat</div>
+          <div className="text-white/60 text-sm">Choose your interface theme for AKIOR</div>
         </header>
         
         {/* Light/Dark Mode */}
@@ -614,8 +614,8 @@ export default function SettingsPage() {
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold">Jarvis</div>
-            <div className="text-white/60 text-sm">Realtime voice assistant settings</div>
+            <div className="text-lg font-semibold">Voice Assistant</div>
+            <div className="text-white/60 text-sm">AKIOR realtime voice settings</div>
           </div>
         </header>
         <div className="grid gap-4 md:grid-cols-2">

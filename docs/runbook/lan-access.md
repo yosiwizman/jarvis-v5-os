@@ -1,6 +1,6 @@
-# JARVIS LAN Access Guide
+# AKIOR LAN Access Guide
 
-This guide explains how to access JARVIS from other machines on your local network.
+This guide explains how to access AKIOR from other machines on your local network.
 
 ## Quick Start
 
@@ -109,7 +109,7 @@ Server: Caddy
 
 Open in browser: `http://<host-ip>/`
 
-You should see the JARVIS interface.
+You should see the AKIOR login page.
 
 ## Troubleshooting
 
@@ -149,6 +149,36 @@ Backend service is down. Check:
 docker logs jarvis-server --tail=50
 docker logs jarvis-web --tail=50
 ```
+
+## UI Troubleshooting
+
+### Settings Page Crash
+
+If the Settings page shows "Application error: a client-side exception has occurred":
+
+1. The page now has an error boundary that catches most errors
+2. Try the "Reset settings" button on the error page
+3. Clear browser localStorage: `localStorage.removeItem('smartMirrorSettings')`
+4. Clear browser cache and reload
+
+### Camera Not Working
+
+Camera requires HTTPS for browser security reasons. On the camera page, check the "Camera Diagnostics" panel at the bottom.
+
+**If accessing via HTTP on LAN:**
+- Camera will show "HTTPS Required" warning
+- Solutions:
+  - Access from the host machine via `http://localhost/camera`
+  - Use Tailscale for secure HTTPS access
+  - Set up Caddy with automatic HTTPS (requires a domain)
+
+### Login Page
+
+AKIOR now shows a login page at `/login` by default:
+- "Quick Access" bypasses authentication for local use
+- "Enter Access Code" accepts any 4+ character code
+- Auth state is stored in `localStorage['akior.authenticated']`
+- To logout: `localStorage.removeItem('akior.authenticated')` and refresh
 
 ## Security Notes
 

@@ -31,18 +31,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
     // Log kiosk mode status (for debugging)
     if (isUbuntuShellMode) {
-      console.log('[Jarvis] Ubuntu Shell / Kiosk Mode: ACTIVE');
+      console.log('[AKIOR] Ubuntu Shell / Kiosk Mode: ACTIVE');
     }
   }, [isUbuntuShellMode]);
 
   // Don't show floating icon on the dedicated Jarvis page
   const showFloatingJarvis = pathname !== '/jarvis';
+  
+  // Hide sidebar on login page
+  const isLoginPage = pathname === '/login';
+
+  // Set document title
+  useEffect(() => {
+    document.title = 'AKIOR Console';
+  }, []);
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>AKIOR Console</title>
+        <meta name="description" content="AKIOR - Intelligent AI Assistant Console" />
+      </head>
       <body className="min-h-screen relative">
         <ThemeProvider>
           <NotificationProvider>
+          {!isLoginPage && (
           <aside className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'} w-[260px]`}>
           <div className="flex items-center justify-between mb-4">
             <button 
@@ -52,14 +65,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               ☰
             </button>
-            {!isCollapsed && <div className="text-xl font-semibold">Jarvis</div>}
+            {!isCollapsed && <div className="text-xl font-semibold">AKIOR</div>}
           </div>
           <nav className="space-y-2 flex-1">
-            <Link className={`block btn truncate ${pathname === '/menu' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/menu" title="Menu">
-              {isCollapsed ? 'M' : 'Menu'}
+            <Link className={`block btn truncate ${pathname === '/menu' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/menu" title="Dashboard">
+              {isCollapsed ? 'D' : 'Dashboard'}
             </Link>
-            <Link className={`block btn truncate ${pathname === '/jarvis' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/jarvis" title="Jarvis">
-              {isCollapsed ? 'J' : 'Jarvis'}
+            <Link className={`block btn truncate ${pathname === '/jarvis' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/jarvis" title="Voice Assistant">
+              {isCollapsed ? 'V' : 'Voice Assistant'}
             </Link>
             <Link className={`block btn truncate ${pathname === '/3dmodel' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/3dmodel" title="3D Model">
               {isCollapsed ? '3D' : '3D Model'}
@@ -98,9 +111,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </nav>
           {!isCollapsed && <footer className="mt-6 text-xs text-white/50">dark • modern</footer>}
         </aside>
+          )}
         
         {/* Floating menu button when sidebar is hidden */}
-        {isCollapsed && (
+        {!isLoginPage && isCollapsed && (
           <button
             onClick={() => setIsCollapsed(false)}
             className="fixed top-4 left-4 z-40 btn p-3 shadow-lg"
@@ -110,16 +124,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </button>
         )}
         
-        <main className={`relative p-8 space-y-6 transition-all duration-300 ${isCollapsed ? 'ml-0' : 'ml-[260px]'}`}>
+        <main className={`relative p-8 space-y-6 transition-all duration-300 ${isLoginPage ? 'ml-0 p-0' : isCollapsed ? 'ml-0' : 'ml-[260px]'}`}>
           <NavigationBridge />
           {children}
         </main>
         
           {/* HUD Widget - System Status (V3 inspired) */}
-          <HudWidget />
+          {!isLoginPage && <HudWidget />}
         
-          {/* Global Jarvis Assistant */}
-          {showFloatingJarvis && (
+          {/* Global AKIOR Voice Assistant */}
+          {!isLoginPage && showFloatingJarvis && (
             <>
               <JarvisIcon onClick={() => setIsJarvisOpen(true)} />
               <JarvisAssistant isOpen={isJarvisOpen} onClose={() => setIsJarvisOpen(false)} />
