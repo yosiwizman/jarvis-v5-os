@@ -1,0 +1,29 @@
+[Unit]
+Description=JARVIS V5/V6 AI Assistant
+Documentation=https://github.com/yosiwizman/jarvis-v5-os
+After=docker.service tailscaled.service network-online.target
+Requires=docker.service
+Wants=tailscaled.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/jarvis/JARVIS-V5-OS
+
+# Start containers
+ExecStart=/usr/bin/docker compose -f deploy/compose.jarvis.yml up -d --remove-orphans
+
+# Stop containers gracefully
+ExecStop=/usr/bin/docker compose -f deploy/compose.jarvis.yml down
+
+# Reload: rebuild and restart
+ExecReload=/usr/bin/docker compose -f deploy/compose.jarvis.yml up -d --build --remove-orphans
+
+# Environment
+Environment=COMPOSE_PROJECT_NAME=jarvis
+
+# Restart policy handled by Docker (unless-stopped)
+# systemd just manages the lifecycle
+
+[Install]
+WantedBy=multi-user.target
