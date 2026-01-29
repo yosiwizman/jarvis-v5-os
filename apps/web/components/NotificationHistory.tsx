@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import type { ScheduledEvent } from '@shared/core';
+import type { ScheduledEvent } from '@shared/notifications';
 
 interface NotificationHistoryResponse {
   ok: boolean;

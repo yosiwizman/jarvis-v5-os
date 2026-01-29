@@ -352,3 +352,10 @@ export function updateLockdownState(partial: Partial<import('./types.js').Lockdo
 }
 
 export { defaultSettings as defaultAppSettings };
+
+// Re-export integrations module for convenience (used by web app)
+export type { IntegrationId, IntegrationSettings, WeatherIntegrationConfig } from './integrations.js';
+export { defaultIntegrationSettings, integrationMetadata, isIntegrationConnected } from './integrations.js';
+
+// Re-export types for convenience (used by web app)
+export type { CameraSettings, MotionZone, LockdownState } from './types.js';
