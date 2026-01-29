@@ -318,10 +318,10 @@ export default function ChatPage() {
       await fetch(buildServerUrl('/tools/invoke'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'cameras.captureAll',
-          args: { tag: args.tag || 'jarvis-capture' }
-        })
+          body: JSON.stringify({
+            name: 'cameras.captureAll',
+            args: { tag: args.tag || 'akior-capture' }
+          })
       });
       
       return {
@@ -417,7 +417,7 @@ export default function ChatPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             dataUrl: imageDataUrl,
-            filename: `jarvis-vision-${targetCamera.friendlyName}`,
+            filename: `akior-vision-${targetCamera.friendlyName}`,
             prompt: `Camera view from ${targetCamera.friendlyName}`
           })
         });
@@ -1060,7 +1060,7 @@ export default function ChatPage() {
             <div className="flex h-full items-center justify-center text-center text-sm text-white/50">
               <div className="space-y-4 max-w-xl">
                 <p>
-                  Start a conversation with Jarvis's GPT-5 text assistant with function calling.
+                  Start a conversation with AKIOR's GPT-5 text assistant with function calling.
                 </p>
                 <div className="text-xs text-left space-y-2 p-4 bg-white/5 rounded-xl">
                   <p className="jarvis-accent-text font-semibold">Try asking me to:</p>
@@ -1114,7 +1114,7 @@ export default function ChatPage() {
                         isUser ? 'jarvis-accent-text opacity-80' : isFunction ? 'jarvis-accent-text' : 'text-white/50'
                       }`}
                     >
-                      {isUser ? 'You' : isFunction ? '⚙️ Function' : 'Jarvis'}
+                      {isUser ? 'You' : isFunction ? '⚙️ Function' : 'AKIOR'}
                     </span>
                     <div
                       className={`whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-lg ${bubbleClass}`}
