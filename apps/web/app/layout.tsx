@@ -8,6 +8,7 @@ import { HudWidget } from '@/components/HudWidget';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { NotificationToast } from '@/components/NotificationToast';
+import { InsecureBanner } from '@/components/InsecureBanner';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
@@ -55,6 +56,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen relative">
         <ThemeProvider>
           <NotificationProvider>
+          {/* HTTP security warning banner */}
+          <InsecureBanner />
           {!isLoginPage && (
           <aside className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'} w-[260px]`}>
           <div className="flex items-center justify-between mb-4">
