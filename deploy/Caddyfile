@@ -6,8 +6,12 @@
 # - /files/*     -> server (static files)
 # - /static/*    -> server (static assets)
 # - /*           -> web (Next.js frontend)
+#
+# Listens on:
+#   - :80   (LAN HTTP access)
+#   - :3000 (localhost for Tailscale Serve)
 
-:3000 {
+:80, :3000 {
     # Socket.IO with WebSocket support
     handle /socket.io/* {
         reverse_proxy server:1234
