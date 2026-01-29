@@ -7,7 +7,8 @@ This guide explains how to access AKIOR from other machines on your local networ
 After deployment, AKIOR is accessible at:
 
 ```
-HTTPS (recommended): https://jarvis.local/
+HTTPS (recommended): https://akior.local/     (primary)
+                     https://jarvis.local/    (alias)
 HTTP (fallback):     http://<host-ip>/
 ```
 
@@ -21,15 +22,16 @@ Example: `http://192.168.1.100/`
 ## Port Overview
 
 | Port | Interface | Purpose |
-|------|-----------|---------|
-| 80 | `0.0.0.0` (all) | **LAN HTTP access** - use this from other machines |
-| 3000 | `127.0.0.1` (localhost) | Tailscale Serve integration |
+|------|-----------|----------|
+| 443 | `0.0.0.0` (all) | **LAN HTTPS** - camera/mic works |
+| 80 | `0.0.0.0` (all) | **LAN HTTP fallback** - no camera/mic |
+| 3000 | `localhost` | Tailscale Serve integration |
 | 3001 | Docker internal | Next.js frontend (not exposed) |
 | 1234 | Docker internal | API server (not exposed) |
 
 ## Setting Up a Hostname (Optional)
 
-Instead of using the IP address, you can set up a friendly hostname like `jarvis.local` or `aifactory-lan`.
+Instead of using the IP address, you can set up a friendly hostname like `akior.local` (primary) or `jarvis.local` (alias).
 
 ### Option 1: Windows Hosts File (Recommended for Single User)
 
@@ -37,10 +39,11 @@ Instead of using the IP address, you can set up a friendly hostname like `jarvis
 2. Open file: `C:\Windows\System32\drivers\etc\hosts`
 3. Add this line (replace IP with your host IP):
    ```
-   192.168.1.100    jarvis.local aifactory-lan
+   192.168.1.204    akior.local jarvis.local aifactory-lan
    ```
 4. Save and close
-5. Access via: `http://jarvis.local/` or `http://aifactory-lan/`
+5. Flush DNS: `ipconfig /flushdns`
+6. Access via: `https://akior.local/` or `https://jarvis.local/`
 
 ### Option 2: macOS/Linux Hosts File
 
@@ -122,13 +125,21 @@ You should see the AKIOR login page.
    ```
    All should show `Up (healthy)`.
 
-2. **Check port 80 is listening:**
+2. **Check ports 80 and 443 are listening:**
    ```bash
-   ss -lntp | grep ':80'
+   ss -lntp | grep -E ':(80|443)'
    ```
-   Should show `0.0.0.0:80` or `*:80`.
+   Should show `0.0.0.0:80` and `0.0.0.0:443`.
 
-3. **Check firewall:**
+3. **Port 443 not listening?** The compose file may be outdated. Pull latest and restart:
+   ```bash
+   cd /opt/jarvis/JARVIS-V5-OS  # or your install path
+   git pull origin main
+   docker compose -f deploy/compose.jarvis.yml down
+   docker compose -f deploy/compose.jarvis.yml up -d
+   ```
+
+4. **Check firewall:**
    ```bash
    sudo ufw status
    # If active, allow port 80:
@@ -166,9 +177,7 @@ If the Settings page shows "Application error: a client-side exception has occur
 
 Camera requires HTTPS for browser security reasons. On the camera page, check the "Camera Diagnostics" panel at the bottom.
 
-**Solution: Enable HTTPS with Local Certificates**
-
-AKIOR supports HTTPS via mkcert-generated certificates. See "HTTPS Setup" section below.
+**Solution:** Access via `https://akior.local/camera` (not HTTP). See "HTTPS Setup" section below.
 
 ### Login Page
 
@@ -180,85 +189,73 @@ AKIOR now shows a login page at `/login` by default:
 
 ## HTTPS Setup (For Camera/Mic)
 
-Browsers require HTTPS for camera and microphone access. AKIOR uses locally-trusted certificates via mkcert.
+Browsers require HTTPS for camera and microphone access. AKIOR uses Caddy's internal CA for automatic certificate generation - no manual cert setup needed.
 
-### Step 1: Generate Certificates (On Host)
-
-```bash
-# Run the certificate setup script
-cd /path/to/jarvis-v5-os
-bash ops/setup/lan-https-certs.sh
-```
-
-This creates:
-- `deploy/certs/cert.pem` - certificate for jarvis.local, aifactory-lan, localhost
-- `deploy/certs/key.pem` - private key
-- `deploy/certs/rootCA.pem` - CA certificate for clients to trust
-
-### Step 2: Restart the Stack
+### Step 1: Deploy/Update the Stack
 
 ```bash
+cd /opt/jarvis/JARVIS-V5-OS  # or your install path
+git pull origin main
 docker compose -f deploy/compose.jarvis.yml down
 docker compose -f deploy/compose.jarvis.yml up -d
 ```
 
-### Step 3: Trust CA on Client Machines
+Caddy automatically generates certificates for `akior.local`, `jarvis.local`, and `aifactory-lan`.
 
-Copy `deploy/certs/rootCA.pem` to each client machine, then:
+### Step 2: Verify HTTPS is Working
 
-**Windows (Recommended - Automated):**
-```powershell
-# Run PowerShell as Administrator, then:
-cd C:\path\to\jarvis-v5-os
-.\ops\windows\import-lan-rootca.ps1
+```bash
+# From host - check ports are listening
+ss -lntp | grep -E ':(80|443)'
 
-# Or with explicit path to certificate:
-.\ops\windows\import-lan-rootca.ps1 -CertPath "C:\path\to\rootCA.pem"
+# Test HTTPS (will show cert warning until CA is trusted)
+curl -k https://localhost/
 ```
-See `ops/windows/README-lan-https.md` for detailed instructions.
 
-**Windows (Manual):**
-1. Double-click `rootCA.pem`
+### Step 3: Export Caddy's Root CA
+
+```bash
+# On the host, extract the CA certificate:
+docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt
+
+# Copy to your Windows machine (e.g., via SCP or shared folder)
+```
+
+### Step 4: Trust CA on Windows
+
+**Option A: Using the import script (Recommended)**
+```powershell
+# Run PowerShell as Administrator:
+cd C:\path\to\jarvis-v5-os
+.\ops\windows\import-lan-rootca.ps1 -CertPath "C:\path\to\caddy-root-ca.crt"
+```
+
+**Option B: Manual import**
+1. Double-click `caddy-root-ca.crt`
 2. Click "Install Certificate"
 3. Select "Local Machine" > Next
 4. Select "Place all certificates in the following store"
 5. Browse > "Trusted Root Certification Authorities" > OK
 6. Next > Finish
-7. Restart browser
+7. Restart browser and flush DNS: `ipconfig /flushdns`
 
-**macOS:**
-```bash
-sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain rootCA.pem
-```
+### Step 5: Verify from Browser
 
-**Linux (Ubuntu/Debian):**
-```bash
-sudo cp rootCA.pem /usr/local/share/ca-certificates/akior-local.crt
-sudo update-ca-certificates
-```
-
-### Step 4: Verify HTTPS
-
-```bash
-# From host
-bash ops/verify/https-ui-check.sh
-
-# From client
-curl -I https://jarvis.local/
-```
-
-Open `https://jarvis.local/camera` in browser - camera should now work.
+Open in browser:
+- `https://akior.local/` - Should show AKIOR without certificate warnings
+- `https://akior.local/camera` - Camera should work
+- `https://akior.local/display` - Kiosk display
 
 ### HTTP Fallback
 
 If HTTPS has issues, HTTP is still available on port 80:
-- `http://jarvis.local/` (shows insecure warning banner)
+- `http://akior.local/` (shows insecure warning banner)
 - Camera/mic features will be disabled over HTTP
 
 ## Security Notes
 
 - Port 443 (HTTPS) and 80 (HTTP) are accessible to all devices on the same network
 - Internal services (3001, 1234) are NOT exposed to the network
-- Local certificates are NOT trusted by browsers until CA is installed
+- Caddy's internal CA is only trusted on machines where you import `caddy-root-ca.crt`
 - For internet access, use Tailscale or set up HTTPS with a public certificate
 
