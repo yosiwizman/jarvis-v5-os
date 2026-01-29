@@ -206,7 +206,18 @@ docker compose -f deploy/compose.jarvis.yml up -d
 
 Copy `deploy/certs/rootCA.pem` to each client machine, then:
 
-**Windows:**
+**Windows (Recommended - Automated):**
+```powershell
+# Run PowerShell as Administrator, then:
+cd C:\path\to\jarvis-v5-os
+.\ops\windows\import-lan-rootca.ps1
+
+# Or with explicit path to certificate:
+.\ops\windows\import-lan-rootca.ps1 -CertPath "C:\path\to\rootCA.pem"
+```
+See `ops/windows/README-lan-https.md` for detailed instructions.
+
+**Windows (Manual):**
 1. Double-click `rootCA.pem`
 2. Click "Install Certificate"
 3. Select "Local Machine" > Next
