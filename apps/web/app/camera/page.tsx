@@ -6,6 +6,136 @@ import { grabStill } from '@/lib/capture';
 import { buildServerUrl } from '@/lib/api';
 import { CameraSettings } from '@/components/CameraSettings';
 
+// Camera Diagnostics Component
+function CameraDiagnostics() {
+  const [diagnostics, setDiagnostics] = useState<{
+    isSecureContext: boolean;
+    protocol: string;
+    hostname: string;
+    deviceCount: number | null;
+    permissionState: 'prompt' | 'granted' | 'denied' | 'unknown';
+    errorMessage: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    async function checkDiagnostics() {
+      if (typeof window === 'undefined') return;
+      
+      const result = {
+        isSecureContext: window.isSecureContext,
+        protocol: window.location.protocol,
+        hostname: window.location.hostname,
+        deviceCount: null as number | null,
+        permissionState: 'unknown' as 'prompt' | 'granted' | 'denied' | 'unknown',
+        errorMessage: null as string | null,
+      };
+      
+      // Check permission state if available
+      try {
+        if ('permissions' in navigator) {
+          const status = await navigator.permissions.query({ name: 'camera' as PermissionName });
+          result.permissionState = status.state as 'prompt' | 'granted' | 'denied';
+        }
+      } catch (e) {
+        // permissions API not available
+      }
+      
+      // Try to enumerate devices
+      try {
+        if (navigator.mediaDevices?.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          result.deviceCount = devices.filter(d => d.kind === 'videoinput').length;
+        }
+      } catch (e: any) {
+        result.errorMessage = e.message;
+      }
+      
+      setDiagnostics(result);
+    }
+    
+    checkDiagnostics();
+  }, []);
+
+  if (!diagnostics) return null;
+  
+  const isLanWithoutHttps = !diagnostics.isSecureContext && 
+    diagnostics.hostname !== 'localhost' && 
+    diagnostics.hostname !== '127.0.0.1';
+
+  return (
+    <div className="card p-6 space-y-4">
+      <div className="flex items-center gap-2">
+        <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        <h3 className="text-lg font-semibold">Camera Diagnostics</h3>
+      </div>
+      
+      <div className="grid gap-3 text-sm">
+        <div className="flex justify-between items-center py-2 border-b border-white/10">
+          <span className="text-white/60">Secure Context (HTTPS)</span>
+          <span className={diagnostics.isSecureContext ? 'text-emerald-400' : 'text-amber-400'}>
+            {diagnostics.isSecureContext ? '✓ Yes' : '✗ No'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center py-2 border-b border-white/10">
+          <span className="text-white/60">Protocol</span>
+          <span className="font-mono">{diagnostics.protocol}</span>
+        </div>
+        <div className="flex justify-between items-center py-2 border-b border-white/10">
+          <span className="text-white/60">Hostname</span>
+          <span className="font-mono">{diagnostics.hostname}</span>
+        </div>
+        <div className="flex justify-between items-center py-2 border-b border-white/10">
+          <span className="text-white/60">Camera Permission</span>
+          <span className={{
+            'granted': 'text-emerald-400',
+            'denied': 'text-red-400',
+            'prompt': 'text-amber-400',
+            'unknown': 'text-white/50'
+          }[diagnostics.permissionState]}>
+            {diagnostics.permissionState}
+          </span>
+        </div>
+        <div className="flex justify-between items-center py-2 border-b border-white/10">
+          <span className="text-white/60">Detected Cameras</span>
+          <span>{diagnostics.deviceCount !== null ? diagnostics.deviceCount : 'Unable to detect'}</span>
+        </div>
+      </div>
+      
+      {isLanWithoutHttps && (
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-amber-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="font-medium">HTTPS Required for Camera Access</span>
+          </div>
+          <p className="text-sm text-white/70">
+            Browsers require HTTPS to access the camera for security reasons. 
+            You're accessing via HTTP on a LAN address.
+          </p>
+          <div className="text-sm space-y-2">
+            <p className="text-white/60">Solutions:</p>
+            <ul className="list-disc list-inside text-white/50 space-y-1">
+              <li>Access via <code className="bg-white/10 px-1 rounded">https://</code> with a valid certificate</li>
+              <li>Use <code className="bg-white/10 px-1 rounded">localhost</code> or <code className="bg-white/10 px-1 rounded">127.0.0.1</code> from the host machine</li>
+              <li>Use Tailscale for secure remote access</li>
+              <li>Set up a reverse proxy with SSL (e.g., Caddy with automatic HTTPS)</li>
+            </ul>
+          </div>
+        </div>
+      )}
+      
+      {diagnostics.errorMessage && (
+        <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4">
+          <p className="text-sm text-red-400">Error: {diagnostics.errorMessage}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const STREAM_FPS = 8;
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds - matches socket ping interval
 const CAMERA_ID_STORAGE_KEY = 'jarvis.cameraId';
@@ -316,7 +446,7 @@ export default function CameraPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Camera Client</h1>
         <p className="text-sm text-white/60">
-          Stream this device to the security dashboard and respond to capture requests from Jarvis tools.
+          Stream this device to the security dashboard and respond to capture requests from AKIOR.
         </p>
       </div>
 
@@ -359,6 +489,8 @@ export default function CameraPage() {
         <p className="text-sm text-white/60">Configure permissions and Wi‑Fi connection for camera devices.</p>
       </div>
       <CameraSettings />
+      
+      <CameraDiagnostics />
     </div>
   );
 }
