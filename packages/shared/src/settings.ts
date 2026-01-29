@@ -55,11 +55,11 @@ export type AppSettings = {
   models: ModelSettings;
   textChat: TextChatSettings;
   imageGeneration: ImageGenerationSettings;
-  integrations: import('./integrations').IntegrationSettings;
+  integrations: import('./integrations.js').IntegrationSettings;
   notificationPreferences?: NotificationPreferences;
   useServerProxy?: boolean;
-  cameras?: import('./types').CameraSettings[];
-  lockdownState?: import('./types').LockdownState;
+  cameras?: import('./types.js').CameraSettings[];
+  lockdownState?: import('./types.js').LockdownState;
   // Legacy field for backward compat during migration
   weather?: {
     enabled?: boolean;
@@ -110,7 +110,7 @@ const defaultSettings: AppSettings = {
     quality: 'standard',
     partialImages: 0
   },
-  integrations: {} as import('./integrations').IntegrationSettings,
+  integrations: {} as import('./integrations.js').IntegrationSettings,
   notificationPreferences: {
     calendar_reminder: true,
     email_notification: true,
@@ -304,14 +304,14 @@ export function updateImageGenerationSettings(partial: Partial<ImageGenerationSe
   writeSettings({ ...current, imageGeneration: { ...current.imageGeneration, ...partial } });
 }
 
-export function updateIntegrations(partial: Partial<import('./integrations').IntegrationSettings>) {
+export function updateIntegrations(partial: Partial<import('./integrations.js').IntegrationSettings>) {
   const current = readSettings();
   writeSettings({ ...current, integrations: { ...current.integrations, ...partial } });
 }
 
-export function updateIntegration<K extends import('./integrations').IntegrationId>(
+export function updateIntegration<K extends import('./integrations.js').IntegrationId>(
   id: K,
-  patch: Partial<import('./integrations').IntegrationSettings[K]>
+  patch: Partial<import('./integrations.js').IntegrationSettings[K]>
 ) {
   const current = readSettings();
   const updated = {
@@ -324,12 +324,12 @@ export function updateIntegration<K extends import('./integrations').Integration
   writeSettings(updated);
 }
 
-export function updateCameras(cameras: import('./types').CameraSettings[]) {
+export function updateCameras(cameras: import('./types.js').CameraSettings[]) {
   const current = readSettings();
   writeSettings({ ...current, cameras });
 }
 
-export function updateCamera(cameraId: string, patch: Partial<import('./types').CameraSettings>) {
+export function updateCamera(cameraId: string, patch: Partial<import('./types.js').CameraSettings>) {
   const current = readSettings();
   const cameras = current.cameras ?? [];
   const existingIndex = cameras.findIndex(c => c.cameraId === cameraId);
@@ -339,23 +339,16 @@ export function updateCamera(cameraId: string, patch: Partial<import('./types').
     cameras[existingIndex] = { ...cameras[existingIndex], ...patch };
   } else {
     // Add new camera
-    cameras.push({ cameraId, enabled: true, friendlyName: '', motionDetection: { enabled: false, sensitivity: 50, cooldownSeconds: 30 }, ...patch } as import('./types').CameraSettings);
+    cameras.push({ cameraId, enabled: true, friendlyName: '', motionDetection: { enabled: false, sensitivity: 50, cooldownSeconds: 30 }, ...patch } as import('./types.js').CameraSettings);
   }
   
   writeSettings({ ...current, cameras });
 }
 
-export function updateLockdownState(partial: Partial<import('./types').LockdownState>) {
+export function updateLockdownState(partial: Partial<import('./types.js').LockdownState>) {
   const current = readSettings();
-  const lockdownState = { ...current.lockdownState, ...partial } as import('./types').LockdownState;
+  const lockdownState = { ...current.lockdownState, ...partial } as import('./types.js').LockdownState;
   writeSettings({ ...current, lockdownState });
 }
 
 export { defaultSettings as defaultAppSettings };
-
-// Re-export integrations module for convenience
-export type { IntegrationId, IntegrationSettings, WeatherIntegrationConfig } from './integrations';
-export { defaultIntegrationSettings, integrationMetadata, isIntegrationConnected } from './integrations';
-
-// Re-export types for convenience
-export type { CameraSettings, MotionZone, LockdownState } from './types';

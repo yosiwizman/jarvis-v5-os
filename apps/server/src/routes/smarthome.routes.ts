@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { readSettings } from '@shared/settings';
+import { readSettings } from '@shared/core/settings';
 import * as alexaClient from '../clients/alexaClient.js';
 import * as irobotClient from '../clients/irobotClient.js';
 import * as nestClient from '../clients/nestClient.js';

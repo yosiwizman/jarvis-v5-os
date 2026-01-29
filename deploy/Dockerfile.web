@@ -11,9 +11,9 @@ WORKDIR /app
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 
-# Copy workspace root files
+# Copy workspace root files and shared package (needed for workspace link)
 COPY package.json package-lock.json ./
-COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared ./packages/shared/
 COPY apps/web/package.json ./apps/web/
 
 # Install all dependencies
@@ -24,17 +24,15 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 
 # Copy source files
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
 COPY package.json package-lock.json ./
 
-# Build shared package first
+# Build shared package first (required for @shared/core)
 WORKDIR /app/packages/shared
-RUN npm run build --if-present || true
+RUN npm run build
 
 # Build Next.js app
 WORKDIR /app/apps/web
@@ -52,10 +50,10 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy standalone build output
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+# Copy standalone build output with correct ownership
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
 USER nextjs
 

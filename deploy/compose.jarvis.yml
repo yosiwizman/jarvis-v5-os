@@ -24,7 +24,7 @@ services:
       - web
       - server
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,6 +40,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - HOSTNAME=0.0.0.0
     expose:
       - "3001"
     networks:
@@ -47,7 +48,7 @@ services:
     depends_on:
       - server
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,7 +74,7 @@ services:
     networks:
       - jarvis-net
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:1234/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:1234/health"]
       interval: 30s
       timeout: 10s
       retries: 3

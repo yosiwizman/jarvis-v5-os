@@ -12,12 +12,12 @@ FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine
 RUN apk add --no-cache libc6-compat
 
-# Copy workspace root files
+# Copy workspace root files and shared package (needed for workspace link)
 COPY package.json package-lock.json ./
-COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared ./packages/shared/
 COPY apps/server/package.json ./apps/server/
 
-# Install all dependencies (including workspace deps)
+# Install all dependencies
 RUN npm ci --workspace=@jarvis/server
 
 # Build the shared package and server
@@ -25,18 +25,17 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
-COPY --from=deps /app/apps/server/node_modules ./apps/server/node_modules
 
 # Copy source files
 COPY packages/shared ./packages/shared
 COPY apps/server ./apps/server
 COPY package.json package-lock.json ./
 
-# Build shared package first, then server
+# Build shared package first (required for @shared/core)
 WORKDIR /app/packages/shared
-RUN npm run build --if-present || true
+RUN npm run build
 
+# Build server
 WORKDIR /app/apps/server
 RUN npm run build
 
@@ -55,7 +54,13 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/apps/server/dist ./dist
 COPY --from=builder /app/apps/server/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/shared ./packages/shared
+
+# Copy built shared package directly into node_modules (replaces workspace symlink)
+RUN rm -rf /app/node_modules/@shared/core
+COPY --from=builder /app/packages/shared /app/node_modules/@shared/core
+
+# Fix permissions on shared package (was 700 from build context)
+RUN chmod -R 755 /app/node_modules/@shared/core
 
 # Create data directory with correct permissions
 RUN mkdir -p /app/data && chown -R jarvis:nodejs /app/data
