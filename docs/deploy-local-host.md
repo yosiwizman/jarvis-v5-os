@@ -33,6 +33,52 @@ Deploy JARVIS on a local Ubuntu server with Docker Compose and Tailscale Serve f
 - Docker Engine + Docker Compose plugin
 - Tailscale (configured and connected to your tailnet)
 - Git
+- SSH key-only access from your Windows workstation (see below)
+
+## SSH Setup (Windows → Ubuntu)
+
+Before running deployment commands, ensure key-only SSH works. This prevents automation scripts from hanging on password prompts.
+
+### 1. Configure SSH on Windows
+
+Edit `C:\Users\<USERNAME>\.ssh\config`:
+
+```
+Host aifactory-lan
+  HostName <HOST_IP>
+  User yosi
+  IdentityFile C:\Users\<USERNAME>\.ssh\id_ed25519
+  IdentitiesOnly yes
+  StrictHostKeyChecking accept-new
+  ServerAliveInterval 30
+  ServerAliveCountMax 3
+```
+
+Replace `<HOST_IP>` with your Ubuntu host's LAN IP and `<USERNAME>` with your Windows username.
+
+### 2. Install your public key on the host
+
+```powershell
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh yosi@aifactory-lan "umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys; sort -u -o ~/.ssh/authorized_keys ~/.ssh/authorized_keys; chmod 700 ~/.ssh; chmod 600 ~/.ssh/authorized_keys"
+```
+
+This prompts for the password once.
+
+### 3. Verify key-only access
+
+```powershell
+ssh -o BatchMode=yes aifactory-lan "echo OK && hostname"
+```
+
+If this fails, see [docs/runbook/ssh-lan-troubleshooting.md](runbook/ssh-lan-troubleshooting.md).
+
+### Automated setup
+
+Alternatively, run the setup script:
+
+```powershell
+.\ops\windows\ssh-setup.ps1
+```
 
 ### Install Docker (if not present)
 
