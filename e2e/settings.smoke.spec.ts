@@ -34,8 +34,10 @@ test.describe('Settings Page Smoke Tests', () => {
       pageErrors.push(error);
     });
 
-    // Navigate to settings page
-    await page.goto('/settings', { waitUntil: 'networkidle' });
+    // Navigate to settings page (use domcontentloaded - networkidle hangs on SSE connections)
+    await page.goto('/settings', { waitUntil: 'domcontentloaded' });
+    // Wait for hydration
+    await page.waitForTimeout(3000);
 
     // Page should not have crashed - check we're still on settings
     await expect(page).toHaveURL(/\/settings/);
@@ -105,7 +107,8 @@ test.describe('Settings Page Smoke Tests', () => {
       pageErrors.push(error);
     });
 
-    await page.goto('/settings', { waitUntil: 'networkidle' });
+    await page.goto('/settings', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(3000);
 
     // Should not crash
     const criticalErrors = pageErrors.filter(err => 
@@ -134,7 +137,8 @@ test.describe('Settings Page Smoke Tests', () => {
       pageErrors.push(error);
     });
 
-    await page.goto('/settings', { waitUntil: 'networkidle' });
+    await page.goto('/settings', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(3000);
 
     // Should not crash even with partial localStorage
     const criticalErrors = pageErrors.filter(err => 

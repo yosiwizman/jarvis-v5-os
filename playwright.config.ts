@@ -24,6 +24,9 @@ export default defineConfig({
   /* Reporter to use */
   reporter: process.env.CI ? 'github' : 'list',
   
+  /* Timeout for each test (CI needs more time for Next.js compilation) */
+  timeout: process.env.CI ? 60000 : 30000,
+  
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
