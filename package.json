@@ -23,6 +23,7 @@
     "clean": "rimraf node_modules apps/*/node_modules packages/*/node_modules .next apps/*/.next"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "rimraf": "^6.0.1",
