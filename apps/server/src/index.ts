@@ -89,7 +89,9 @@ const certPathEnv = process.env.SERVER_TLS_CERT_PATH?.trim() || process.env.CERT
 const resolvedKeyPath = keyPathEnv ? toAbsolutePath(keyPathEnv) : path.join(certDir, `${certName}-key.pem`);
 const resolvedCertPath = certPathEnv ? toAbsolutePath(certPathEnv) : path.join(certDir, `${certName}.pem`);
 
-const hasCertificates = existsSync(resolvedKeyPath) && existsSync(resolvedCertPath);
+// Allow forcing HTTP mode in CI/test environments (Next.js rewrites can't proxy to self-signed HTTPS)
+const forceHttp = process.env.DISABLE_HTTPS === 'true' || process.env.DISABLE_HTTPS === '1';
+const hasCertificates = !forceHttp && existsSync(resolvedKeyPath) && existsSync(resolvedCertPath);
 
 const fastify = Fastify({
   logger: true,

@@ -157,7 +157,8 @@ jobs:
           sleep 5
           PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e:ci
         env:
-          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+          DISABLE_HTTPS: 'true'
+          BACKEND_URL: 'http://localhost:1234'
           CI: true
 
   # Security gate: npm audit for dependency vulnerabilities
