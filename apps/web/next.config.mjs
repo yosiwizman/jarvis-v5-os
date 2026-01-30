@@ -12,6 +12,9 @@ try {
   // Git not available, not a git repo, or timed out
 }
 
+// Backend server URL (Fastify runs on port 1234 with HTTPS)
+const BACKEND_URL = process.env.BACKEND_URL || 'https://localhost:1234';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -44,6 +47,22 @@ const nextConfig = {
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
     };
     return config;
+  },
+  // Rewrite /api/* to the backend server (for start:ci and production modes without dev-proxy)
+  // Note: In dev mode with dev-proxy.mjs, the proxy handles this instead
+  async rewrites() {
+    return [
+      // Keep Next.js-specific API routes local
+      {
+        source: '/api/proxy-model/:path*',
+        destination: '/api/proxy-model/:path*',
+      },
+      // Forward all other /api/* to the backend server (stripping /api prefix)
+      {
+        source: '/api/:path*',
+        destination: `${BACKEND_URL}/:path*`,
+      },
+    ];
   },
 };
 

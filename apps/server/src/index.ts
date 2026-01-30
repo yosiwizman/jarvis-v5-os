@@ -21,6 +21,11 @@ import { notificationScheduler } from './notificationScheduler.js';
 import type { ScheduleNotificationRequest, ScheduleNotificationResponse } from '@shared/core';
 import { logger, logSystemEvent, logApiRequest, createRequestLogger } from './utils/logger.js';
 import { 
+  validateAndNormalizeSettings, 
+  safeJsonParse, 
+  getDefaultSettings 
+} from './utils/settingsContract.js';
+import { 
   initConversationStore, 
   saveConversation, 
   getConversation, 
@@ -84,7 +89,9 @@ const certPathEnv = process.env.SERVER_TLS_CERT_PATH?.trim() || process.env.CERT
 const resolvedKeyPath = keyPathEnv ? toAbsolutePath(keyPathEnv) : path.join(certDir, `${certName}-key.pem`);
 const resolvedCertPath = certPathEnv ? toAbsolutePath(certPathEnv) : path.join(certDir, `${certName}.pem`);
 
-const hasCertificates = existsSync(resolvedKeyPath) && existsSync(resolvedCertPath);
+// Allow forcing HTTP mode in CI/test environments (Next.js rewrites can't proxy to self-signed HTTPS)
+const forceHttp = process.env.DISABLE_HTTPS === 'true' || process.env.DISABLE_HTTPS === '1';
+const hasCertificates = !forceHttp && existsSync(resolvedKeyPath) && existsSync(resolvedCertPath);
 
 const fastify = Fastify({
   logger: true,
@@ -1376,19 +1383,36 @@ fastify.get('/3dprint/token-status', async () => {
 });
 
 // GET /settings - Load settings from server
+// CONTRACT: Always returns normalized, valid AppSettings (never partial/corrupt)
 fastify.get('/settings', async (req, reply) => {
   try {
-    if (existsSync(SETTINGS_FILE)) {
-      const content = await readFile(SETTINGS_FILE, 'utf-8');
-      const settings = JSON.parse(content);
-      return settings;
+    if (!existsSync(SETTINGS_FILE)) {
+      // No settings file - return normalized defaults
+      logger.info('[SettingsContract] No settings file, returning defaults');
+      return getDefaultSettings();
     }
-    // Return empty object if file doesn't exist yet
-    return {};
+    
+    const content = await readFile(SETTINGS_FILE, 'utf-8');
+    const { data, error: parseError } = safeJsonParse(content);
+    
+    if (parseError) {
+      // JSON parse failed - return normalized defaults (don't crash)
+      logger.warn({ parseError }, '[SettingsContract] Settings file corrupted, returning defaults');
+      return getDefaultSettings();
+    }
+    
+    // Validate and normalize (fills missing keys with defaults)
+    const { settings, zodErrors } = validateAndNormalizeSettings(data);
+    
+    if (zodErrors?.length) {
+      logger.info({ errorCount: zodErrors.length }, '[SettingsContract] Settings normalized with validation warnings');
+    }
+    
+    return settings;
   } catch (error) {
-    logger.error({ error }, 'Failed to read settings');
-    reply.code(500);
-    return { error: 'Failed to read settings' };
+    logger.error({ error }, '[SettingsContract] Unexpected error reading settings, returning defaults');
+    // Never return 500 - always return valid defaults
+    return getDefaultSettings();
   }
 });
 
