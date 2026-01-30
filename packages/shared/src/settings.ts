@@ -82,23 +82,21 @@ function normalizeIntegrations(input: Partial<IntegrationSettings> | undefined |
   }
   
   // Deep merge each integration individually
-  const result = { ...defaultIntegrationSettings } as IntegrationSettings;
-  const integrationKeys = Object.keys(defaultIntegrationSettings) as IntegrationId[];
-  
-  for (const key of integrationKeys) {
-    const defaultVal = defaultIntegrationSettings[key];
-    const inputVal = input[key];
-    
-    if (inputVal && typeof inputVal === 'object') {
-      // Merge with defaults, ensuring all fields exist
-      result[key] = { ...defaultVal, ...inputVal } as typeof defaultVal;
-    } else {
-      // Use default if input is missing or invalid
-      result[key] = { ...defaultVal };
-    }
-  }
-  
-  return result;
+  // Use explicit merging per key to satisfy TypeScript's strict type checking
+  return {
+    weather: { ...defaultIntegrationSettings.weather, ...(input.weather ?? {}) },
+    webSearch: { ...defaultIntegrationSettings.webSearch, ...(input.webSearch ?? {}) },
+    localLLM: { ...defaultIntegrationSettings.localLLM, ...(input.localLLM ?? {}) },
+    elevenLabs: { ...defaultIntegrationSettings.elevenLabs, ...(input.elevenLabs ?? {}) },
+    azureTTS: { ...defaultIntegrationSettings.azureTTS, ...(input.azureTTS ?? {}) },
+    spotify: { ...defaultIntegrationSettings.spotify, ...(input.spotify ?? {}) },
+    gmail: { ...defaultIntegrationSettings.gmail, ...(input.gmail ?? {}) },
+    googleCalendar: { ...defaultIntegrationSettings.googleCalendar, ...(input.googleCalendar ?? {}) },
+    alexa: { ...defaultIntegrationSettings.alexa, ...(input.alexa ?? {}) },
+    irobot: { ...defaultIntegrationSettings.irobot, ...(input.irobot ?? {}) },
+    nest: { ...defaultIntegrationSettings.nest, ...(input.nest ?? {}) },
+    smartLights: { ...defaultIntegrationSettings.smartLights, ...(input.smartLights ?? {}) },
+  };
 }
 
 /**
