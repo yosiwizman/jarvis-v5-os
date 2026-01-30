@@ -134,65 +134,89 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     };
   }, [notifications, dismissNotification]);
 
-  // Connect to SSE stream for real-time notifications
+  // Connect to SSE stream for real-time notifications with exponential backoff
   useEffect(() => {
-    console.log('[NotificationContext] Connecting to SSE stream...');
+    let es: EventSource | null = null;
+    let retryCount = 0;
+    let retryTimeout: NodeJS.Timeout | null = null;
+    const MAX_RETRY_DELAY = 30000; // 30 seconds max
+    const BASE_RETRY_DELAY = 1000; // 1 second base
+    
+    const connect = () => {
+      console.log('[NotificationContext] Connecting to SSE stream...');
+      
+      es = new EventSource('/api/notifications/stream');
 
-    const es = new EventSource('/api/notifications/stream');
+      es.onopen = () => {
+        console.log('[NotificationContext] SSE connection established');
+        retryCount = 0; // Reset retry count on successful connection
+      };
 
-    es.onopen = () => {
-      console.log('[NotificationContext] SSE connection established');
-    };
+      es.onmessage = (event) => {
+        try {
+          const notification = JSON.parse(event.data) as Notification;
+          
+          // Skip connection/heartbeat messages
+          if (notification.type === 'connection' || notification.type === 'heartbeat') {
+            if (notification.type === 'connection') {
+              console.log('[NotificationContext] SSE connection confirmed');
+            }
+            return;
+          }
 
-    es.onmessage = (event) => {
-      try {
-        const notification = JSON.parse(event.data) as Notification;
-        
-        // Skip connection confirmation messages
-        if (notification.type === 'connection') {
-          console.log('[NotificationContext] SSE connection confirmed:', notification.payload);
-          return;
+          console.log('[NotificationContext] Notification received:', notification.type);
+
+          // Check user preferences
+          const settings = readSettings();
+          const preferences = settings?.notificationPreferences;
+          
+          // Filter based on user preferences (default to true if preference not set)
+          const preferenceKey = notification.type as keyof typeof preferences;
+          const isEnabled = preferences?.[preferenceKey] !== false;
+          
+          if (!isEnabled) {
+            console.log(`[NotificationContext] Notification filtered by preferences: ${notification.type}`);
+            return;
+          }
+
+          // Add notification to state with unique ID and mark as unread
+          setNotifications((prev) => [
+            {
+              ...notification,
+              id: notification.id || `notif-${Date.now()}-${Math.random()}`,
+              read: false // New live notifications are unread
+            },
+            ...prev // Prepend to show newest first
+          ]);
+        } catch (error) {
+          // Silently ignore parse errors for malformed messages
         }
+      };
 
-        console.log('[NotificationContext] Notification received:', notification);
-
-        // Check user preferences
-        const settings = readSettings();
-        const preferences = settings?.notificationPreferences;
+      es.onerror = () => {
+        // Close the current connection
+        es?.close();
+        es = null;
         
-        // Filter based on user preferences (default to true if preference not set)
-        const preferenceKey = notification.type as keyof typeof preferences;
-        const isEnabled = preferences?.[preferenceKey] !== false;
+        // Calculate exponential backoff delay
+        const delay = Math.min(BASE_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+        retryCount++;
         
-        if (!isEnabled) {
-          console.log(`[NotificationContext] Notification filtered by preferences: ${notification.type}`);
-          return;
-        }
+        console.log(`[NotificationContext] SSE error, reconnecting in ${delay}ms (attempt ${retryCount})`);
+        
+        // Schedule reconnection
+        retryTimeout = setTimeout(connect, delay);
+      };
 
-        // Add notification to state with unique ID and mark as unread
-        setNotifications((prev) => [
-          {
-            ...notification,
-            id: notification.id || `notif-${Date.now()}-${Math.random()}`,
-            read: false // New live notifications are unread
-          },
-          ...prev // Prepend to show newest first
-        ]);
-      } catch (error) {
-        console.error('[NotificationContext] Failed to parse notification:', error);
-      }
+      setEventSource(es);
     };
-
-    es.onerror = (error) => {
-      console.error('[NotificationContext] SSE connection error:', error);
-      // EventSource will automatically attempt reconnection
-    };
-
-    setEventSource(es);
+    
+    connect();
 
     return () => {
       console.log('[NotificationContext] Closing SSE connection');
-      es.close();
+      if (retryTimeout) clearTimeout(retryTimeout);
+      es?.close();
     };
   }, []);
 

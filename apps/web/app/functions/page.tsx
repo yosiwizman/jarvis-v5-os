@@ -272,7 +272,7 @@ export default function FunctionsPage() {
                         <>
                           <li>Generates 3D models using AI (Meshy API)</li>
                           <li>Shows real-time progress during generation</li>
-                          <li>Automatically renders in the Jarvis interface</li>
+                          <li>Automatically renders in the AKIOR interface</li>
                         </>
                       )}
                       {func.name === 'navigate_to_page' && (
@@ -308,7 +308,7 @@ export default function FunctionsPage() {
         <h3 className="text-lg font-semibold mb-3">🤖 How Function Calling Works</h3>
         <div className="space-y-3 text-white/70">
           <p>
-            Jarvis uses OpenAI's function calling feature to intelligently determine which function to execute based on your natural language request. Simply ask Jarvis what you want in plain English, and he'll automatically:
+            AKIOR uses OpenAI's function calling feature to intelligently determine which function to execute based on your natural language request. Simply ask AKIOR what you want in plain English, and it will automatically:
           </p>
           <ol className="list-decimal list-inside space-y-2 ml-4">
             <li>Analyze your request to understand the intent</li>
