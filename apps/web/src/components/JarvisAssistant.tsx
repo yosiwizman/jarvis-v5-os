@@ -901,7 +901,7 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
         onClick={closeAssistant}
       />
 
-      {/* Jarvis Visualizer */}
+      {/* AKIOR Visualizer */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
         <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square pointer-events-auto animate-[scale-up_0.3s_ease-out]">
           {/* Ring 2 - Outer */}

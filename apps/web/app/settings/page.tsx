@@ -31,6 +31,7 @@ import {
   testNestIntegration,
   testSmartLightsIntegration
 } from '@/lib/integrations';
+import { BuildInfo } from '@/components/BuildInfo';
 
 type KeyName = 'openai' | 'meshy';
 type KeyMetaState = Record<KeyName, { present: boolean }>;
@@ -2384,6 +2385,11 @@ export default function SettingsPage() {
           )}
         </div>
       </section>
+
+      {/* Build Info Footer */}
+      <footer className="text-center text-xs text-white/40 pt-4">
+        <BuildInfo />
+      </footer>
     </div>
   );
 }

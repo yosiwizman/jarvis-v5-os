@@ -68,9 +68,57 @@ export type AppSettings = {
   };
 };
 
-import { defaultIntegrationSettings } from './integrations.js';
+import { defaultIntegrationSettings, type IntegrationSettings, type IntegrationId } from './integrations.js';
 
 const STORAGE_KEY = 'smartMirrorSettings';
+
+/**
+ * Deep-merge integration settings to ensure every integration has all required fields.
+ * This prevents "Cannot read properties of undefined" errors when accessing nested properties.
+ */
+function normalizeIntegrations(input: Partial<IntegrationSettings> | undefined | null): IntegrationSettings {
+  if (!input || typeof input !== 'object') {
+    return { ...defaultIntegrationSettings };
+  }
+  
+  // Deep merge each integration individually
+  // Use explicit merging per key to satisfy TypeScript's strict type checking
+  return {
+    weather: { ...defaultIntegrationSettings.weather, ...(input.weather ?? {}) },
+    webSearch: { ...defaultIntegrationSettings.webSearch, ...(input.webSearch ?? {}) },
+    localLLM: { ...defaultIntegrationSettings.localLLM, ...(input.localLLM ?? {}) },
+    elevenLabs: { ...defaultIntegrationSettings.elevenLabs, ...(input.elevenLabs ?? {}) },
+    azureTTS: { ...defaultIntegrationSettings.azureTTS, ...(input.azureTTS ?? {}) },
+    spotify: { ...defaultIntegrationSettings.spotify, ...(input.spotify ?? {}) },
+    gmail: { ...defaultIntegrationSettings.gmail, ...(input.gmail ?? {}) },
+    googleCalendar: { ...defaultIntegrationSettings.googleCalendar, ...(input.googleCalendar ?? {}) },
+    alexa: { ...defaultIntegrationSettings.alexa, ...(input.alexa ?? {}) },
+    irobot: { ...defaultIntegrationSettings.irobot, ...(input.irobot ?? {}) },
+    nest: { ...defaultIntegrationSettings.nest, ...(input.nest ?? {}) },
+    smartLights: { ...defaultIntegrationSettings.smartLights, ...(input.smartLights ?? {}) },
+  };
+}
+
+/**
+ * Normalize settings by deep-merging with defaults.
+ * Ensures all nested objects (especially integrations) have required fields.
+ */
+export function normalizeSettings(input: unknown): AppSettings {
+  const partial = (input && typeof input === 'object' ? input : {}) as Partial<AppSettings>;
+  
+  return {
+    ...defaultSettings,
+    ...partial,
+    jarvis: { ...defaultSettings.jarvis, ...(partial.jarvis ?? {}) },
+    models: { ...defaultSettings.models, ...(partial.models ?? {}) },
+    textChat: { ...defaultSettings.textChat, ...(partial.textChat ?? {}) },
+    imageGeneration: { ...defaultSettings.imageGeneration, ...(partial.imageGeneration ?? {}) },
+    integrations: normalizeIntegrations(partial.integrations),
+    notificationPreferences: { ...defaultSettings.notificationPreferences, ...(partial.notificationPreferences ?? {}) },
+    cameras: partial.cameras ?? defaultSettings.cameras,
+    lockdownState: partial.lockdownState ?? defaultSettings.lockdownState
+  };
+}
 const SERVER_URL = '/api/settings';
 
 // In-memory cache for settings loaded from server
@@ -153,21 +201,10 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
       throw new Error(`Server returned ${response.status}`);
     }
     
-    const serverSettings = await response.json() as Partial<AppSettings>;
+    const serverSettings = await response.json();
     
-    // Merge server settings with defaults
-    const merged = {
-      ...defaultSettings,
-      ...serverSettings,
-      jarvis: { ...defaultSettings.jarvis, ...(serverSettings?.jarvis ?? {}) },
-      models: { ...defaultSettings.models, ...(serverSettings?.models ?? {}) },
-      textChat: { ...defaultSettings.textChat, ...(serverSettings?.textChat ?? {}) },
-      imageGeneration: { ...defaultSettings.imageGeneration, ...(serverSettings?.imageGeneration ?? {}) },
-      integrations: { ...defaultSettings.integrations, ...(serverSettings?.integrations ?? {}) },
-      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(serverSettings?.notificationPreferences ?? {}) },
-      cameras: serverSettings?.cameras ?? defaultSettings.cameras,
-      lockdownState: serverSettings?.lockdownState ?? defaultSettings.lockdownState
-    } satisfies AppSettings;
+    // Deep-merge server settings with defaults using normalizeSettings
+    const merged = normalizeSettings(serverSettings);
     
     // Cache in memory
     settingsCache = merged;
@@ -188,26 +225,15 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
     // Fallback to localStorage
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? (JSON.parse(raw) as Partial<AppSettings>) : {};
-      const merged = {
-        ...defaultSettings,
-        ...parsed,
-        jarvis: { ...defaultSettings.jarvis, ...(parsed?.jarvis ?? {}) },
-        models: { ...defaultSettings.models, ...(parsed?.models ?? {}) },
-        textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
-        imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
-        integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) },
-        notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) },
-        cameras: parsed?.cameras ?? defaultSettings.cameras,
-        lockdownState: parsed?.lockdownState ?? defaultSettings.lockdownState
-      } satisfies AppSettings;
+      const parsed = raw ? JSON.parse(raw) : null;
+      const merged = normalizeSettings(parsed);
       
       settingsCache = merged;
       return merged;
     } catch (localError) {
       console.warn('Failed to read localStorage, using defaults', localError);
-      settingsCache = defaultSettings;
-      return defaultSettings;
+      settingsCache = normalizeSettings(null);
+      return settingsCache;
     }
   }
 }
@@ -226,25 +252,14 @@ export function readSettings(): AppSettings {
     return settingsCache;
   }
   
-  // Fallback to localStorage
+  // Fallback to localStorage with deep normalization
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Partial<AppSettings>) : {};
-    return {
-      ...defaultSettings,
-      ...parsed,
-      jarvis: { ...defaultSettings.jarvis, ...(parsed?.jarvis ?? {}) },
-      models: { ...defaultSettings.models, ...(parsed?.models ?? {}) },
-      textChat: { ...defaultSettings.textChat, ...(parsed?.textChat ?? {}) },
-      imageGeneration: { ...defaultSettings.imageGeneration, ...(parsed?.imageGeneration ?? {}) },
-      integrations: { ...defaultSettings.integrations, ...(parsed?.integrations ?? {}) },
-      notificationPreferences: { ...defaultSettings.notificationPreferences, ...(parsed?.notificationPreferences ?? {}) },
-      cameras: parsed?.cameras ?? defaultSettings.cameras,
-      lockdownState: parsed?.lockdownState ?? defaultSettings.lockdownState
-    } satisfies AppSettings;
+    const parsed = raw ? JSON.parse(raw) : null;
+    return normalizeSettings(parsed);
   } catch (error) {
     console.warn('Failed to read settings', error);
-    return defaultSettings;
+    return normalizeSettings(null);
   }
 }
 

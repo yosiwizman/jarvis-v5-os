@@ -1006,7 +1006,7 @@ export default function JarvisPage() {
         )}
       </button>
       
-      {/* Jarvis Visualizer - Full Screen */}
+      {/* AKIOR Visualizer - Full Screen */}
       <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square">
         {/* Ring 2 - Outer */}
         <div
