@@ -52,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <title>AKIOR Console</title>
         <meta name="description" content="AKIOR - Intelligent AI Assistant Console" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-screen relative">
         <ThemeProvider>

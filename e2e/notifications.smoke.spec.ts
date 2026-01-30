@@ -8,14 +8,20 @@ import { test, expect } from '@playwright/test';
  * - Health endpoint returns valid status
  * - Client receives heartbeat within expected interval
  * - No console spam or connection thrashing
+ * 
+ * Note: API tests call the backend directly (via BACKEND_URL) because
+ * Next.js rewrites strip the /api prefix but the backend routes include it.
  */
+
+// Backend URL for direct API calls (bypassing Next.js rewrites)
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1234';
 
 test.describe('Notifications SSE Smoke Tests', () => {
 
-  test('notifications health API returns ok:true', async ({ request }) => {
-    const response = await request.get('/api/health/notifications');
+  test('notifications health API returns ok:true', async () => {
+    const response = await fetch(`${BACKEND_URL}/api/health/notifications`);
     
-    expect(response.status()).toBe(200);
+    expect(response.status).toBe(200);
     
     const data = await response.json();
     expect(data.ok).toBe(true);
@@ -24,14 +30,24 @@ test.describe('Notifications SSE Smoke Tests', () => {
     expect(data.sse.heartbeat_interval_sec).toBe(15);
   });
 
-  test('SSE stream returns correct headers', async ({ request }) => {
-    // Use a raw fetch to check headers (request API may buffer)
-    const response = await request.get('/api/notifications/stream');
+  test('SSE stream returns correct headers', async () => {
+    // Call backend directly to check headers
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     
-    expect(response.status()).toBe(200);
-    
-    const contentType = response.headers()['content-type'];
-    expect(contentType).toContain('text/event-stream');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
+        signal: controller.signal
+      });
+      
+      expect(response.status).toBe(200);
+      
+      const contentType = response.headers.get('content-type');
+      expect(contentType).toContain('text/event-stream');
+    } finally {
+      clearTimeout(timeout);
+      controller.abort();
+    }
   });
 
   test('page loads without SSE-related console errors', async ({ page }) => {
@@ -175,18 +191,28 @@ test.describe('Notifications SSE Smoke Tests', () => {
 
 test.describe('Notifications API Contract Tests', () => {
 
-  test('notifications stream endpoint exists and responds', async ({ request }) => {
-    // Just verify the endpoint is reachable and returns SSE content-type
-    const response = await request.get('/api/notifications/stream');
+  test('notifications stream endpoint exists and responds', async () => {
+    // Call backend directly to verify SSE endpoint
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     
-    expect(response.status()).toBe(200);
-    expect(response.headers()['content-type']).toContain('text/event-stream');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
+        signal: controller.signal
+      });
+      
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toContain('text/event-stream');
+    } finally {
+      clearTimeout(timeout);
+      controller.abort();
+    }
   });
 
-  test('notifications history API returns valid structure', async ({ request }) => {
-    const response = await request.get('/api/notifications/history?limit=10');
+  test('notifications history API returns valid structure', async () => {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/history?limit=10`);
     
-    expect(response.status()).toBe(200);
+    expect(response.status).toBe(200);
     
     const data = await response.json();
     expect(data.ok).toBe(true);
@@ -196,36 +222,40 @@ test.describe('Notifications API Contract Tests', () => {
     expect(typeof data.offset).toBe('number');
   });
 
-  test('notifications schedule API validates input', async ({ request }) => {
+  test('notifications schedule API validates input', async () => {
     // Test with invalid input (missing required fields)
-    const response = await request.post('/api/notifications/schedule', {
-      data: {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         type: 'test',
         payload: {}
         // Missing triggerAt
-      }
+      })
     });
     
     // Should return 400 for invalid input
-    expect(response.status()).toBe(400);
+    expect(response.status).toBe(400);
     
     const data = await response.json();
     expect(data.ok).toBe(false);
     expect(data.error).toBeDefined();
   });
 
-  test('notifications schedule API accepts valid input', async ({ request }) => {
+  test('notifications schedule API accepts valid input', async () => {
     const triggerAt = new Date(Date.now() + 60000).toISOString(); // 1 minute from now
     
-    const response = await request.post('/api/notifications/schedule', {
-      data: {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         type: 'test',
         payload: { message: 'E2E test notification' },
         triggerAt
-      }
+      })
     });
     
-    expect(response.status()).toBe(200);
+    expect(response.status).toBe(200);
     
     const data = await response.json();
     expect(data.ok).toBe(true);

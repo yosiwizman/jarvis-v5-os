@@ -56,6 +56,7 @@ function assertIncludes(actual: string | null | undefined, expected: string, mes
 // Test Suites
 // ============================================================================
 
+async function runTests() {
 console.log('\n📡 SSE Notifications Contract Tests\n');
 console.log(`   Target: ${BACKEND_URL}\n`);
 
@@ -297,3 +298,10 @@ if (failed > 0) {
   console.log('✅ All tests passed!\n');
   process.exit(0);
 }
+}
+
+// Run the tests
+runTests().catch((err) => {
+  console.error('Test runner failed:', err);
+  process.exit(1);
+});
