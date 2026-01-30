@@ -15,6 +15,8 @@
     "typecheck": "npm run typecheck -ws --if-present",
     "test:settings": "tsx scripts/test-settings-normalization.ts",
     "test:contract": "tsx scripts/test-settings-contract.ts",
+    "test:notifications": "tsx scripts/test-notifications-sse.ts",
+    "test:notifications:ci": "cross-env BACKEND_URL=http://localhost:1234 tsx scripts/test-notifications-sse.ts",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --project=chromium",
     "smoke": "tsx scripts/smoke.ts",
