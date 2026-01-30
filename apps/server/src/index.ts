@@ -309,11 +309,12 @@ fastify.get('/api/notifications/history', async (req, reply) => {
 
 // Notification API: SSE stream for real-time notification delivery
 fastify.get('/api/notifications/stream', async (req, reply) => {
-  // Set SSE headers
+  // Set SSE headers with best practices for reverse proxy compatibility
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no' // Disable nginx/reverse proxy buffering
   });
 
   // Generate client ID
@@ -331,7 +332,13 @@ fastify.get('/api/notifications/stream', async (req, reply) => {
   logger.info({ clientId }, 'SSE client connected to notification stream');
 
   // Send initial connection confirmation
-  reply.raw.write(`data: ${JSON.stringify({ type: 'connection', payload: { status: 'connected', clientId }, triggeredAt: new Date().toISOString() })}\n\n`);
+  const connectionMsg = {
+    type: 'connection',
+    id: `conn-${Date.now()}`,
+    payload: { status: 'connected', clientId },
+    triggeredAt: new Date().toISOString()
+  };
+  reply.raw.write(`data: ${JSON.stringify(connectionMsg)}\n\n`);
 
   // Handle client disconnect
   req.raw.on('close', () => {
@@ -341,6 +348,27 @@ fastify.get('/api/notifications/stream', async (req, reply) => {
 
   // Keep connection alive (don't await, let it stay open)
   return reply;
+});
+
+// Notification API: Health check for SSE/notifications subsystem
+fastify.get('/api/health/notifications', async (req, reply) => {
+  try {
+    const sseHealth = notificationScheduler.getSSEHealth();
+    const stats = notificationScheduler.getStats();
+
+    return reply.send({
+      ok: true,
+      sse: sseHealth,
+      stats: {
+        scheduled: stats.scheduledEvents,
+        fired: stats.firedEvents
+      },
+      time: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error({ error }, 'Failed to get notification health');
+    return reply.status(500).send({ ok: false, error: 'health_check_failed' });
+  }
 });
 
 // ========================================

@@ -9,6 +9,7 @@
  * - Persistent storage (JSON file)
  * - Event loop checks every minute for due events
  * - Broadcasts fired events to all connected SSE clients
+ * - Heartbeat every 15 seconds to keep SSE connections alive
  */
 
 import { randomUUID } from 'crypto';
@@ -22,6 +23,9 @@ const writeFileAsync = promisify(writeFile);
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const EVENTS_FILE = path.join(DATA_DIR, 'scheduled-events.json');
+
+/** Heartbeat interval in milliseconds */
+const HEARTBEAT_INTERVAL_MS = 15000;
 
 /**
  * SSE client connection
@@ -38,7 +42,9 @@ export class NotificationScheduler {
   private events: ScheduledEvent[] = [];
   private sseClients: SSEClient[] = [];
   private checkInterval: NodeJS.Timeout | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
   private initialized = false;
+  private lastHeartbeatAt: Date | null = null;
 
   constructor() {
     // Ensure data directory exists
@@ -153,7 +159,50 @@ export class NotificationScheduler {
       this.checkAndFireDueEvents();
     }, 60 * 1000);
 
+    // Start heartbeat for SSE clients
+    this.startHeartbeat();
+
     console.log('[NotificationScheduler] Event loop started (check every 60s)');
+  }
+
+  /**
+   * Start SSE heartbeat: send ping every 15 seconds to keep connections alive
+   */
+  private startHeartbeat(): void {
+    this.heartbeatInterval = setInterval(() => {
+      this.broadcastHeartbeat();
+    }, HEARTBEAT_INTERVAL_MS);
+
+    console.log(`[NotificationScheduler] Heartbeat started (every ${HEARTBEAT_INTERVAL_MS / 1000}s)`);
+  }
+
+  /**
+   * Broadcast heartbeat to all connected SSE clients
+   */
+  private broadcastHeartbeat(): void {
+    if (this.sseClients.length === 0) {
+      return; // No clients to heartbeat
+    }
+
+    const now = new Date();
+    this.lastHeartbeatAt = now;
+
+    const heartbeat = {
+      type: 'heartbeat',
+      id: `hb-${Date.now()}`,
+      payload: { timestamp: now.toISOString() },
+      triggeredAt: now.toISOString()
+    };
+
+    const message = `data: ${JSON.stringify(heartbeat)}\n\n`;
+
+    for (const client of this.sseClients) {
+      try {
+        client.send(message);
+      } catch (error) {
+        // Client may have disconnected, will be cleaned up
+      }
+    }
   }
 
   /**
@@ -164,6 +213,11 @@ export class NotificationScheduler {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
       console.log('[NotificationScheduler] Event loop stopped');
+    }
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+      console.log('[NotificationScheduler] Heartbeat stopped');
     }
   }
 
@@ -254,6 +308,24 @@ export class NotificationScheduler {
       scheduledEvents: this.getScheduledEvents().length,
       firedEvents: this.getFiredEvents().length,
       connectedClients: this.sseClients.length
+    };
+  }
+
+  /**
+   * Get SSE health info for monitoring
+   */
+  getSSEHealth() {
+    const now = Date.now();
+    const lastHeartbeatAgeMs = this.lastHeartbeatAt
+      ? now - this.lastHeartbeatAt.getTime()
+      : null;
+
+    return {
+      enabled: true,
+      heartbeat_interval_sec: HEARTBEAT_INTERVAL_MS / 1000,
+      last_heartbeat_at: this.lastHeartbeatAt?.toISOString() ?? null,
+      last_heartbeat_age_ms: lastHeartbeatAgeMs,
+      connected_clients: this.sseClients.length
     };
   }
 }
