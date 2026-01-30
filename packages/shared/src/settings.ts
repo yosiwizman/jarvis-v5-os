@@ -102,11 +102,12 @@ function normalizeIntegrations(input: Partial<IntegrationSettings> | undefined |
 /**
  * Normalize settings by deep-merging with defaults.
  * Ensures all nested objects (especially integrations) have required fields.
+ * This is the SINGLE CHOKE-POINT for normalization - all settings must pass through here.
  */
 export function normalizeSettings(input: unknown): AppSettings {
   const partial = (input && typeof input === 'object' ? input : {}) as Partial<AppSettings>;
   
-  return {
+  const normalized: AppSettings = {
     ...defaultSettings,
     ...partial,
     jarvis: { ...defaultSettings.jarvis, ...(partial.jarvis ?? {}) },
@@ -118,6 +119,40 @@ export function normalizeSettings(input: unknown): AppSettings {
     cameras: partial.cameras ?? defaultSettings.cameras,
     lockdownState: partial.lockdownState ?? defaultSettings.lockdownState
   };
+  
+  // DEV-only assertion to catch regressions early
+  if (process.env.NODE_ENV === 'development') {
+    assertNormalizedSettings(normalized);
+  }
+  
+  return normalized;
+}
+
+/**
+ * DEV-only assertion that validates required settings structure.
+ * Throws with actionable context if required integration keys are missing.
+ */
+function assertNormalizedSettings(settings: AppSettings): void {
+  const requiredIntegrationKeys: (keyof IntegrationSettings)[] = [
+    'weather', 'webSearch', 'localLLM', 'elevenLabs', 'azureTTS',
+    'spotify', 'gmail', 'googleCalendar', 'alexa', 'irobot', 'nest', 'smartLights'
+  ];
+  
+  if (!settings.integrations || typeof settings.integrations !== 'object') {
+    console.error('[Settings] ASSERTION FAILED: integrations is missing or invalid', settings);
+    throw new Error('[Settings] normalizeSettings failed: integrations is missing or invalid');
+  }
+  
+  for (const key of requiredIntegrationKeys) {
+    if (!settings.integrations[key] || typeof settings.integrations[key] !== 'object') {
+      console.error(`[Settings] ASSERTION FAILED: integrations.${key} is missing or invalid`, {
+        key,
+        value: settings.integrations[key],
+        integrations: settings.integrations
+      });
+      throw new Error(`[Settings] normalizeSettings failed: integrations.${key} is missing or invalid`);
+    }
+  }
 }
 const SERVER_URL = '/api/settings';
 
@@ -240,26 +275,36 @@ export async function loadSettingsFromServer(): Promise<AppSettings> {
 
 /**
  * Read settings synchronously from cache (after loadSettingsFromServer has been called)
- * Falls back to localStorage then defaults if cache is empty
+ * Falls back to localStorage then defaults if cache is empty.
+ * 
+ * IMPORTANT: This function ALWAYS returns normalized settings.
+ * All consumers can trust that integrations and all nested fields exist.
  */
 export function readSettings(): AppSettings {
+  // SSR path - return normalized defaults
   if (typeof window === 'undefined') {
-    return defaultSettings;
+    return normalizeSettings(null);
   }
   
-  // Return cached settings if available
+  // Return cached settings if available (already normalized when cached)
+  // Re-normalize as safety net in case cache was somehow corrupted
   if (settingsCache) {
-    return settingsCache;
+    return normalizeSettings(settingsCache);
   }
   
   // Fallback to localStorage with deep normalization
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
-    return normalizeSettings(parsed);
+    const normalized = normalizeSettings(parsed);
+    // Cache the normalized result for subsequent reads
+    settingsCache = normalized;
+    return normalized;
   } catch (error) {
     console.warn('Failed to read settings', error);
-    return normalizeSettings(null);
+    const normalized = normalizeSettings(null);
+    settingsCache = normalized;
+    return normalized;
   }
 }
 
