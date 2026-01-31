@@ -522,6 +522,15 @@ export default function SettingsPage() {
           <p className="text-sm text-white/60">
             Your browser loaded client code from <code className="text-cyan-400">{clientSha}</code> but the server is running <code className="text-cyan-400">{serverSha}</code>.
             This may indicate stale cache or wrong host. Try hard-refreshing (Ctrl+Shift+R) or check your DNS.
+            {' '}
+            <a 
+              href="https://github.com/akior-os/jarvis-v5-os/blob/main/docs/ops/dns-setup.md" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-amber-400 underline hover:text-amber-300"
+            >
+              DNS Setup Guide
+            </a>
           </p>
         </div>
       )}

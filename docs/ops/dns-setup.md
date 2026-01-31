@@ -2,11 +2,24 @@
 
 This document describes how to configure DNS so that `akior.local` resolves to your AKIOR server across your network.
 
-## Overview
+## ⚠️ Canonical Host Rule
 
-AKIOR uses the hostname `akior.local` for HTTPS access with valid certificates. For this to work, your network needs to resolve `akior.local` to the correct IP address.
+**ONE server. ONE IP. Network-wide.**
 
-## Quick Verification
+- `akior.local` MUST resolve to exactly ONE IP address across the entire LAN
+- All clients (PCs, phones, tablets) MUS## Quick Verification
+
+Use the verification scripts for automated checks:
+
+```powershell
+# Windows - full verification suite
+.\scripts\net\verify-dns.ps1
+
+# Linux/Mac
+./scripts/net/verify-dns.sh
+```
+
+Or manually:
 
 ```powershell
 # Check what akior.local resolves to
@@ -16,7 +29,7 @@ ping -n 1 akior.local
 curl https://akior.local/api/health/build -k
 ```
 
-Expected: Ping returns the IP of your AKIOR server, and the API returns the expected build SHA.
+Expected: Ping returns the IP from `docs/ops/canonical-host.md`, and the API returns the expected build SHA.
 
 ## Option 1: Router DNS (Recommended)
 
@@ -52,7 +65,9 @@ Most home routers support custom DNS entries. This is the best option as it work
 
 ## Option 2: Hosts File (Per-Device)
 
-Quick fix for a single machine. Not recommended for long-term use.
+**⚠️ Temporary only. Violates canonical host rule for production.**
+
+Quick fix for a single machine during initial setup or debugging.
 
 ### Windows:
 
@@ -79,52 +94,70 @@ Add line:
 192.168.1.100  akior.local
 ```
 
-## Option 3: Local DNS Server (Advanced)
+## Option 3: Local DNS Server (Enterprise-Grade)
 
-For more control, run a local DNS server. Good options:
+For networks where router DNS is insufficient. This provides centralized DNS control for the entire LAN.
 
 ### AdGuard Home (Recommended)
 
-AdGuard Home provides DNS with ad-blocking and custom rewrites.
+AdGuard Home provides DNS with ad-blocking and custom rewrites. Best for home labs and small teams.
 
-1. Install via Docker:
+1. Install via Docker on the AKIOR server:
    ```yaml
-   # docker-compose.yml
+   # docker-compose.adguard.yml
    services:
      adguard:
        image: adguard/adguardhome
-       ports:
-         - "53:53/tcp"
-         - "53:53/udp"
-         - "3080:80/tcp"
+       network_mode: host  # Required for port 53
        volumes:
          - ./adguard/work:/opt/adguardhome/work
          - ./adguard/conf:/opt/adguardhome/conf
        restart: unless-stopped
    ```
 
-2. Access setup wizard at `http://localhost:3080`
+   ```powershell
+   # Start AdGuard Home
+   docker compose -f docker-compose.adguard.yml up -d
+   ```
+
+2. Access setup wizard at `http://<AKIOR_SERVER_IP>:3000`
+   - Set admin credentials
+   - Configure upstream DNS (e.g., `8.8.8.8`, `1.1.1.1`)
 
 3. Add DNS rewrite:
-   - Go to Filters → DNS rewrites
-   - Add: `akior.local` → `192.168.1.100`
+   - Go to **Filters → DNS rewrites**
+   - Add: `akior.local` → `<AKIOR_SERVER_IP>`
 
-4. Point your router's DHCP to use this DNS server
+4. Configure router DHCP to use AdGuard as DNS:
+   - Router admin → DHCP settings
+   - Set **Primary DNS** = `<AKIOR_SERVER_IP>`
+   - Leave Secondary DNS empty or use `8.8.8.8` as fallback
 
-### dnsmasq (Lightweight)
+5. Force clients to pick up new DNS:
+   - Disconnect/reconnect Wi-Fi, OR
+   - `ipconfig /release && ipconfig /renew` (Windows), OR
+   - Reboot devices
 
-Minimal DNS forwarder, good for headless servers.
+### dnsmasq (Lightweight Fallback)
+
+Minimal DNS forwarder for Linux servers. Good for headless/CLI-only environments.
 
 ```bash
 # Install
 sudo apt install dnsmasq
 
-# Configure
-echo "address=/akior.local/192.168.1.100" | sudo tee /etc/dnsmasq.d/akior.conf
+# Configure (replace <AKIOR_SERVER_IP> with actual IP)
+echo "address=/akior.local/<AKIOR_SERVER_IP>" | sudo tee /etc/dnsmasq.d/akior.conf
+echo "server=8.8.8.8" | sudo tee -a /etc/dnsmasq.d/akior.conf
 
 # Restart
 sudo systemctl restart dnsmasq
+
+# Verify
+dig @localhost akior.local
 ```
+
+Then configure router DHCP to use this server's IP as the DNS server.
 
 ## Option 4: mDNS/Bonjour (Zero-Config)
 
@@ -168,17 +201,37 @@ ipconfig /flushdns
 # Check DNS server being used
 nslookup akior.local
 
-# Try direct IP access
-curl https://192.168.1.100/api/health/build -k
+# Try direct IP access (replace with canonical IP from docs/ops/canonical-host.md)
+curl https://<CANONICAL_IP>/api/health/build -k
 ```
 
-### Wrong IP
+### Wrong IP (Most Common Issue)
 
 If `akior.local` resolves to the wrong IP:
 
-1. Check all hosts files on the network
-2. Check router DNS entries
-3. Check for multiple DNS servers
+1. **Check local hosts file first** (often the culprit):
+   ```powershell
+   # Windows
+   type C:\Windows\System32\drivers\etc\hosts | findstr akior
+   
+   # Linux/Mac
+   grep akior /etc/hosts
+   ```
+
+2. **Remove stale hosts entries**:
+   ```powershell
+   # Windows (Admin PowerShell)
+   (Get-Content C:\Windows\System32\drivers\etc\hosts) | Where-Object { $_ -notmatch 'akior' } | Set-Content C:\Windows\System32\drivers\etc\hosts
+   ```
+
+3. **Check router DNS entries** - ensure only one entry for `akior.local`
+
+4. **Check for multiple DNS servers** - only one should have the `akior.local` override
+
+5. **Verify with verification script**:
+   ```powershell
+   .\scripts\net\verify-dns.ps1
+   ```
 
 ### Certificate Errors
 
@@ -213,8 +266,47 @@ For production deployments:
     (via Router DNS or hosts file)
 ```
 
+## DHCP Lease Renewal
+
+After changing DNS settings, clients need to pick up the new configuration:
+
+### Windows
+```powershell
+# Release and renew DHCP lease
+ipconfig /release
+ipconfig /renew
+ipconfig /flushdns
+
+# Verify
+nslookup akior.local
+```
+
+### Linux
+```bash
+# Restart NetworkManager
+sudo systemctl restart NetworkManager
+
+# Or manually
+sudo dhclient -r && sudo dhclient
+```
+
+### Mac
+```bash
+# Renew DHCP lease
+sudo ipconfig set en0 DHCP
+
+# Flush DNS
+sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder
+```
+
+### All Devices (Nuclear Option)
+If devices aren't picking up new DNS, reboot the router. This forces all DHCP leases to renew.
+
 ## Related
 
+- `docs/ops/canonical-host.md` - Canonical server IP and change process
 - `docs/runbooks/deploy-drift.md` - Deployment drift troubleshooting
+- `scripts/net/verify-dns.ps1` - DNS verification script (Windows)
+- `scripts/net/verify-dns.sh` - DNS verification script (Linux/Mac)
 - `deploy/Caddyfile` - Caddy reverse proxy configuration
 - `deploy/compose.jarvis.yml` - Docker Compose stack
