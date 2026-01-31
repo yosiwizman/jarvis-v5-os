@@ -5,10 +5,14 @@ serves stale assets that don't match the expected build.
 
 ## Symptoms
 
+- `/api/health/build` returns **404** (endpoint doesn't exist in running build)
 - Settings page crashes with `TypeError: Cannot read properties of undefined`
 - Browser console references old hashed bundles (e.g., `page-1c6a2a71d758b1c8.js`)
 - Application behavior doesn't match recent code changes
 - Error boundaries show a different build SHA than expected
+
+> **CRITICAL**: If `/api/health/build` returns 404, you are NOT running a recent build.
+> Skip to [One-Command Redeploy](#one-command-redeploy-recommended) below.
 
 ## Quick Verification (10 seconds)
 
@@ -61,7 +65,37 @@ Or check your deployment system (GitHub Actions, CI/CD dashboard).
 | ✓ Match | ✗ Different | - | Client cached stale HTML |
 | ✗ Different | - | - | Multiple instances with different builds |
 
-## Recovery Procedures
+## One-Command Redeploy (Recommended)
+
+For the local Docker Compose stack, use the automated redeploy script:
+
+```powershell
+# From the repo root on Windows:
+.\deploy\local\redeploy.ps1
+```
+
+This script will:
+1. Pull latest code from main
+2. Stop existing containers
+3. Rebuild images with `--no-cache` (injects git SHA)
+4. Start containers with `--force-recreate`
+5. Wait for health checks to pass
+6. Verify `/api/health/build` returns correct SHA
+7. Check `/settings` loads without crash
+
+### Verification Script
+
+To verify a live deployment without redeploying:
+
+```powershell
+# Check if live build matches expected SHA:
+.\scripts\verify-live-build.ps1
+
+# Or with custom URL:
+.\scripts\verify-live-build.ps1 -BaseUrl "http://localhost:3000"
+```
+
+## Manual Recovery Procedures
 
 ### A. Client Has Stale HTML Cache
 
@@ -76,17 +110,28 @@ Or check your deployment system (GitHub Actions, CI/CD dashboard).
 
 ### B. Server Running Old Build
 
-**Symptoms**: API SHA doesn't match expected deployment SHA.
+**Symptoms**: API SHA doesn't match expected deployment SHA, or `/api/health/build` returns 404.
 
-**Fix (Docker/Container)**:
-```bash
-# Stop and remove old container
-docker stop akior-web
-docker rm akior-web
+**Fix (Recommended - Docker Compose)**:
+```powershell
+# Use the one-command redeploy script:
+.\deploy\local\redeploy.ps1
+```
 
-# Pull latest and start
-docker pull your-registry/akior-web:latest
-docker run -d --name akior-web ... your-registry/akior-web:latest
+**Fix (Manual Docker Compose)**:
+```powershell
+cd deploy
+
+# Get current git info
+$SHA = git rev-parse --short HEAD
+$TIME = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+# Stop, rebuild, start
+docker compose -f compose.jarvis.yml down
+docker compose -f compose.jarvis.yml build --no-cache `
+    --build-arg GIT_SHA=$SHA `
+    --build-arg BUILD_TIME=$TIME
+docker compose -f compose.jarvis.yml up -d --force-recreate
 ```
 
 **Fix (PM2/Node)**:
@@ -179,5 +224,8 @@ Next.js is configured with proper cache headers (see `apps/web/next.config.mjs`)
 
 - `/api/health` — Full health check with server status
 - `/api/health/build` — Build-only info (always available)
+- `deploy/local/redeploy.ps1` — One-command redeploy script
+- `scripts/verify-live-build.ps1` — Deployment verification script
 - `e2e/drift-detection.spec.ts` — Automated drift tests
+- `deploy/Caddyfile` — Reverse proxy configuration with cache headers
 - `docs/ops/deployment.md` — General deployment procedures
