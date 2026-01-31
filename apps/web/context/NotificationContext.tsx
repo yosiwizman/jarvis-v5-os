@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import type { Notification } from '@shared/notifications';
 import { readSettings } from '@shared/settings';
 
@@ -8,9 +8,19 @@ interface NotificationWithReadState extends Notification {
   read: boolean;
 }
 
+/** SSE connection health state for monitoring/debugging */
+export interface SSEHealthState {
+  status: 'connecting' | 'connected' | 'degraded' | 'disconnected';
+  lastMessageAt: Date | null;
+  lastHeartbeatAt: Date | null;
+  consecutiveFailures: number;
+  retryCount: number;
+}
+
 interface NotificationContextValue {
   notifications: NotificationWithReadState[];
   unreadCount: number;
+  sseHealth: SSEHealthState;
   dismissNotification: (id: string) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -33,10 +43,22 @@ interface NotificationProviderProps {
   children: ReactNode;
 }
 
+const initialSSEHealth: SSEHealthState = {
+  status: 'connecting',
+  lastMessageAt: null,
+  lastHeartbeatAt: null,
+  consecutiveFailures: 0,
+  retryCount: 0
+};
+
 export function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<NotificationWithReadState[]>([]);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [sseHealth, setSSEHealth] = useState<SSEHealthState>(initialSSEHealth);
+  
+  // Use ref to track retry state without causing re-renders
+  const retryStateRef = useRef({ count: 0, timeout: null as NodeJS.Timeout | null });
 
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -137,34 +159,64 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   // Connect to SSE stream for real-time notifications with exponential backoff
   useEffect(() => {
     let es: EventSource | null = null;
-    let retryCount = 0;
-    let retryTimeout: NodeJS.Timeout | null = null;
     const MAX_RETRY_DELAY = 30000; // 30 seconds max
     const BASE_RETRY_DELAY = 1000; // 1 second base
     
+    const updateHealth = (updates: Partial<SSEHealthState>) => {
+      setSSEHealth((prev) => ({ ...prev, ...updates }));
+    };
+    
     const connect = () => {
-      console.log('[NotificationContext] Connecting to SSE stream...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[NotificationContext] Connecting to SSE stream...');
+      }
+      
+      updateHealth({ status: 'connecting' });
       
       es = new EventSource('/api/notifications/stream');
 
       es.onopen = () => {
-        console.log('[NotificationContext] SSE connection established');
-        retryCount = 0; // Reset retry count on successful connection
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[NotificationContext] SSE connection established');
+        }
+        // Reset retry count on successful connection
+        retryStateRef.current.count = 0;
+        updateHealth({ 
+          status: 'connected', 
+          consecutiveFailures: 0,
+          retryCount: 0
+        });
       };
 
       es.onmessage = (event) => {
         try {
           const notification = JSON.parse(event.data) as Notification;
+          const now = new Date();
           
-          // Skip connection/heartbeat messages
-          if (notification.type === 'connection' || notification.type === 'heartbeat') {
-            if (notification.type === 'connection') {
+          // Update health on any message (connection is alive)
+          updateHealth({ lastMessageAt: now });
+          
+          // Reset retry count on successful message (connection is healthy)
+          retryStateRef.current.count = 0;
+          
+          // Handle connection/heartbeat messages - update health but don't add to notifications
+          if (notification.type === 'connection') {
+            if (process.env.NODE_ENV === 'development') {
               console.log('[NotificationContext] SSE connection confirmed');
             }
+            updateHealth({ status: 'connected', consecutiveFailures: 0 });
+            return;
+          }
+          
+          if (notification.type === 'heartbeat') {
+            // Heartbeat received - connection is healthy, reset backoff
+            updateHealth({ lastHeartbeatAt: now, status: 'connected', consecutiveFailures: 0 });
             return;
           }
 
-          console.log('[NotificationContext] Notification received:', notification.type);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NotificationContext] Notification received:', notification.type);
+          }
 
           // Check user preferences
           const settings = readSettings();
@@ -175,7 +227,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           const isEnabled = preferences?.[preferenceKey] !== false;
           
           if (!isEnabled) {
-            console.log(`[NotificationContext] Notification filtered by preferences: ${notification.type}`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`[NotificationContext] Notification filtered by preferences: ${notification.type}`);
+            }
             return;
           }
 
@@ -188,7 +242,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             },
             ...prev // Prepend to show newest first
           ]);
-        } catch (error) {
+        } catch {
           // Silently ignore parse errors for malformed messages
         }
       };
@@ -199,13 +253,24 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         es = null;
         
         // Calculate exponential backoff delay
+        const retryCount = retryStateRef.current.count;
         const delay = Math.min(BASE_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
-        retryCount++;
+        retryStateRef.current.count = retryCount + 1;
         
-        console.log(`[NotificationContext] SSE error, reconnecting in ${delay}ms (attempt ${retryCount})`);
+        // Update health state
+        const newFailures = retryCount + 1;
+        updateHealth({ 
+          status: newFailures >= 3 ? 'degraded' : 'connecting',
+          consecutiveFailures: newFailures,
+          retryCount: retryCount + 1
+        });
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[NotificationContext] SSE error, reconnecting in ${delay}ms (attempt ${retryCount + 1})`);
+        }
         
         // Schedule reconnection
-        retryTimeout = setTimeout(connect, delay);
+        retryStateRef.current.timeout = setTimeout(connect, delay);
       };
 
       setEventSource(es);
@@ -214,17 +279,33 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     connect();
 
     return () => {
-      console.log('[NotificationContext] Closing SSE connection');
-      if (retryTimeout) clearTimeout(retryTimeout);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[NotificationContext] Closing SSE connection');
+      }
+      if (retryStateRef.current.timeout) {
+        clearTimeout(retryStateRef.current.timeout);
+      }
+      updateHealth({ status: 'disconnected' });
       es?.close();
     };
   }, []);
+
+  // Expose debug info in development via window object
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      (window as any).__notifDebug = {
+        getHealth: () => sseHealth,
+        getNotifications: () => notifications
+      };
+    }
+  }, [sseHealth, notifications]);
 
   return (
     <NotificationContext.Provider
       value={{
         notifications,
         unreadCount,
+        sseHealth,
         dismissNotification,
         markAsRead,
         markAllAsRead,
