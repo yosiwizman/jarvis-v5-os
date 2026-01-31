@@ -24,6 +24,14 @@ akior.local, jarvis.local, aifactory-lan {
     # Use Caddy's internal CA for automatic cert generation
     tls internal
 
+    # Health endpoints - never cache (deployment drift prevention)
+    handle /api/health/* {
+        uri strip_prefix /api
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        header Pragma "no-cache"
+        reverse_proxy server:1234
+    }
+
     # Socket.IO with WebSocket support
     handle /socket.io/* {
         reverse_proxy server:1234
@@ -45,7 +53,9 @@ akior.local, jarvis.local, aifactory-lan {
     }
 
     # Everything else goes to Next.js web frontend
+    # HTML should not be cached to prevent stale bundle references
     handle {
+        header Cache-Control "no-store, no-cache, must-revalidate"
         reverse_proxy web:3001
     }
 
@@ -61,6 +71,14 @@ akior.local, jarvis.local, aifactory-lan {
 # HTTP - Fallback for recovery (camera won't work)
 # ============================================
 :80, :3000 {
+    # Health endpoints - never cache (deployment drift prevention)
+    handle /api/health/* {
+        uri strip_prefix /api
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        header Pragma "no-cache"
+        reverse_proxy server:1234
+    }
+
     # Socket.IO with WebSocket support
     handle /socket.io/* {
         reverse_proxy server:1234
@@ -82,7 +100,9 @@ akior.local, jarvis.local, aifactory-lan {
     }
 
     # Everything else goes to Next.js web frontend
+    # HTML should not be cached to prevent stale bundle references
     handle {
+        header Cache-Control "no-store, no-cache, must-revalidate"
         reverse_proxy web:3001
     }
 
