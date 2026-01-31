@@ -69,7 +69,7 @@ const nextConfig = {
    * Cache-busting headers for deployment drift prevention.
    * 
    * Strategy:
-   * - HTML pages: no-store (always fetch fresh to get latest JS bundle references)
+   * - All pages: no-store (always fetch fresh to get latest JS bundle references)
    * - Static hashed assets (_next/static): immutable, long cache (content-addressed)
    * - API routes: no-store (always fresh)
    * 
@@ -77,33 +77,29 @@ const nextConfig = {
    */
   async headers() {
     return [
-      // HTML pages - never cache to prevent serving stale bundle references
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'header',
-            key: 'accept',
-            value: '(.*text/html.*)',
-          },
-        ],
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
-          { key: 'Pragma', value: 'no-cache' },
-        ],
-      },
-      // Health/build endpoints - never cache
-      {
-        source: '/api/health/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
-        ],
-      },
-      // Hashed static assets - cache immutably (content-addressed)
+      // Hashed static assets - cache immutably (content-addressed) - MUST come first
       {
         source: '/_next/static/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // Settings page specifically - never cache, disable ETags
+      {
+        source: '/settings',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, max-age=0' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
+      // All other pages - never cache HTML documents
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, max-age=0' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
         ],
       },
     ];
