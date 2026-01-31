@@ -161,8 +161,30 @@ fastify.get('/config', async () => ({
 fastify.get('/health', async () => ({
   ok: true,
   timestamp: new Date().toISOString(),
-  uptime: process.uptime()
+  uptime: process.uptime(),
+  build: {
+    gitSha: process.env.GIT_SHA || 'unknown',
+    buildTime: process.env.BUILD_TIME || 'unknown',
+  }
 }));
+
+// Build info endpoint for deployment drift detection
+// This endpoint is used by operators to verify which version is running
+fastify.get('/health/build', async (req, reply) => {
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+  reply.header('Pragma', 'no-cache');
+  return {
+    ok: true,
+    git_sha: process.env.GIT_SHA || 'unknown',
+    build_time: process.env.BUILD_TIME || 'unknown',
+    app_version: process.env.npm_package_version || '6.2.0',
+    service: 'server',
+    env: {
+      node_env: process.env.NODE_ENV || 'unknown',
+    },
+    time: new Date().toISOString(),
+  };
+});
 
 // Initialize storage systems
 logSystemEvent('server_starting');

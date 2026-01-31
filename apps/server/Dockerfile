@@ -43,8 +43,14 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+# Build arguments for deployment tracking
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+
 ENV NODE_ENV=production
 ENV PORT=1234
+ENV GIT_SHA=${GIT_SHA}
+ENV BUILD_TIME=${BUILD_TIME}
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
