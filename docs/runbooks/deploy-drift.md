@@ -190,6 +190,69 @@ docker ps | grep akior
 
 **Fix**: Ensure all instances are running the same build.
 
+### E. akior.local Points to Wrong Host
+
+**Symptoms**: 
+- `localhost:3000/settings` works, but `akior.local/settings` shows old build
+- Settings page shows "Build Drift Detected" warning
+- SHA returned by API doesn't match expected
+- Ping shows non-localhost IP with TTL=64 (another LAN device)
+
+**Diagnosis**:
+```powershell
+# Check what IP akior.local resolves to
+ping -n 1 akior.local
+
+# Check hosts file
+type C:\Windows\System32\drivers\etc\hosts | Select-String "akior"
+
+# Verify build SHA on the target host
+curl https://akior.local/api/health/build -k
+
+# Compare with local build
+curl http://localhost:3000/api/health/build
+```
+
+**Fix Options** (choose based on your network setup):
+
+#### Option 1: Update Hosts File (Per-Device)
+
+Edit `C:\Windows\System32\drivers\etc\hosts` as Administrator:
+```
+# Point akior.local to the correct host
+192.168.1.100  akior.local
+```
+
+Replace `192.168.1.100` with the IP of the machine running AKIOR.
+
+#### Option 2: Update Router DNS (Network-Wide, Recommended)
+
+1. Log into your router admin panel
+2. Find DNS/DHCP settings
+3. Add a static DNS entry: `akior.local` → `<LAN IP of AKIOR server>`
+4. Flush DNS on clients: `ipconfig /flushdns`
+
+#### Option 3: Run Local DNS (Advanced)
+
+See `docs/ops/dns-setup.md` for setting up AdGuard Home or dnsmasq.
+
+#### Option 4: Redeploy on Target Host
+
+If `akior.local` correctly points to a dedicated server, redeploy there:
+```bash
+ssh user@akior-server
+cd /path/to/jarvis-v5-os
+git pull origin main
+./deploy/local/redeploy.ps1  # or equivalent for Linux
+```
+
+**Verification**:
+```powershell
+# After fix, both should return same SHA:
+.\scripts\verify-live-build.ps1 -BaseUrl "http://localhost:3000"
+.\scripts\verify-live-build.ps1 -BaseUrl "https://akior.local"
+```
+
 ## Prevention
 
 ### Build-Time Checks

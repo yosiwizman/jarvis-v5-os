@@ -471,16 +471,60 @@ export default function SettingsPage() {
     );
   }
 
+  // Fetch server build info for drift detection
+  const [serverBuild, setServerBuild] = useState<{ git_sha: string; build_time: string } | null>(null);
+  useEffect(() => {
+    fetch('/api/health/build')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setServerBuild(data))
+      .catch(() => {});
+  }, []);
+
   if (!settings) return null;
 
   const chat = textChat();
 
-  // Build info for debugging
-  const gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
+  // Build info for drift detection
+  const clientSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
+  const serverSha = serverBuild?.git_sha || 'loading...';
+  const hasDrift = serverBuild && clientSha !== 'unknown' && serverSha !== clientSha;
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      {/* Settings Header with Build Info */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h1 className="text-2xl font-semibold">Settings</h1>
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-white/40">Server:</span>
+            <code className={`font-mono px-2 py-0.5 rounded ${hasDrift ? 'bg-amber-500/20 text-amber-400' : 'bg-white/5 text-cyan-400'}`}
+                  data-testid="server-build-sha">
+              {serverSha}
+            </code>
+          </div>
+          <a href="/api/health/build" target="_blank" rel="noopener noreferrer"
+             className="text-white/30 hover:text-white/60 underline"
+             title="View full build info">
+            Build Info
+          </a>
+        </div>
+      </div>
+
+      {/* Drift Warning Banner */}
+      {hasDrift && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-2">
+          <div className="flex items-center gap-2 text-amber-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="font-medium">Build Drift Detected</span>
+          </div>
+          <p className="text-sm text-white/60">
+            Your browser loaded client code from <code className="text-cyan-400">{clientSha}</code> but the server is running <code className="text-cyan-400">{serverSha}</code>.
+            This may indicate stale cache or wrong host. Try hard-refreshing (Ctrl+Shift+R) or check your DNS.
+          </p>
+        </div>
+      )}
 
       {/* Appearance / Theme Section */}
       <section className="card p-6 space-y-6">
