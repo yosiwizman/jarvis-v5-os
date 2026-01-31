@@ -55,13 +55,32 @@ if ([string]::IsNullOrEmpty($ExpectedSha)) {
 Write-Info "Base URL: $BaseUrl"
 Write-Host ""
 
-# Ignore SSL errors for self-signed certs
-[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+# Ignore SSL errors for self-signed certs (Windows PowerShell 5.x)
+if (-not ("TrustAllCertsPolicy" -as [type])) {
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+        return true;
+    }
+}
+"@
+}
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+# Build params for Invoke-RestMethod/Invoke-WebRequest (PS 6+ has -SkipCertificateCheck)
+$webParams = @{ TimeoutSec = 10 }
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    $webParams.SkipCertificateCheck = $true
+}
 
 # Test 1: /api/health/build returns 200
 Write-Host "Test 1: /api/health/build returns 200" -ForegroundColor White
 try {
-    $buildResponse = Invoke-RestMethod -Uri "$BaseUrl/api/health/build" -TimeoutSec 10 -SkipCertificateCheck
+    $buildResponse = Invoke-RestMethod -Uri "$BaseUrl/api/health/build" @webParams
     
     if ($buildResponse.ok -eq $true) {
         Write-Pass "/api/health/build returns ok=true"
@@ -104,7 +123,7 @@ Write-Host ""
 # Test 3: /api/health returns ok
 Write-Host "Test 3: /api/health returns ok" -ForegroundColor White
 try {
-    $healthResponse = Invoke-RestMethod -Uri "$BaseUrl/api/health" -TimeoutSec 10 -SkipCertificateCheck
+    $healthResponse = Invoke-RestMethod -Uri "$BaseUrl/api/health" @webParams
     
     if ($healthResponse.ok -eq $true) {
         Write-Pass "/api/health returns ok=true"
@@ -122,8 +141,12 @@ Write-Host ""
 
 # Test 4: /settings page loads without crash
 Write-Host "Test 4: /settings page loads" -ForegroundColor White
+$settingsParams = @{ TimeoutSec = 15; UseBasicParsing = $true }
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    $settingsParams.SkipCertificateCheck = $true
+}
 try {
-    $settingsResponse = Invoke-WebRequest -Uri "$BaseUrl/settings" -TimeoutSec 15 -SkipCertificateCheck
+    $settingsResponse = Invoke-WebRequest -Uri "$BaseUrl/settings" @settingsParams
     
     if ($settingsResponse.StatusCode -eq 200) {
         # Check for crash indicators in HTML
