@@ -10,26 +10,22 @@ The **canonical host** is the single authoritative server that should respond to
 
 ## Current Configuration
 
-Edit this section when the canonical host changes:
-
 ```yaml
-# Canonical AKIOR Server
+# Canonical AKIOR Server - PRODUCTION
 hostname: akior.local
-lan_ip: <YOUR_SERVER_IP>        # e.g., 192.168.1.100
-machine_name: <YOUR_MACHINE>    # e.g., akior-server, desktop-pc
-last_updated: <DATE>
-updated_by: <YOUR_NAME>
-```
-
-### Example:
-
-```yaml
-hostname: akior.local
-lan_ip: 192.168.1.100
-machine_name: homelab-nuc
+lan_ip: 192.168.1.76
+machine_name: aifactory
+connection: Wired Ethernet (NOT Wi-Fi)
 last_updated: 2026-01-31
 updated_by: yosiwizman
 ```
+
+### Network Notes
+
+- **Canonical server**: `192.168.1.76` (wired, hostname "aifactory")
+- **Non-canonical**: `192.168.1.77` (Wi-Fi client "Ai-Factory-1") - do NOT use
+- **Gateway**: `192.168.1.254` (AT&T BGW320) - will NOT appear in DHCP client list
+- **DNS/DHCP provider**: AdGuard Home on `192.168.1.76:3000`
 
 ## How DNS Resolution Works
 
@@ -41,19 +37,31 @@ updated_by: yosiwizman
          │ DNS query: akior.local
          ▼
 ┌─────────────────┐
-│  Router/DNS     │────────────────────────────┐
-│  (or AdGuard)   │                            │
+│  AdGuard Home   │────────────────────────────┐
+│  192.168.1.76   │                            │
+│  (DNS + DHCP)   │                            │
 └────────┬────────┘                            │
-         │ Returns: 192.168.1.100              │
+         │ Returns: 192.168.1.76               │
          ▼                                     │
 ┌─────────────────┐                            │
 │  Canonical Host │◀───────────────────────────┘
-│  192.168.1.100  │
+│  192.168.1.76   │
+│  "aifactory"    │
 │                 │
 │  Docker Stack:  │
 │  - Caddy (443)  │
 │  - Next.js      │
 │  - Fastify      │
+│  - AdGuard Home │
+└─────────────────┘
+         │
+         │ Internet via
+         ▼
+┌─────────────────┐
+│  AT&T BGW320    │
+│  192.168.1.254  │
+│  (WAN routing)  │
+│  DHCP: disabled │
 └─────────────────┘
 ```
 
@@ -190,8 +198,21 @@ ping akior.local
 curl -k https://akior.local/api/health/build | jq .git_sha
 ```
 
+## AT&T BGW320 Notes
+
+**Why 192.168.1.254 doesn't appear in device lists:**
+
+The BGW320's management IP (`192.168.1.254`) is the gateway itself, not a DHCP client. When viewing "Connected Devices" in the BGW320 admin panel or AdGuard's DHCP client list, you'll only see:
+- Devices that received DHCP leases
+- Devices that sent ARP requests
+
+The gateway is the router—it doesn't request a DHCP lease from itself.
+
 ## Related Documentation
 
 - `docs/ops/dns-setup.md` - How to configure DNS
+- `docs/ops/adguard-bgw320.md` - AdGuard Home setup for BGW320
 - `docs/runbooks/deploy-drift.md` - Troubleshooting deployment issues
+- `deploy/adguard-home/docker-compose.yml` - AdGuard Home deployment
+- `scripts/net/check-adguard-ready.sh` - AdGuard readiness check
 - `deploy/local/redeploy.ps1` - Automated redeploy script

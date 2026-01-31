@@ -1,0 +1,2 @@
+# This file preserves the volumes directory structure.
+# AdGuard Home will create work/ and conf/ subdirectories at runtime.
