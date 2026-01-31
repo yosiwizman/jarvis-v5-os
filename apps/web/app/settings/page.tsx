@@ -475,9 +475,43 @@ export default function SettingsPage() {
 
   const chat = textChat();
 
+  // Failsafe guard: detect corrupted/stale settings
+  // This should never happen if normalization is working, but provides last-resort protection
+  const integrations = settings?.integrations ?? {};
+  const isSettingsCorrupted = !integrations.weather || typeof integrations.weather !== 'object';
+  const gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
+
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Settings</h1>
+
+      {/* Failsafe Warning Banner - shows if settings are corrupted/stale */}
+      {isSettingsCorrupted && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-2">
+          <div className="flex items-center gap-2 text-amber-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="font-medium">Settings data incomplete</span>
+          </div>
+          <p className="text-sm text-white/60">
+            Settings payload is missing expected integration data. This may indicate a stale build,
+            deployment drift, or corrupted local storage.
+          </p>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-white/40">Build SHA:</span>
+            <code className="text-cyan-400 font-mono" data-testid="settings-corruption-sha">{gitSha}</code>
+            <a
+              href="/api/health/build"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              Check current build
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Appearance / Theme Section */}
       <section className="card p-6 space-y-6">

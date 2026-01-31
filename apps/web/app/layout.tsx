@@ -9,6 +9,8 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { NotificationToast } from '@/components/NotificationToast';
 import { InsecureBanner } from '@/components/InsecureBanner';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { BuildInfo } from '@/components/BuildInfo';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
@@ -55,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-screen relative">
+        <ErrorBoundary>
         <ThemeProvider>
           <NotificationProvider>
           {/* HTTP security warning banner */}
@@ -113,7 +116,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {isCollapsed ? 'Se' : 'Settings'}
             </Link>
           </nav>
-          {!isCollapsed && <footer className="mt-6 text-xs text-white/50">dark • modern</footer>}
+          {!isCollapsed && (
+            <footer className="mt-6 space-y-2">
+              <div className="text-xs text-white/50">dark • modern</div>
+              <BuildInfo />
+            </footer>
+          )}
         </aside>
           )}
         
@@ -148,6 +156,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NotificationToast />
           </NotificationProvider>
         </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
