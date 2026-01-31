@@ -1,0 +1,70 @@
+# AdGuard Home - LAN DNS + DHCP Server
+# =====================================
+# Provides network-wide DNS with custom rewrites and optional DHCP.
+# Designed for networks where the router (e.g., AT&T BGW320) cannot
+# provide custom DNS entries via its own DHCP.
+#
+# Required Ports/Services:
+#   - DNS:   53/tcp, 53/udp  (must not conflict with systemd-resolved)
+#   - DHCP:  67/udp          (only when AdGuard DHCP is enabled)
+#   - Admin: 3000/tcp        (web UI for configuration)
+#
+# network_mode: host is REQUIRED for DHCP to work properly.
+# cap_add: NET_ADMIN is REQUIRED for DHCP binding.
+#
+# Usage:
+#   docker compose up -d
+#   Then access http://<SERVER_IP>:3000 for setup wizard.
+#
+# See: docs/ops/adguard-bgw320.md for AT&T BGW320 setup procedure.
+
+services:
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard-home
+    restart: unless-stopped
+
+    # Host networking required for DHCP to work
+    # This binds directly to host ports (no port mapping needed)
+    network_mode: "host"
+
+    # NET_ADMIN capability required for DHCP server functionality
+    cap_add:
+      - NET_ADMIN
+
+    volumes:
+      # Work directory (runtime data, query logs)
+      - ./volumes/work:/opt/adguardhome/work
+      # Config directory (settings, filters, DNS rewrites)
+      - ./volumes/conf:/opt/adguardhome/conf
+
+    # Environment (optional)
+    environment:
+      # Timezone for logs (adjust to your timezone)
+      - TZ=America/Los_Angeles
+
+    # Health check to verify AdGuard is responding
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Notes:
+# ------
+# 1. On Linux, if port 53 is in use by systemd-resolved:
+#    sudo systemctl stop systemd-resolved
+#    sudo systemctl disable systemd-resolved
+#    Then update /etc/resolv.conf to use 127.0.0.1 or your upstream DNS.
+#
+# 2. Firewall rules may need to allow:
+#    - TCP/UDP 53 (DNS)
+#    - UDP 67 (DHCP, if enabled)
+#    - TCP 3000 (Admin UI)
+#
+# 3. After first run, configure via web UI:
+#    - Set admin password
+#    - Add DNS rewrite: akior.local -> <CANONICAL_IP>
+#    - Enable DHCP server (if taking over from router)
+#    - Set DHCP range (e.g., 192.168.1.100 - 192.168.1.200)
