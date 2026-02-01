@@ -53,15 +53,19 @@ export default function MenuPage() {
   }, [keysMeta]);
 
   const cards = useMemo<MenuCard[]>(() => {
-    return [
-      {
-        href: '/onboard',
-        title: 'Onboarding / Setup',
-        desc: `Get ${BRAND.productName} ready for new devices and operators.`,
-        badge: setupIncomplete ? 'Not configured' : undefined
-      },
-      ...baseCards
-    ];
+    // Only show Setup card when keys are missing
+    if (setupIncomplete) {
+      return [
+        {
+          href: '/settings#provider-keys',
+          title: 'Setup',
+          desc: 'Configure API keys and complete onboarding.',
+          badge: 'Not configured'
+        },
+        ...baseCards
+      ];
+    }
+    return baseCards;
   }, [setupIncomplete]);
 
   return (
