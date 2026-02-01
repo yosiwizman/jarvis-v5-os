@@ -1057,6 +1057,7 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
                 transform: `scale(${logoScale})`,
                 filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`
               }}
+              data-testid="brand-mark"
             >
               <div 
                 className="text-5xl font-bold tracking-[0.3em] text-cyan-400"
@@ -1187,6 +1188,7 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
       onClick={onClick}
       className="group fixed bottom-6 right-6 z-30 w-32 h-32 hover:scale-110 transition-transform duration-200"
       aria-label="Open AKIOR Assistant"
+      data-testid="brand-float"
     >
       <div className="relative w-full h-full">
         {/* Ring 2 - Outer */}
