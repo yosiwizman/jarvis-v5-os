@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { BRAND, PRIMARY_HOSTNAME } from '@/lib/brand';
 
 interface HealthStatus {
   ok: boolean;
@@ -231,7 +232,7 @@ function DisplayDashboard() {
             A
           </div>
           <div>
-            <h1 className="text-2xl font-bold">AKIOR Display</h1>
+            <h1 className="text-2xl font-bold">{BRAND.productName} Display</h1>
             <p className="text-white/60 text-sm">System Status Monitor</p>
           </div>
         </div>
@@ -318,9 +319,9 @@ function DisplayDashboard() {
 
       {/* Footer */}
       <footer className={`text-center text-white/40 text-sm transition-opacity duration-300 ${showChrome ? 'opacity-100' : 'opacity-0'}`}>
-        <p>AKIOR System Monitor • Auto-refresh every 10s</p>
+        <p>{BRAND.productName} System Monitor • Auto-refresh every 10s</p>
         <p className="mt-1">
-          Access: <span className="text-cyan-400">https://{health?.hostname || 'jarvis.local'}/display</span>
+          Access: <span className="text-cyan-400">https://{health?.hostname || PRIMARY_HOSTNAME}/display</span>
         </p>
       </footer>
     </div>

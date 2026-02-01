@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildServerUrl } from '@/lib/api';
 import { FileUpload } from '@/components/FileUpload';
+import { BRAND } from '@/lib/brand';
 
 type FileCategory = 'image' | 'stl' | 'model' | 'other';
 
@@ -170,7 +171,7 @@ export default function FilesPage() {
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold">Shared Files</h1>
         <p className="text-sm text-white/60">
-          Central library for every asset Jarvis creates. Direct downloads are available at
+          Central library for every asset {BRAND.productName} creates. Direct downloads are available at
           <span className="ml-1 font-mono text-white/80">
             {directLinkLabel || 'https://your-server-address/files/*'}
           </span>

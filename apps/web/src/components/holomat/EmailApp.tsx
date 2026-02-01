@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { BRAND } from '@/lib/brand';
 
 interface EmailAppProps {
   onClose: () => void;
@@ -482,7 +483,7 @@ export function EmailApp({ onClose }: EmailAppProps) {
 
       {/* Footer */}
       <div className="absolute bottom-4 left-6 right-6 text-center text-xs text-purple-400/60 tracking-wider">
-        JARVIS EMAIL SYSTEM • {emails.length} MESSAGE{emails.length !== 1 ? 'S' : ''}
+        {BRAND.productName.toUpperCase()} EMAIL SYSTEM • {emails.length} MESSAGE{emails.length !== 1 ? 'S' : ''}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { jarvisFunctions } from '@/lib/jarvis-functions';
 import { useState } from 'react';
 import { useFunctionSettings } from '@/hooks/useFunctionSettings';
+import { BRAND } from '@/lib/brand';
 
 export default function FunctionsPage() {
   const [expandedFunction, setExpandedFunction] = useState<string | null>(null);
@@ -92,9 +93,9 @@ export default function FunctionsPage() {
     <div className="space-y-6">
       {/* Header */}
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">⚡ Jarvis Functions</h1>
+        <h1 className="text-3xl font-bold">⚡ {BRAND.productName} Functions</h1>
         <p className="text-white/70">
-          Complete documentation of all functions available to Jarvis AI Assistant
+          Complete documentation of all functions available to {BRAND.productName} AI Assistant
         </p>
       </header>
 

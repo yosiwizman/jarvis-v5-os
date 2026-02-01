@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { BRAND } from '@/lib/brand';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -91,10 +92,10 @@ export default function LoginPage() {
             
             <div>
               <h1 className="text-3xl font-bold tracking-wider text-cyan-400">
-                AKIOR
+                {BRAND.productName}
               </h1>
               <p className="text-sm text-white/50 mt-1 tracking-wide">
-                Intelligent AI Console
+                {BRAND.tagline}
               </p>
             </div>
           </div>

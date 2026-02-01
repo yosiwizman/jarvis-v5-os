@@ -1,6 +1,8 @@
+import { BRAND } from '@/lib/brand';
+
 /**
- * Function definitions for Jarvis assistant
- * Each function defines what Jarvis can do across the application
+ * Function definitions for AKIOR assistant
+ * Each function defines what AKIOR can do across the application
  */
 
 export interface JarvisFunction {
@@ -125,7 +127,7 @@ export const jarvisFunctions: JarvisFunction[] = [
   },
   {
     name: 'open_file',
-    description: 'Open and display a specific file in the Jarvis interface. Use this AFTER search_files to open a file by its exact filename. Displays images directly and renders 3D models with Three.js.',
+    description: `Open and display a specific file in the ${BRAND.productName} interface. Use this AFTER search_files to open a file by its exact filename. Displays images directly and renders 3D models with Three.js.`,
     parameters: {
       type: 'object',
       properties: {

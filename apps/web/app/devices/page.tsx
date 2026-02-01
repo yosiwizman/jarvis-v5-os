@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCameraSocket } from '@/lib/socket';
 import type { CameraPresence } from '@/lib/socket';
+import { BRAND } from '@/lib/brand';
 
 interface DeviceInfo extends CameraPresence {
   deviceType?: string;
@@ -168,7 +169,7 @@ export default function DevicesPage() {
           <div>
             <h1 className="text-4xl font-bold mb-2">Connected Devices</h1>
             <p className="text-gray-400">
-              Manage and control devices on the Jarvis network
+              Manage and control devices on the {BRAND.productName} network
             </p>
           </div>
           <button
@@ -270,11 +271,11 @@ export default function DevicesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <span className="text-gray-500">☐</span>
-                  <span className="text-gray-300">Android on same WiFi as Jarvis</span>
+                  <span className="text-gray-300">Android on same WiFi as {BRAND.productName}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-gray-500">☐</span>
-                  <span className="text-gray-300">Jarvis server running on port 1234</span>
+                  <span className="text-gray-300">{BRAND.productName} server running on port 1234</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-gray-500">☐</span>

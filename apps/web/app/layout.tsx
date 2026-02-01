@@ -14,6 +14,7 @@ import { BuildInfo } from '@/components/BuildInfo';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
+import { BRAND } from '@/lib/brand';
 
 // Note: metadata must be exported from a Server Component, not a Client Component
 // If you need metadata, create a separate server layout wrapper
@@ -43,17 +44,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   
   // Hide sidebar on login page
   const isLoginPage = pathname === '/login';
+  const titleText = `${BRAND.productName} Console`;
 
   // Set document title
   useEffect(() => {
-    document.title = 'AKIOR Console';
-  }, []);
+    document.title = titleText;
+  }, [titleText]);
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>AKIOR Console</title>
-        <meta name="description" content="AKIOR - Intelligent AI Assistant Console" />
+        <title>{titleText}</title>
+        <meta name="description" content={BRAND.description} />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-screen relative">
@@ -72,7 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               ☰
             </button>
-            {!isCollapsed && <div className="text-xl font-semibold">AKIOR</div>}
+            {!isCollapsed && <div className="text-xl font-semibold">{BRAND.productName}</div>}
           </div>
           <nav className="space-y-2 flex-1">
             <Link className={`block btn truncate ${pathname === '/menu' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/menu" title="Dashboard">

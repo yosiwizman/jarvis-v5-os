@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { buildServerUrl } from '@/lib/api';
+import { BRAND } from '@/lib/brand';
 
 // Dynamically import 3D viewer to avoid SSR issues
 const JarvisModelViewer = dynamic(
@@ -84,7 +85,7 @@ export function ModelViewerApp({ onClose, modelUrl, modelName }: ModelViewerAppP
               </svg>
             </div>
             <p className="text-gray-400 text-lg">No model loaded</p>
-            <p className="text-sm text-gray-500 mt-2">Ask Jarvis to open a model or select one from Model Creator</p>
+            <p className="text-sm text-gray-500 mt-2">Ask {BRAND.productName} to open a model or select one from Model Creator</p>
           </div>
         )}
 
