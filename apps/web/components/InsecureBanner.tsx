@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BRAND } from '@/lib/brand';
 
 /**
  * Banner that appears when running over HTTP (insecure context).
@@ -35,7 +36,7 @@ export function InsecureBanner() {
     }
   };
 
-  const targetUrl = 'https://akior.local';
+  const targetUrl = BRAND.canonicalUrl;
 
   const handleCopy = async () => {
     try {

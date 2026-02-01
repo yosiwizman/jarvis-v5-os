@@ -1,7 +1,23 @@
-import Link from 'next/link';
+'use client';
 
-const cards = [
-  { href: '/jarvis', title: 'Voice Assistant', desc: 'AKIOR realtime voice interface' },
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { buildServerUrl } from '@/lib/api';
+import { BRAND, VOICE_ROUTE } from '@/lib/brand';
+
+type KeysMeta = {
+  openai?: { present: boolean };
+  meshy?: { present: boolean };
+};
+type MenuCard = {
+  href: string;
+  title: string;
+  desc: string;
+  badge?: string;
+};
+
+const baseCards: MenuCard[] = [
+  { href: VOICE_ROUTE, title: 'Voice Assistant', desc: `${BRAND.productName} realtime voice interface` },
   { href: '/3dmodel', title: '3D Model', desc: 'Create models from captured images' },
   { href: '/createimage', title: 'Create Image', desc: 'Generate images from prompts' },
   { href: '/3dprinters', title: '3D Printers', desc: 'Monitor and control Bambu Lab printers' },
@@ -10,15 +26,56 @@ const cards = [
   { href: '/security', title: 'Security', desc: 'Live dashboard for connected cameras' },
   { href: '/camera', title: 'Camera', desc: 'Register a device as a camera client' },
   { href: '/holomat', title: 'Holomat', desc: 'Futuristic scanning interface with camera sync' },
-  { href: '/settings', title: 'Settings', desc: 'AKIOR system configuration' }
+  { href: '/settings', title: 'Settings', desc: `${BRAND.productName} system configuration` }
 ];
 
 export default function MenuPage() {
+  const [keysMeta, setKeysMeta] = useState<KeysMeta | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(buildServerUrl('/admin/keys/meta'))
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.meta) {
+          setKeysMeta(data.meta as KeysMeta);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [buildServerUrl]);
+
+  const setupIncomplete = useMemo(() => {
+    if (!keysMeta) return false;
+    return !keysMeta.openai?.present || !keysMeta.meshy?.present;
+  }, [keysMeta]);
+
+  const cards = useMemo<MenuCard[]>(() => {
+    return [
+      {
+        href: '/onboard',
+        title: 'Onboarding / Setup',
+        desc: `Get ${BRAND.productName} ready for new devices and operators.`,
+        badge: setupIncomplete ? 'Not configured' : undefined
+      },
+      ...baseCards
+    ];
+  }, [setupIncomplete]);
+
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => (
         <Link key={card.href} href={card.href as any} className="card p-6 hover:border-[color:rgb(var(--jarvis-accent)_/_0.3)] transition block group">
-          <div className="text-lg font-semibold group-hover:jarvis-accent-text transition">{card.title}</div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-lg font-semibold group-hover:jarvis-accent-text transition">{card.title}</div>
+            {card.badge && (
+              <span className="text-xs px-2 py-1 rounded-full border border-amber-500/40 text-amber-300 bg-amber-500/10">
+                {card.badge}
+              </span>
+            )}
+          </div>
           <div className="mt-2 text-white/60">{card.desc}</div>
           <div className="mt-4 jarvis-accent-text font-medium">Go →</div>
         </Link>
