@@ -480,6 +480,18 @@ export default function SettingsPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!settings || typeof window === 'undefined') return;
+    if (window.location.hash === '#provider-keys') {
+      const target = document.getElementById('provider-keys');
+      if (target) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      }
+    }
+  }, [settings]);
+
   if (!settings) return null;
 
   const chat = textChat();
@@ -668,7 +680,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="card p-6 space-y-4">
+      <section id="provider-keys" className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
             <div className="text-lg font-semibold">Voice Assistant</div>
