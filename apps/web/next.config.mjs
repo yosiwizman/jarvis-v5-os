@@ -57,10 +57,10 @@ const nextConfig = {
         source: '/api/proxy-model/:path*',
         destination: '/api/proxy-model/:path*',
       },
-      // Forward all other /api/* to the backend server (stripping /api prefix)
+      // Forward all other /api/* to the backend server (preserving /api prefix)
       {
         source: '/api/:path*',
-        destination: `${BACKEND_URL}/:path*`,
+        destination: `${BACKEND_URL}/api/:path*`,
       },
     ];
   },

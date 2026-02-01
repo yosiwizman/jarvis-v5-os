@@ -2,7 +2,7 @@
 #
 # Routes requests to appropriate backend services:
 # - /socket.io/* -> server (WebSocket support)
-# - /api/*       -> server (strips /api prefix)
+# - /api/*       -> server (preserves /api prefix for backend)
 # - /files/*     -> server (static files)
 # - /static/*    -> server (static assets)
 # - /*           -> web (Next.js frontend)
@@ -26,7 +26,6 @@ akior.local, jarvis.local, aifactory-lan {
 
     # Health endpoints - never cache (deployment drift prevention)
     handle /api/health/* {
-        uri strip_prefix /api
         header Cache-Control "no-store, no-cache, must-revalidate"
         header Pragma "no-cache"
         reverse_proxy server:1234
@@ -37,9 +36,8 @@ akior.local, jarvis.local, aifactory-lan {
         reverse_proxy server:1234
     }
 
-    # API routes - strip /api prefix when forwarding
+    # API routes - backend expects /api/* paths
     handle /api/* {
-        uri strip_prefix /api
         reverse_proxy server:1234
     }
 
@@ -73,7 +71,6 @@ akior.local, jarvis.local, aifactory-lan {
 :80, :3000 {
     # Health endpoints - never cache (deployment drift prevention)
     handle /api/health/* {
-        uri strip_prefix /api
         header Cache-Control "no-store, no-cache, must-revalidate"
         header Pragma "no-cache"
         reverse_proxy server:1234
@@ -84,9 +81,8 @@ akior.local, jarvis.local, aifactory-lan {
         reverse_proxy server:1234
     }
 
-    # API routes - strip /api prefix when forwarding
+    # API routes - backend expects /api/* paths
     handle /api/* {
-        uri strip_prefix /api
         reverse_proxy server:1234
     }
 

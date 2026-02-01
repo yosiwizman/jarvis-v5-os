@@ -71,7 +71,7 @@ await test('SSE endpoint returns correct Content-Type header', async () => {
   const timeout = setTimeout(() => controller.abort(), 5000);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
       signal: controller.signal
     });
     
@@ -88,7 +88,7 @@ await test('SSE endpoint returns Cache-Control: no-cache', async () => {
   const timeout = setTimeout(() => controller.abort(), 5000);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
       signal: controller.signal
     });
     
@@ -105,7 +105,7 @@ await test('SSE endpoint returns X-Accel-Buffering: no', async () => {
   const timeout = setTimeout(() => controller.abort(), 5000);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
       signal: controller.signal
     });
     
@@ -122,7 +122,7 @@ await test('SSE endpoint returns HTTP 200', async () => {
   const timeout = setTimeout(() => controller.abort(), 5000);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
       signal: controller.signal
     });
     
@@ -144,7 +144,7 @@ await test('SSE sends connection message on connect', async () => {
   const timeout = setTimeout(() => controller.abort(), 5000);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
       signal: controller.signal
     });
     
@@ -200,7 +200,7 @@ await test('SSE sends heartbeat within 20 seconds', async () => {
   const timeout = setTimeout(() => controller.abort(), SSE_TIMEOUT_MS);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
+    const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
       signal: controller.signal
     });
     
@@ -257,7 +257,7 @@ await test('SSE sends heartbeat within 20 seconds', async () => {
 console.log('\n4️⃣  Health Endpoint');
 
 await test('Health endpoint returns ok:true', async () => {
-  const response = await fetch(`${BACKEND_URL}/health/notifications`);
+  const response = await fetch(`${BACKEND_URL}/api/health/notifications`);
   assertEqual(response.status, 200, 'HTTP status');
   
   const data = await response.json();
@@ -265,7 +265,7 @@ await test('Health endpoint returns ok:true', async () => {
 });
 
 await test('Health endpoint returns SSE config', async () => {
-  const response = await fetch(`${BACKEND_URL}/health/notifications`);
+  const response = await fetch(`${BACKEND_URL}/api/health/notifications`);
   const data = await response.json();
   
   assert(data.sse !== undefined, 'Should have sse field');
@@ -274,7 +274,7 @@ await test('Health endpoint returns SSE config', async () => {
 });
 
 await test('Health endpoint returns timestamp', async () => {
-  const response = await fetch(`${BACKEND_URL}/health/notifications`);
+  const response = await fetch(`${BACKEND_URL}/api/health/notifications`);
   const data = await response.json();
   
   assert(data.time !== undefined, 'Should have time field');
