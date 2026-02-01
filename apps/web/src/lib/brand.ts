@@ -18,6 +18,9 @@ export const BRAND = {
   canonicalUrl: `https://${PRIMARY_HOSTNAME}`
 };
 
+/** Branding version for cache-busting (increment when branding assets change) */
+export const BRAND_VERSION = '2026-02-01-hotfix2';
+
 export const productName = BRAND.productName;
 export const legacyName = BRAND.legacyName;
 export const tagline = BRAND.tagline;

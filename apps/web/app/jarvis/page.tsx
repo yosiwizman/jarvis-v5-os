@@ -1152,6 +1152,7 @@ export default function JarvisPage() {
               transform: `scale(${logoScale})`,
               filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`
             }}
+            data-testid="brand-mark"
           >
             <div 
               className="text-7xl font-bold tracking-[0.3em] text-cyan-400"
