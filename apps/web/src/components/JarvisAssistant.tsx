@@ -1052,19 +1052,29 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
             </div>
           ) : (
             <div
-              className="relative z-10"
+              className="relative z-10 flex flex-col items-center justify-center"
               style={{
                 transform: `scale(${logoScale})`,
                 filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`
               }}
             >
-              <Image
-                src="/assets/logo.png"
-                alt="AKIOR Logo"
-                width={300}
-                height={300}
-                className="w-72 h-72 object-contain"
-              />
+              <div 
+                className="text-5xl font-bold tracking-[0.3em] text-cyan-400"
+                style={{ 
+                  textShadow: '0 0 30px rgba(34, 211, 238, 0.8), 0 0 60px rgba(34, 211, 238, 0.4)',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                }}
+              >
+                AKIOR
+              </div>
+              <div 
+                className="text-sm tracking-[0.2em] text-cyan-400/70 uppercase text-center leading-relaxed mt-2"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              >
+                Advanced Knowledge Intelligence
+                <br />
+                Operating Resource
+              </div>
             </div>
           )}
 
@@ -1207,15 +1217,33 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
           />
         </div>
 
-        {/* Logo - Center - BIGGER */}
+        {/* Logo - Center */}
         <div className="absolute inset-0 flex items-center justify-center z-10">
-          <Image
-            src="/assets/logo.png"
-            alt="AKIOR"
-            width={86}
-            height={86}
-            className="w-[86px] h-[86px] object-contain group-hover:drop-shadow-[0_0_15px_rgba(34,211,238,0.9)]"
-          />
+          <div className="flex flex-col items-center justify-center group-hover:drop-shadow-[0_0_15px_rgba(34,211,238,0.9)]">
+            <div 
+              className="text-lg font-bold tracking-[0.2em] text-cyan-400"
+              style={{ 
+                textShadow: '0 0 15px rgba(34, 211, 238, 0.8)',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}
+            >
+              AKIOR
+            </div>
+            <div 
+              className="text-[5px] tracking-[0.1em] text-cyan-400/60 uppercase text-center leading-tight mt-0.5"
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+            >
+              Advanced Knowledge Intelligence
+              <br />
+              Operating Resource
+            </div>
+            <div 
+              className="text-[6px] tracking-[0.15em] text-cyan-400/80 uppercase mt-1"
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+            >
+              Click to Activate
+            </div>
+          </div>
         </div>
       </div>
     </button>

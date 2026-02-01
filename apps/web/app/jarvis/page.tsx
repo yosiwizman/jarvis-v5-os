@@ -1147,19 +1147,29 @@ export default function JarvisPage() {
           </div>
         ) : (
           <div
-            className="relative z-10"
+            className="relative z-10 flex flex-col items-center justify-center"
             style={{
               transform: `scale(${logoScale})`,
               filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`
             }}
           >
-            <Image
-              src="/assets/logo.png"
-              alt="AKIOR Logo"
-              width={500}
-              height={500}
-              className="w-[500px] h-[500px] object-contain"
-            />
+            <div 
+              className="text-7xl font-bold tracking-[0.3em] text-cyan-400"
+              style={{ 
+                textShadow: '0 0 40px rgba(34, 211, 238, 0.8), 0 0 80px rgba(34, 211, 238, 0.4)',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}
+            >
+              AKIOR
+            </div>
+            <div 
+              className="text-lg tracking-[0.2em] text-cyan-400/70 uppercase text-center leading-relaxed mt-4"
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+            >
+              Advanced Knowledge Intelligence
+              <br />
+              Operating Resource
+            </div>
           </div>
         )}
 

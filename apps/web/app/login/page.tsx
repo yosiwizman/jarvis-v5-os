@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { BRAND } from '@/lib/brand';
 
 export default function LoginPage() {
@@ -73,30 +72,30 @@ export default function LoginPage() {
           
           {/* Logo Section */}
           <div className="text-center space-y-4">
-            <div className="relative inline-block">
+            <div className="relative inline-block py-4">
               {/* Glow Effect */}
-              <div className="absolute inset-0 blur-2xl bg-cyan-500/30 rounded-full scale-150" />
+              <div className="absolute inset-0 blur-2xl bg-cyan-500/20 rounded-full scale-150" />
               
-              {/* Logo */}
+              {/* Brand Mark */}
               <div className="relative">
-                <Image
-                  src="/assets/logo.png"
-                  alt="AKIOR"
-                  width={120}
-                  height={120}
-                  className="mx-auto drop-shadow-[0_0_20px_rgba(34,211,238,0.5)]"
-                  priority
-                />
+                <div 
+                  className="text-4xl font-bold tracking-[0.3em] text-cyan-400"
+                  style={{ 
+                    textShadow: '0 0 20px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.3)',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                  }}
+                >
+                  {BRAND.productName}
+                </div>
+                <div 
+                  className="text-[10px] tracking-[0.15em] text-cyan-400/70 uppercase text-center leading-tight mt-2"
+                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                >
+                  Advanced Knowledge Intelligence
+                  <br />
+                  Operating Resource
+                </div>
               </div>
-            </div>
-            
-            <div>
-              <h1 className="text-3xl font-bold tracking-wider text-cyan-400">
-                {BRAND.productName}
-              </h1>
-              <p className="text-sm text-white/50 mt-1 tracking-wide">
-                {BRAND.tagline}
-              </p>
             </div>
           </div>
 
