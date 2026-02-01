@@ -77,7 +77,7 @@ export default function LoginPage() {
               <div className="absolute inset-0 blur-2xl bg-cyan-500/20 rounded-full scale-150" />
               
               {/* Brand Mark */}
-              <div className="relative">
+              <div className="relative" data-testid="brand-mark">
                 <div 
                   className="text-4xl font-bold tracking-[0.3em] text-cyan-400"
                   style={{ 

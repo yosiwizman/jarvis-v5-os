@@ -958,3 +958,13 @@
 {"level":"info","time":"2025-12-07T18:18:02.892Z","node_version":"v22.17.1","eventId":"6a35f9ff-eb41-418c-88c8-55e48655ba49","type":"system.test","triggerAt":"2025-12-07T18:23:02.846Z","msg":"Notification scheduled"}
 {"level":"info","time":"2025-12-07T18:18:02.892Z","node_version":"v22.17.1","type":"api_request","method":"POST","url":"/api/notifications/schedule","statusCode":200,"duration":21,"userAgent":"node","ip":"127.0.0.1","msg":"POST /api/notifications/schedule 200 - 21ms"}
 {"level":"info","time":"2025-12-07T18:18:05.375Z","node_version":"v22.17.1","clientId":"6b14853e-aac3-4f0b-b7fa-e56a75a79b7f","msg":"SSE client disconnected from notification stream"}
+{"level":"info","time":"2026-02-01T21:48:17.711Z","node_version":"v22.17.1","logsDir":"C:\\Users\\yosiw\\Desktop\\jarvis-v5-os-governance\\apps\\server\\data\\logs","msg":"Logger initialized"}
+{"level":"info","time":"2026-02-01T21:48:17.737Z","node_version":"v22.17.1","keyPath":"C:\\Users\\yosiw\\Desktop\\jarvis-v5-os-governance\\infra\\certs\\localhost-key.pem","certPath":"C:\\Users\\yosiw\\Desktop\\jarvis-v5-os-governance\\infra\\certs\\localhost.pem","msg":"Loaded TLS certificates"}
+{"level":"info","time":"2026-02-01T21:48:17.738Z","node_version":"v22.17.1","msg":"Lockdown service initialized"}
+{"level":"info","time":"2026-02-01T21:48:17.745Z","node_version":"v22.17.1","type":"system","event":"server_starting","msg":"System event: server_starting"}
+{"level":"info","time":"2026-02-01T21:48:17.746Z","node_version":"v22.17.1","msg":"Conversation store initialized"}
+{"level":"info","time":"2026-02-01T21:48:17.746Z","node_version":"v22.17.1","msg":"Action store initialized"}
+{"level":"info","time":"2026-02-01T21:48:17.749Z","node_version":"v22.17.1","msg":"Notification scheduler initialized"}
+{"level":"info","time":"2026-02-01T21:48:17.749Z","node_version":"v22.17.1","msg":"Email notification system not initialized (Gmail not configured)"}
+{"level":"warn","time":"2026-02-01T21:48:17.769Z","node_version":"v22.17.1","msg":"HTTPS & Socket.IO up on https://localhost:1234"}
+{"level":"info","time":"2026-02-01T21:48:17.769Z","node_version":"v22.17.1","msg":"No valid Bambu token found, skipping Cloud MQTT"}
