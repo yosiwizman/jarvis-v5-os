@@ -71,6 +71,9 @@ services:
     build:
       context: ..
       dockerfile: apps/server/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-unknown}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
     container_name: jarvis-server
     restart: unless-stopped
     environment:
@@ -86,7 +89,7 @@ services:
     networks:
       - jarvis-net
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:1234/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://*********:1234/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
