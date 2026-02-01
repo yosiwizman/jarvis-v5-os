@@ -86,4 +86,26 @@ test.describe('AKIOR Branding Consistency', () => {
 
     expect(pageErrors, `Page errors: ${pageErrors.map(e => e.message).join(', ')}`).toHaveLength(0);
   });
+
+  test('jarvis (voice) page shows AKIOR HUD without J.A.R.V.I.S.', async ({ page }) => {
+    const pageErrors: Error[] = [];
+    page.on('pageerror', (err) => pageErrors.push(err));
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => {
+      window.localStorage.setItem('akior.authenticated', 'true');
+    });
+
+    await page.goto('/jarvis', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(500);
+
+    const bodyText = await page.locator('body').textContent();
+    expect(bodyText).toContain('AKIOR');
+    expect(bodyText).not.toContain('J.A.R.V.I.S.');
+    expect(bodyText).not.toContain('JARVIS');
+
+    const jarvisImages = await page.locator('img[src*=\"jarvis\" i], img[alt*=\"jarvis\" i], img[alt*=\"J.A.R.V.I.S.\" i]').count();
+    expect(jarvisImages).toBe(0);
+
+    expect(pageErrors, `Page errors: ${pageErrors.map(e => e.message).join(', ')}`).toHaveLength(0);
+  });
 });

@@ -14,7 +14,7 @@ import { BuildInfo } from '@/components/BuildInfo';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { loadSettingsFromServer } from '@shared/settings';
-import { BRAND } from '@/lib/brand';
+import { BRAND, BRAND_VERSION } from '@/lib/brand';
 
 // Note: metadata must be exported from a Server Component, not a Client Component
 // If you need metadata, create a separate server layout wrapper
@@ -50,6 +50,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     document.title = titleText;
   }, [titleText]);
+
+  // Kill any stale service workers when branding version changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+    const stored = window.localStorage.getItem('akior.brandVersion');
+    if (stored === BRAND_VERSION) return;
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+      .catch(() => undefined)
+      .finally(() => {
+        window.localStorage.setItem('akior.brandVersion', BRAND_VERSION);
+      });
+  }, []);
 
   return (
     <html lang="en" suppressHydrationWarning>
