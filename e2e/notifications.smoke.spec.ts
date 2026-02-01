@@ -9,8 +9,8 @@ import { test, expect } from '@playwright/test';
  * - Client receives heartbeat within expected interval
  * - No console spam or connection thrashing
  * 
- * Note: API tests call the backend directly (via BACKEND_URL) because
- * Next.js rewrites strip the /api prefix but the backend routes include it.
+ * Note: API tests call the backend directly (via BACKEND_URL) without /api prefix.
+ * Caddy and Next.js rewrites both strip /api before forwarding to backend.
  */
 
 // Backend URL for direct API calls (bypassing Next.js rewrites)
@@ -19,7 +19,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:1234';
 test.describe('Notifications SSE Smoke Tests', () => {
 
   test('notifications health API returns ok:true', async () => {
-    const response = await fetch(`${BACKEND_URL}/api/health/notifications`);
+    const response = await fetch(`${BACKEND_URL}/health/notifications`);
     
     expect(response.status).toBe(200);
     
@@ -36,7 +36,7 @@ test.describe('Notifications SSE Smoke Tests', () => {
     const timeout = setTimeout(() => controller.abort(), 5000);
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
+      const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
         signal: controller.signal
       });
       
@@ -197,7 +197,7 @@ test.describe('Notifications API Contract Tests', () => {
     const timeout = setTimeout(() => controller.abort(), 5000);
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/notifications/stream`, {
+      const response = await fetch(`${BACKEND_URL}/notifications/stream`, {
         signal: controller.signal
       });
       
@@ -210,7 +210,7 @@ test.describe('Notifications API Contract Tests', () => {
   });
 
   test('notifications history API returns valid structure', async () => {
-    const response = await fetch(`${BACKEND_URL}/api/notifications/history?limit=10`);
+    const response = await fetch(`${BACKEND_URL}/notifications/history?limit=10`);
     
     expect(response.status).toBe(200);
     
@@ -224,7 +224,7 @@ test.describe('Notifications API Contract Tests', () => {
 
   test('notifications schedule API validates input', async () => {
     // Test with invalid input (missing required fields)
-    const response = await fetch(`${BACKEND_URL}/api/notifications/schedule`, {
+    const response = await fetch(`${BACKEND_URL}/notifications/schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -245,7 +245,7 @@ test.describe('Notifications API Contract Tests', () => {
   test('notifications schedule API accepts valid input', async () => {
     const triggerAt = new Date(Date.now() + 60000).toISOString(); // 1 minute from now
     
-    const response = await fetch(`${BACKEND_URL}/api/notifications/schedule`, {
+    const response = await fetch(`${BACKEND_URL}/notifications/schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

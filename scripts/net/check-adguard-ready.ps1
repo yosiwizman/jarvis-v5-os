@@ -7,7 +7,7 @@
     All checks must pass before it's safe to disable the router's DHCP server.
 
 .PARAMETER Server
-    AdGuard Home server IP address. Default: 192.168.1.76
+    AdGuard Home server IP address. Default: 192.168.1.64
 
 .PARAMETER Port
     AdGuard Home admin port. Default: 3000
@@ -25,7 +25,7 @@
 #>
 
 param(
-    [string]$Server = "192.168.1.76",
+    [string]$Server = "192.168.1.64",
     [int]$Port = 3000
 )
 

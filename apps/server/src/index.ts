@@ -246,7 +246,7 @@ try {
 fastify.addHook('onRequest', createRequestLogger());
 
 // Notification API: Schedule a notification
-fastify.post('/api/notifications/schedule', async (req, reply) => {
+fastify.post('/notifications/schedule', async (req, reply) => {
   const body = req.body as Partial<ScheduleNotificationRequest>;
 
   // Validate required fields
@@ -288,7 +288,7 @@ fastify.post('/api/notifications/schedule', async (req, reply) => {
 });
 
 // Notification API: Get notification history with filtering and pagination
-fastify.get('/api/notifications/history', async (req, reply) => {
+fastify.get('/notifications/history', async (req, reply) => {
   try {
     const query = req.query as { type?: string; limit?: string; offset?: string };
     const type = query.type;
@@ -330,7 +330,7 @@ fastify.get('/api/notifications/history', async (req, reply) => {
 });
 
 // Notification API: SSE stream for real-time notification delivery
-fastify.get('/api/notifications/stream', async (req, reply) => {
+fastify.get('/notifications/stream', async (req, reply) => {
   // Set SSE headers with best practices for reverse proxy compatibility
   reply.raw.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -373,7 +373,7 @@ fastify.get('/api/notifications/stream', async (req, reply) => {
 });
 
 // Notification API: Health check for SSE/notifications subsystem
-fastify.get('/api/health/notifications', async (req, reply) => {
+fastify.get('/health/notifications', async (req, reply) => {
   try {
     const sseHealth = notificationScheduler.getSSEHealth();
     const stats = notificationScheduler.getStats();
@@ -398,7 +398,7 @@ fastify.get('/api/health/notifications', async (req, reply) => {
 // ========================================
 
 // Save a conversation
-fastify.post('/api/conversations/save', async (req, reply) => {
+fastify.post('/conversations/save', async (req, reply) => {
   try {
     const conversation = req.body as Partial<Conversation>;
     
@@ -422,7 +422,7 @@ fastify.post('/api/conversations/save', async (req, reply) => {
 });
 
 // Get a conversation by ID
-fastify.get('/api/conversations/:id', async (req, reply) => {
+fastify.get('/conversations/:id', async (req, reply) => {
   try {
     const { id } = req.params as { id: string };
     
@@ -445,7 +445,7 @@ fastify.get('/api/conversations/:id', async (req, reply) => {
 });
 
 // List/Search conversations
-fastify.get('/api/conversations', async (req, reply) => {
+fastify.get('/conversations', async (req, reply) => {
   try {
     const query = req.query as {
       query?: string;
@@ -485,7 +485,7 @@ fastify.get('/api/conversations', async (req, reply) => {
 });
 
 // Delete a conversation
-fastify.delete('/api/conversations/:id', async (req, reply) => {
+fastify.delete('/conversations/:id', async (req, reply) => {
   try {
     const { id } = req.params as { id: string };
     
@@ -508,7 +508,7 @@ fastify.delete('/api/conversations/:id', async (req, reply) => {
 });
 
 // Get conversation statistics
-fastify.get('/api/conversations/stats', async (req, reply) => {
+fastify.get('/conversations/stats', async (req, reply) => {
   try {
     const stats = await getConversationStats();
     return reply.send({ ok: true, stats });
@@ -523,7 +523,7 @@ fastify.get('/api/conversations/stats', async (req, reply) => {
 // ========================================
 
 // Record an action
-fastify.post('/api/actions/record', async (req, reply) => {
+fastify.post('/actions/record', async (req, reply) => {
   try {
     const action = req.body as Partial<Action>;
     
@@ -546,7 +546,7 @@ fastify.post('/api/actions/record', async (req, reply) => {
 });
 
 // Get an action by ID
-fastify.get('/api/actions/:id', async (req, reply) => {
+fastify.get('/actions/:id', async (req, reply) => {
   try {
     const { id } = req.params as { id: string };
     
@@ -568,7 +568,7 @@ fastify.get('/api/actions/:id', async (req, reply) => {
 });
 
 // Query/List actions
-fastify.get('/api/actions', async (req, reply) => {
+fastify.get('/actions', async (req, reply) => {
   try {
     const query = req.query as {
       type?: string;
@@ -606,7 +606,7 @@ fastify.get('/api/actions', async (req, reply) => {
 });
 
 // Get action statistics
-fastify.get('/api/actions/stats', async (req, reply) => {
+fastify.get('/actions/stats', async (req, reply) => {
   try {
     const stats = await getActionStats();
     return reply.send({ ok: true, stats });
@@ -617,7 +617,7 @@ fastify.get('/api/actions/stats', async (req, reply) => {
 });
 
 // Cleanup old actions
-fastify.post('/api/actions/cleanup', async (req, reply) => {
+fastify.post('/actions/cleanup', async (req, reply) => {
   try {
     const { days } = req.body as { days?: number };
     const daysToKeep = days || 90; // Default: keep 90 days
@@ -1332,7 +1332,7 @@ fastify.post('/integrations/google-calendar/test', async (req, reply) => {
 // Email Notification System Management Endpoints
 
 // Get email notification status and statistics
-fastify.get('/api/email-notifications/status', async (req, reply) => {
+fastify.get('/email-notifications/status', async (req, reply) => {
   try {
     const { getEmailNotificationChecker } = await import('./integrations/email-notifications.js');
     const checker = getEmailNotificationChecker();
@@ -1361,7 +1361,7 @@ fastify.get('/api/email-notifications/status', async (req, reply) => {
 });
 
 // Manually trigger email check
-fastify.post('/api/email-notifications/trigger', async (req, reply) => {
+fastify.post('/email-notifications/trigger', async (req, reply) => {
   try {
     const { getEmailNotificationChecker } = await import('./integrations/email-notifications.js');
     const checker = getEmailNotificationChecker();
@@ -1382,7 +1382,7 @@ fastify.post('/api/email-notifications/trigger', async (req, reply) => {
 });
 
 // Update email notification configuration
-fastify.post('/api/email-notifications/config', async (req, reply) => {
+fastify.post('/email-notifications/config', async (req, reply) => {
   try {
     const body = req.body as { enabled?: boolean; checkIntervalMinutes?: number; filters?: any };
     
@@ -1485,7 +1485,7 @@ fastify.post('/settings', async (req, reply) => {
 // =============================================================================
 
 // Weather API
-fastify.post('/api/integrations/weather/query', async (req, reply) => {
+fastify.post('/integrations/weather/query', async (req, reply) => {
   const body = req.body as { location?: string };
   
   // Load settings for default location
@@ -1544,7 +1544,7 @@ fastify.post('/api/integrations/weather/query', async (req, reply) => {
 });
 
 // Notes API
-fastify.get('/api/notes', async (req, reply) => {
+fastify.get('/notes', async (req, reply) => {
   try {
     const { getAllNotes } = await import('./storage/notesStore.js');
     const notes = await getAllNotes();
@@ -1558,7 +1558,7 @@ fastify.get('/api/notes', async (req, reply) => {
   }
 });
 
-fastify.post('/api/notes', async (req, reply) => {
+fastify.post('/notes', async (req, reply) => {
   const body = req.body as { content?: string; tags?: string[] };
   
   if (!body.content || !body.content.trim()) {
@@ -1578,7 +1578,7 @@ fastify.post('/api/notes', async (req, reply) => {
   }
 });
 
-fastify.get('/api/notes/:id', async (req, reply) => {
+fastify.get('/notes/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   
   try {
@@ -1596,7 +1596,7 @@ fastify.get('/api/notes/:id', async (req, reply) => {
   }
 });
 
-fastify.put('/api/notes/:id', async (req, reply) => {
+fastify.put('/notes/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   const body = req.body as { content?: string; tags?: string[] };
   
@@ -1621,7 +1621,7 @@ fastify.put('/api/notes/:id', async (req, reply) => {
   }
 });
 
-fastify.delete('/api/notes/:id', async (req, reply) => {
+fastify.delete('/notes/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   
   try {
@@ -1656,7 +1656,7 @@ fastify.delete('/api/notes/:id', async (req, reply) => {
 });
 
 // Reminders API
-fastify.get('/api/reminders', async (req, reply) => {
+fastify.get('/reminders', async (req, reply) => {
   try {
     const { getAllReminders } = await import('./storage/remindersStore.js');
     const reminders = await getAllReminders();
@@ -1670,7 +1670,7 @@ fastify.get('/api/reminders', async (req, reply) => {
   }
 });
 
-fastify.post('/api/reminders', async (req, reply) => {
+fastify.post('/reminders', async (req, reply) => {
   const body = req.body as { message?: string; triggerAt?: string };
   
   if (!body.message || !body.message.trim()) {
@@ -1715,7 +1715,7 @@ fastify.post('/api/reminders', async (req, reply) => {
   }
 });
 
-fastify.delete('/api/reminders/:id', async (req, reply) => {
+fastify.delete('/reminders/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   
   try {
@@ -1736,7 +1736,7 @@ fastify.delete('/api/reminders/:id', async (req, reply) => {
 });
 
 // Alarms API
-fastify.get('/api/alarms', async (req, reply) => {
+fastify.get('/alarms', async (req, reply) => {
   try {
     const { getAllAlarms } = await import('./storage/alarmsStore.js');
     const alarms = await getAllAlarms();
@@ -1750,7 +1750,7 @@ fastify.get('/api/alarms', async (req, reply) => {
   }
 });
 
-fastify.post('/api/alarms', async (req, reply) => {
+fastify.post('/alarms', async (req, reply) => {
   const body = req.body as {
     name?: string;
     type?: 'time' | 'motion' | 'event';
@@ -1797,7 +1797,7 @@ fastify.post('/api/alarms', async (req, reply) => {
   }
 });
 
-fastify.put('/api/alarms/:id/toggle', async (req, reply) => {
+fastify.put('/alarms/:id/toggle', async (req, reply) => {
   const { id } = req.params as { id: string };
   
   try {
@@ -1817,7 +1817,7 @@ fastify.put('/api/alarms/:id/toggle', async (req, reply) => {
   }
 });
 
-fastify.delete('/api/alarms/:id', async (req, reply) => {
+fastify.delete('/alarms/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   
   try {

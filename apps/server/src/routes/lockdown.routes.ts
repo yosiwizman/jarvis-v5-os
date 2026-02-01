@@ -17,7 +17,7 @@ export async function registerLockdownRoutes(fastify: FastifyInstance) {
    * GET /api/lockdown/status
    * Get current lockdown mode status
    */
-  fastify.get('/api/lockdown/status', async (request, reply) => {
+  fastify.get('/lockdown/status', async (request, reply) => {
     try {
       const lockdownService = getLockdownService();
       const state = lockdownService.getState();
@@ -39,7 +39,7 @@ export async function registerLockdownRoutes(fastify: FastifyInstance) {
    * POST /api/lockdown/activate
    * Activate lockdown mode
    */
-  fastify.post('/api/lockdown/activate', async (request, reply) => {
+  fastify.post('/lockdown/activate', async (request, reply) => {
     try {
       const body = ActivateLockdownSchema.parse(request.body);
       const lockdownService = getLockdownService();
@@ -83,7 +83,7 @@ export async function registerLockdownRoutes(fastify: FastifyInstance) {
    * POST /api/lockdown/deactivate
    * Deactivate lockdown mode
    */
-  fastify.post('/api/lockdown/deactivate', async (request, reply) => {
+  fastify.post('/lockdown/deactivate', async (request, reply) => {
     try {
       const lockdownService = getLockdownService();
       
@@ -117,7 +117,7 @@ export async function registerLockdownRoutes(fastify: FastifyInstance) {
    * POST /api/lockdown/toggle
    * Toggle lockdown mode (activate if inactive, deactivate if active)
    */
-  fastify.post('/api/lockdown/toggle', async (request, reply) => {
+  fastify.post('/lockdown/toggle', async (request, reply) => {
     try {
       const body = ActivateLockdownSchema.parse(request.body);
       const lockdownService = getLockdownService();

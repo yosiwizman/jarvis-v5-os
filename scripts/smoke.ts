@@ -175,8 +175,8 @@ async function runSmokeTests(): Promise<void> {
       useApiBase: true,
     }),
 
-    // Notification system endpoints
-    check('Notification schedule API', '/api/notifications/schedule', {
+    // Notification system endpoints (no /api prefix - backend routes don't have it)
+    check('Notification schedule API', '/notifications/schedule', {
       method: 'POST',
       body: {
         type: 'system.test',
@@ -187,7 +187,7 @@ async function runSmokeTests(): Promise<void> {
       assertOkField: true,
       useApiBase: true,
     }),
-    check('Notification SSE stream API', '/api/notifications/stream', {
+    check('Notification SSE stream API', '/notifications/stream', {
       method: 'GET',
       expectedStatus: 200,
       useApiBase: true,

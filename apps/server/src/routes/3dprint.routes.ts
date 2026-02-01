@@ -239,7 +239,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
   })();
 
   // Login endpoint
-  fastify.post('/api/3dprint/login', async (req, reply) => {
+  fastify.post('/3dprint/login', async (req, reply) => {
     const { username, password } = req.body as any;
     
     if (!username || !password) {
@@ -340,7 +340,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
   });
 
   // Verify code endpoint (passwordless login step 2)
-  fastify.post('/api/3dprint/verify', async (req, reply) => {
+  fastify.post('/3dprint/verify', async (req, reply) => {
     const { email, code } = req.body as any;
     
     logger.info({
@@ -394,7 +394,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
   });
 
   // Token status endpoint
-  fastify.get('/api/3dprint/token-status', async (req, reply) => {
+  fastify.get('/3dprint/token-status', async (req, reply) => {
     if (bambuToken && bambuToken.accessToken && bambuToken.tokenExpiration > Date.now()) {
       reply.send({ loggedIn: true });
     } else {
@@ -403,18 +403,18 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
   });
 
   // Get printer config
-  fastify.get('/api/3dprint/config', async (req, reply) => {
+  fastify.get('/3dprint/config', async (req, reply) => {
     const config = await loadBambuConfig();
     reply.send(config);
   });
 
   // Get printer statuses
-  fastify.get('/api/3dprint/status', async (req, reply) => {
+  fastify.get('/3dprint/status', async (req, reply) => {
     reply.send(telemetryCacheMap);
   });
 
   // Send printer command
-  fastify.post('/api/3dprint/:sn/:cmd', async (req, reply) => {
+  fastify.post('/3dprint/:sn/:cmd', async (req, reply) => {
     const { sn, cmd } = req.params as { sn: string; cmd: string };
     
     if (!cloudClient || !cloudClient.connected) {
@@ -442,7 +442,7 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
   });
 
   // Get print history/tasks
-  fastify.get('/api/3dprint/tasks', async (req, reply) => {
+  fastify.get('/3dprint/tasks', async (req, reply) => {
     if (!bambuToken || !bambuToken.accessToken) {
       return reply.send([]);
     }

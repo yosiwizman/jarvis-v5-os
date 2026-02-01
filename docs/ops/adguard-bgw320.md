@@ -6,7 +6,7 @@ This runbook covers deploying AdGuard Home as the LAN DNS/DHCP server on network
 
 The AT&T BGW320 gateway has limited DNS customization:
 - **Cannot set custom DNS entries** via its DHCP server
-- **Cannot add host overrides** like `akior.local -> 192.168.1.76`
+- **Cannot add host overrides** like `akior.local -> 192.168.1.64`
 - **DHCP is limited** to basic IP assignment
 
 **Solution**: Run AdGuard Home on the canonical server to provide both DNS (with custom rewrites) and DHCP for the entire LAN.
@@ -26,7 +26,7 @@ The AT&T BGW320 gateway has limited DNS customization:
         ▼                       ▼                       ▼
 ┌───────────────┐     ┌─────────────────────┐    ┌─────────────┐
 │  Wi-Fi Client │     │  Canonical Server   │    │ Other LAN   │
-│  192.168.1.77 │     │  192.168.1.76       │    │ Devices     │
+│  192.168.1.77 │     │  192.168.1.64       │    │ Devices     │
 │  Ai-Factory-1 │     │  "aifactory" (wired)│    │             │
 └───────────────┘     │                     │    └─────────────┘
                       │  ┌───────────────┐  │
@@ -55,7 +55,7 @@ This is normal. The gateway is the router itself, not a DHCP client. When viewin
 
 ## Prerequisites
 
-- [ ] SSH or direct access to the canonical server (192.168.1.76)
+- [ ] SSH or direct access to the canonical server (192.168.1.64)
 - [ ] Docker and Docker Compose installed on the server
 - [ ] Access to BGW320 admin panel (http://192.168.1.254)
 - [ ] Know the BGW320 admin password (on device label or set by user)
@@ -80,7 +80,7 @@ The order matters to avoid network downtime:
 
 ### Step 1: Deploy AdGuard Home Container
 
-On the canonical server (192.168.1.76):
+On the canonical server (192.168.1.64):
 
 ```bash
 cd /path/to/jarvis-v5-os
@@ -103,7 +103,7 @@ docker inspect adguard-home --format='{{.State.Health.Status}}'
 
 ### Step 2: Initial AdGuard Setup
 
-1. Open browser to: **http://192.168.1.76:3000**
+1. Open browser to: **http://192.168.1.64:3000**
 
 2. Complete the setup wizard:
    - **Admin Interface**: Listen on all interfaces, port 3000
@@ -122,14 +122,14 @@ docker inspect adguard-home --format='{{.State.Health.Status}}'
 
 3. Add the AKIOR entry:
    - **Domain**: `akior.local`
-   - **Answer**: `192.168.1.76`
+   - **Answer**: `192.168.1.64`
 
 4. Click **Save**
 
 5. Verify DNS works from another machine:
    ```bash
-   # Should return 192.168.1.76
-   nslookup akior.local 192.168.1.76
+   # Should return 192.168.1.64
+   nslookup akior.local 192.168.1.64
    ```
 
 ---
@@ -175,7 +175,7 @@ sudo dhclient -r
 # Request new lease (should come from AdGuard)
 sudo dhclient -v
 
-# Verify the DHCP server is 192.168.1.76
+# Verify the DHCP server is 192.168.1.64
 cat /var/lib/dhcp/dhclient.leases | grep "dhcp-server"
 ```
 
@@ -186,7 +186,7 @@ ipconfig /renew
 
 # Check DHCP server
 ipconfig /all | Select-String "DHCP Server"
-# Should show 192.168.1.76
+# Should show 192.168.1.64
 ```
 
 ---
@@ -220,7 +220,7 @@ Run full verification from any LAN client:
 ./scripts/net/verify-dns.sh
 
 # Should show:
-# - akior.local resolves to 192.168.1.76
+# - akior.local resolves to 192.168.1.64
 # - /api/health/build returns valid SHA
 # - Settings page accessible
 ```
@@ -304,7 +304,7 @@ Leases have TTL. Either:
 2. Verify DNS server is AdGuard:
    ```bash
    nslookup akior.local
-   # Server should be 192.168.1.76
+   # Server should be 192.168.1.64
    ```
 
 3. Check AdGuard DNS rewrite exists

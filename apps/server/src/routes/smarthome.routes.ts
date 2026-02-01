@@ -48,7 +48,7 @@ const SmartLightsActionSchema = z.object({
 
 export function registerSmartHomeRoutes(fastify: FastifyInstance) {
   // Alexa routes
-  fastify.post('/api/smarthome/alexa', async (req, reply) => {
+  fastify.post('/smarthome/alexa', async (req, reply) => {
     try {
       const body = AlexaActionSchema.parse(req.body);
       const settings = readSettings();
@@ -98,7 +98,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
   });
 
   // iRobot routes
-  fastify.post('/api/smarthome/irobot', async (req, reply) => {
+  fastify.post('/smarthome/irobot', async (req, reply) => {
     try {
       const body = IRobotActionSchema.parse(req.body);
       const settings = readSettings();
@@ -149,7 +149,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
   });
 
   // Nest routes
-  fastify.post('/api/smarthome/nest', async (req, reply) => {
+  fastify.post('/smarthome/nest', async (req, reply) => {
     try {
       const body = NestActionSchema.parse(req.body);
       const settings = readSettings();
@@ -205,7 +205,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
   });
 
   // Smart Lights routes
-  fastify.post('/api/smarthome/lights', async (req, reply) => {
+  fastify.post('/smarthome/lights', async (req, reply) => {
     try {
       const body = SmartLightsActionSchema.parse(req.body);
       const settings = readSettings();
@@ -264,7 +264,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
   });
 
   // Test connection endpoints
-  fastify.get('/api/smarthome/alexa/test', async (req, reply) => {
+  fastify.get('/smarthome/alexa/test', async (req, reply) => {
     const settings = readSettings();
     const alexaConfig = settings.integrations.alexa;
 
@@ -282,7 +282,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
     return reply.send(result);
   });
 
-  fastify.get('/api/smarthome/irobot/test', async (req, reply) => {
+  fastify.get('/smarthome/irobot/test', async (req, reply) => {
     const settings = readSettings();
     const irobotConfig = settings.integrations.irobot;
 
@@ -299,7 +299,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
     return reply.send(result);
   });
 
-  fastify.get('/api/smarthome/nest/test', async (req, reply) => {
+  fastify.get('/smarthome/nest/test', async (req, reply) => {
     const settings = readSettings();
     const nestConfig = settings.integrations.nest;
 
@@ -319,7 +319,7 @@ export function registerSmartHomeRoutes(fastify: FastifyInstance) {
     return reply.send(result);
   });
 
-  fastify.get('/api/smarthome/lights/test', async (req, reply) => {
+  fastify.get('/smarthome/lights/test', async (req, reply) => {
     const settings = readSettings();
     const lightsConfig = settings.integrations.smartLights;
 

@@ -13,7 +13,7 @@ The **canonical host** is the single authoritative server that should respond to
 ```yaml
 # Canonical AKIOR Server - PRODUCTION
 hostname: akior.local
-lan_ip: 192.168.1.76
+lan_ip: 192.168.1.64
 machine_name: aifactory
 connection: Wired Ethernet (NOT Wi-Fi)
 last_updated: 2026-01-31
@@ -22,10 +22,10 @@ updated_by: yosiwizman
 
 ### Network Notes
 
-- **Canonical server**: `192.168.1.76` (wired, hostname "aifactory")
+- **Canonical server**: `192.168.1.64` (wired, hostname "aifactory")
 - **Non-canonical**: `192.168.1.77` (Wi-Fi client "Ai-Factory-1") - do NOT use
 - **Gateway**: `192.168.1.254` (AT&T BGW320) - will NOT appear in DHCP client list
-- **DNS/DHCP provider**: AdGuard Home on `192.168.1.76:3000`
+- **DNS/DHCP provider**: AdGuard Home on `192.168.1.64:3000`
 
 ## How DNS Resolution Works
 
@@ -38,14 +38,14 @@ updated_by: yosiwizman
          ▼
 ┌─────────────────┐
 │  AdGuard Home   │────────────────────────────┐
-│  192.168.1.76   │                            │
+│  192.168.1.64   │                            │
 │  (DNS + DHCP)   │                            │
 └────────┬────────┘                            │
-         │ Returns: 192.168.1.76               │
+         │ Returns: 192.168.1.64               │
          ▼                                     │
 ┌─────────────────┐                            │
 │  Canonical Host │◀───────────────────────────┘
-│  192.168.1.76   │
+│  192.168.1.64   │
 │  "aifactory"    │
 │                 │
 │  Docker Stack:  │
