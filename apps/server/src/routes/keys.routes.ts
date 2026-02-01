@@ -25,7 +25,7 @@ function toMeta() {
 }
 
 export function registerKeyRoutes(fastify: FastifyInstance, io: SocketServer) {
-  fastify.put('/admin/keys', async (req, reply) => {
+  fastify.put('/api/admin/keys', async (req, reply) => {
     const body = PutSchema.parse(req.body ?? {});
     let updated = false;
     for (const [name, value] of Object.entries(body)) {
@@ -41,12 +41,12 @@ export function registerKeyRoutes(fastify: FastifyInstance, io: SocketServer) {
     return reply.send({ ok: true, meta });
   });
 
-  fastify.get('/admin/keys/meta', async (_, reply) => {
+  fastify.get('/api/admin/keys/meta', async (_, reply) => {
     const meta = toMeta();
     return reply.send({ ok: true, meta });
   });
 
-  fastify.delete('/admin/keys/:name', async (req, reply) => {
+  fastify.delete('/api/admin/keys/:name', async (req, reply) => {
     const params = req.params as { name: 'meshy' | 'openai' };
     deleteSecret(params.name);
     const meta = toMeta();
