@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 /**
  * LogViewer Component
@@ -60,56 +60,62 @@ function formatTimestamp(isoString: string): string {
   });
 }
 
-// Sample data for demonstration
-const sampleLogs: LogEntry[] = [
-  {
-    id: '1',
-    timestamp: new Date().toISOString(),
-    level: 'info',
-    category: 'app',
-    message: 'Server started successfully',
-    context: { port: 1234, env: 'development' }
-  },
-  {
-    id: '2',
-    timestamp: new Date(Date.now() - 60000).toISOString(),
-    level: 'info',
-    category: 'actions',
-    message: 'Conversation store initialized',
-    context: { conversations: 0 }
-  },
-  {
-    id: '3',
-    timestamp: new Date(Date.now() - 120000).toISOString(),
-    level: 'info',
-    category: 'actions',
-    message: 'Action store initialized',
-    context: { actions: 0 }
-  },
-  {
-    id: '4',
-    timestamp: new Date(Date.now() - 180000).toISOString(),
-    level: 'warn',
-    category: 'app',
-    message: 'High memory usage detected',
-    context: { memoryUsedPct: 85 }
-  },
-  {
-    id: '5',
-    timestamp: new Date(Date.now() - 240000).toISOString(),
-    level: 'info',
-    category: 'security',
-    message: 'Camera motion detected',
-    context: { deviceId: 'camera-1', severity: 'low' }
-  }
-];
+// Sample data for demonstration (initialized on client to avoid hydration mismatch)
+function createSampleLogs(): LogEntry[] {
+  const now = Date.now();
+  return [
+    {
+      id: '1',
+      timestamp: new Date(now).toISOString(),
+      level: 'info',
+      category: 'app',
+      message: 'Server started successfully',
+      context: { port: 1234, env: 'development' }
+    },
+    {
+      id: '2',
+      timestamp: new Date(now - 60000).toISOString(),
+      level: 'info',
+      category: 'actions',
+      message: 'Conversation store initialized',
+      context: { conversations: 0 }
+    },
+    {
+      id: '3',
+      timestamp: new Date(now - 120000).toISOString(),
+      level: 'info',
+      category: 'actions',
+      message: 'Action store initialized',
+      context: { actions: 0 }
+    },
+    {
+      id: '4',
+      timestamp: new Date(now - 180000).toISOString(),
+      level: 'warn',
+      category: 'app',
+      message: 'High memory usage detected',
+      context: { memoryUsedPct: 85 }
+    },
+    {
+      id: '5',
+      timestamp: new Date(now - 240000).toISOString(),
+      level: 'info',
+      category: 'security',
+      message: 'Camera motion detected',
+      context: { deviceId: 'camera-1', severity: 'low' }
+    }
+  ];
+}
 
 export function LogViewer() {
-  const [logs] = useState<LogEntry[]>(sampleLogs);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  useEffect(() => {
+    setLogs(createSampleLogs());
+  }, []);
 
   // Filter logs based on search and filters
   const filteredLogs = logs.filter((log) => {
