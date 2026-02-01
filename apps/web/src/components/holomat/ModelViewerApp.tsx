@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { buildServerUrl } from '@/lib/api';
 import { BRAND } from '@/lib/brand';
 
 // Dynamically import 3D viewer to avoid SSR issues

@@ -200,7 +200,7 @@ export default function OnboardPage() {
         </div>
       )}
 
-      <section className="card p-6 space-y-4">
+      <section className="card p-6 space-y-4" data-testid="live-status">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Live Status</h2>
@@ -235,7 +235,7 @@ export default function OnboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid gap-4 lg:grid-cols-2" data-testid="onboarding-checklist">
         {steps.map((step, idx) => (
           <div key={step.title} className="card p-6 space-y-3">
             <div className="flex items-center justify-between">

@@ -3,12 +3,19 @@
  * Use these constants throughout the app for consistent branding
  */
 
+/** Primary hostname for LAN access (single source of truth) */
+export const PRIMARY_HOSTNAME = 'akior.local';
+
+/** Legacy hostname alias */
+export const LEGACY_HOSTNAME = 'jarvis.local';
+
 export const BRAND = {
   productName: 'AKIOR',
   legacyName: 'Jarvis',
   tagline: 'Intelligent AI Assistant Console',
   description: 'AKIOR - Intelligent AI Assistant Console',
-  canonicalUrl: 'https://akior.local'
+  /** Derived from PRIMARY_HOSTNAME to keep single source of truth */
+  canonicalUrl: `https://${PRIMARY_HOSTNAME}`
 };
 
 export const productName = BRAND.productName;
@@ -28,12 +35,6 @@ export const LEGACY_NAME = BRAND.legacyName;
 
 /** App description for metadata */
 export const APP_DESCRIPTION = BRAND.description;
-
-/** Primary hostname for LAN access */
-export const PRIMARY_HOSTNAME = 'akior.local';
-
-/** Legacy hostname alias */
-export const LEGACY_HOSTNAME = 'jarvis.local';
 
 /** Voice assistant route */
 export const VOICE_ROUTE = '/jarvis'; // Legacy route, keep for backward compat

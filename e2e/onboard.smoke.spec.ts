@@ -9,6 +9,13 @@ test.describe('Onboarding Page', () => {
 
     await expect(page.locator('body')).toContainText(/onboarding|setup/i);
 
+    // Wait for async hydration and Live Status checks before asserting errors
+    await page.waitForSelector('[data-testid="live-status"], [data-testid="onboarding-checklist"]', { timeout: 5000 }).catch(() => {
+      // Element not found is ok, continue with error assertion
+    });
+    // Add a short wait for any deferred async errors
+    await page.waitForTimeout(500);
+
     expect(pageErrors, `Page errors: ${pageErrors.map(e => e.message).join(', ')}`).toHaveLength(0);
   });
 });
