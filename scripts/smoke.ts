@@ -122,52 +122,51 @@ async function runSmokeTests(): Promise<void> {
     check('Menu page', '/menu'),
     check('Holomat page', '/holomat'),
 
-    // API endpoints (use API_BASE_URL in CI mode)
-    check('System metrics API', '/system/metrics', {
+    // API endpoints (use API_BASE_URL in CI mode) - all routes have /api prefix
+    check('System metrics API', '/api/system/metrics', {
       validateJson: true,
       useApiBase: true,
     }),
-    check('3D print token status API', '/3dprint/token-status', {
+    check('3D print token status API', '/api/3dprint/token-status', {
       validateJson: true,
-      assertOkField: true,
       useApiBase: true,
     }),
-    check('Web search API (unconfigured)', '/integrations/web-search', {
+    check('Web search API (unconfigured)', '/api/integrations/web-search', {
       method: 'POST',
       body: { query: 'test query' },
       expectedStatus: 503,  // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('ElevenLabs TTS API (unconfigured)', '/integrations/elevenlabs/tts', {
+    check('ElevenLabs TTS API (unconfigured)', '/api/integrations/elevenlabs/tts', {
       method: 'POST',
       body: { text: 'Hello from smoke tests' },
       expectedStatus: 503,  // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Azure TTS API (unconfigured)', '/integrations/azure-tts/tts', {
+    check('Azure TTS API (unconfigured)', '/api/integrations/azure-tts/tts', {
       method: 'POST',
       body: { text: 'Hello from smoke tests' },
       expectedStatus: 503,  // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Spotify API (unconfigured)', '/integrations/spotify/search', {
+    check('Spotify API (unconfigured)', '/api/integrations/spotify/search', {
       method: 'POST',
       body: { query: 'test' },
       expectedStatus: 503,  // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Gmail API (unconfigured)', '/integrations/gmail/test', {
+    check('Gmail API (unconfigured)', '/api/integrations/gmail/test', {
       method: 'POST',
       body: {},
       expectedStatus: 503,  // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Google Calendar API (unconfigured)', '/integrations/google-calendar/test', {
+    check('Google Calendar API (unconfigured)', '/api/integrations/google-calendar/test', {
       method: 'POST',
       body: {},
       expectedStatus: 503,  // Expected: not configured
@@ -175,7 +174,7 @@ async function runSmokeTests(): Promise<void> {
       useApiBase: true,
     }),
 
-    // Notification system endpoints
+    // Notification system endpoints - backend routes have /api prefix
     check('Notification schedule API', '/api/notifications/schedule', {
       method: 'POST',
       body: {

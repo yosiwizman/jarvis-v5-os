@@ -143,7 +143,7 @@ const config = {
   }
 };
 
-fastify.get('/config', async () => ({
+fastify.get('/api/config', async () => ({
   rtc: config.rtc,
   features: { voice: true, security: true, mesh: true, image: true },
   defaults: {
@@ -158,7 +158,7 @@ fastify.get('/config', async () => ({
 }));
 
 // Health check endpoint for container orchestration (Fly.io, K8s, etc.)
-fastify.get('/health', async () => ({
+fastify.get('/api/health', async () => ({
   ok: true,
   timestamp: new Date().toISOString(),
   uptime: process.uptime(),
@@ -170,7 +170,7 @@ fastify.get('/health', async () => ({
 
 // Build info endpoint for deployment drift detection
 // This endpoint is used by operators to verify which version is running
-fastify.get('/health/build', async (req, reply) => {
+fastify.get('/api/health/build', async (req, reply) => {
   reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
   reply.header('Pragma', 'no-cache');
   return {
@@ -637,7 +637,7 @@ fastify.post('/api/actions/cleanup', async (req, reply) => {
 });
 
 // System metrics endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.get('/system/metrics', async () => {
+fastify.get('/api/system/metrics', async () => {
   const os = await import('os');
   
   // Calculate CPU load average (1 minute)
@@ -662,7 +662,7 @@ fastify.get('/system/metrics', async () => {
 });
 
 // Weather integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.get('/integrations/weather', async (req, reply) => {
+fastify.get('/api/integrations/weather', async (req, reply) => {
   const { location } = req.query as { location?: string };
   
   // Read API key from environment
@@ -713,7 +713,7 @@ fastify.get('/integrations/weather', async (req, reply) => {
 });
 
 // Web Search integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.post('/integrations/web-search', async (req, reply) => {
+fastify.post('/api/integrations/web-search', async (req, reply) => {
   const body = req.body as { query?: string; maxResults?: number };
   
   if (!body.query || typeof body.query !== 'string' || !body.query.trim()) {
@@ -740,7 +740,7 @@ fastify.post('/integrations/web-search', async (req, reply) => {
 });
 
 // ElevenLabs TTS integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
+fastify.post('/api/integrations/elevenlabs/tts', async (req, reply) => {
   const body = req.body as { text?: string };
   
   if (!body.text || typeof body.text !== 'string' || !body.text.trim()) {
@@ -792,7 +792,7 @@ fastify.post('/integrations/elevenlabs/tts', async (req, reply) => {
 });
 
 // Azure TTS integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
+fastify.post('/api/integrations/azure-tts/tts', async (req, reply) => {
   const body = req.body as { text?: string };
   
   if (!body.text || typeof body.text !== 'string' || !body.text.trim()) {
@@ -846,7 +846,7 @@ fastify.post('/integrations/azure-tts/tts', async (req, reply) => {
 });
 
 // Spotify integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.post('/integrations/spotify/search', async (req, reply) => {
+fastify.post('/api/integrations/spotify/search', async (req, reply) => {
   const body = req.body as { query?: string; limit?: number };
   
   if (!body.query || typeof body.query !== 'string' || !body.query.trim()) {
@@ -895,7 +895,7 @@ fastify.post('/integrations/spotify/search', async (req, reply) => {
 });
 
 // Gmail integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.post('/integrations/gmail/test', async (req, reply) => {
+fastify.post('/api/integrations/gmail/test', async (req, reply) => {
   // Load settings
   let settings: any = null;
   try {
@@ -951,7 +951,7 @@ fastify.post('/integrations/gmail/test', async (req, reply) => {
 });
 
 // Gmail fetch inbox endpoint
-fastify.get('/integrations/gmail/inbox', async (req, reply) => {
+fastify.get('/api/integrations/gmail/inbox', async (req, reply) => {
   const query = req.query as { maxResults?: string; pageToken?: string };
   
   // Load settings
@@ -1009,7 +1009,7 @@ fastify.get('/integrations/gmail/inbox', async (req, reply) => {
 });
 
 // Gmail fetch full message endpoint
-fastify.get('/integrations/gmail/message/:messageId', async (req, reply) => {
+fastify.get('/api/integrations/gmail/message/:messageId', async (req, reply) => {
   const { messageId } = req.params as { messageId: string };
   
   if (!messageId) {
@@ -1068,7 +1068,7 @@ fastify.get('/integrations/gmail/message/:messageId', async (req, reply) => {
 });
 
 // Gmail send email endpoint
-fastify.post('/integrations/gmail/send', async (req, reply) => {
+fastify.post('/api/integrations/gmail/send', async (req, reply) => {
   const body = req.body as { to?: string; subject?: string; body?: string; cc?: string; bcc?: string };
   
   // Validate required fields
@@ -1135,7 +1135,7 @@ fastify.post('/integrations/gmail/send', async (req, reply) => {
 });
 
 // Google Calendar: fetch upcoming events (for UI)
-fastify.get('/integrations/google-calendar/sync-events', async (req, reply) => {
+fastify.get('/api/integrations/google-calendar/sync-events', async (req, reply) => {
   // Load settings
   let settings: any = null;
   try {
@@ -1192,7 +1192,7 @@ fastify.get('/integrations/google-calendar/sync-events', async (req, reply) => {
 });
 
 // Google Calendar sync reminders endpoint
-fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) => {
+fastify.post('/api/integrations/google-calendar/sync-reminders', async (req, reply) => {
   logger.info('Calendar reminder sync requested');
   
   // Load settings
@@ -1280,7 +1280,7 @@ fastify.post('/integrations/google-calendar/sync-reminders', async (req, reply) 
 });
 
 // Google Calendar integration endpoint (note: /api prefix is stripped by dev-proxy)
-fastify.post('/integrations/google-calendar/test', async (req, reply) => {
+fastify.post('/api/integrations/google-calendar/test', async (req, reply) => {
   // Load settings
   let settings: any = null;
   try {
@@ -1417,24 +1417,9 @@ fastify.post('/api/email-notifications/config', async (req, reply) => {
   }
 });
 
-// 3D Print token status endpoint (stub for now)
-fastify.get('/3dprint/token-status', async () => {
-  // TODO: Implement real Bambu auth token check
-  // For now, return a stub response so UI doesn't error
-  // Response shape matches TokenStatusResponse type from @shared/3dprint
-  return {
-    ok: true,
-    loggedIn: false,
-    connected: false,
-    provider: 'bambu',
-    hasToken: false,
-    error: null
-  };
-});
-
-// GET /settings - Load settings from server
+// GET /settings
 // CONTRACT: Always returns normalized, valid AppSettings (never partial/corrupt)
-fastify.get('/settings', async (req, reply) => {
+fastify.get('/api/settings', async (req, reply) => {
   try {
     if (!existsSync(SETTINGS_FILE)) {
       // No settings file - return normalized defaults
@@ -1467,7 +1452,7 @@ fastify.get('/settings', async (req, reply) => {
 });
 
 // POST /settings - Save settings to server
-fastify.post('/settings', async (req, reply) => {
+fastify.post('/api/settings', async (req, reply) => {
   try {
     const settings = req.body;
     await writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
@@ -2056,7 +2041,7 @@ const ChatRequestSchema = z.object({
   tools: z.array(z.any()).optional()
 });
 
-fastify.post('/openai/text-chat', async (req, reply) => {
+fastify.post('/api/openai/text-chat', async (req, reply) => {
   const parsed = ChatRequestSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0];
@@ -2341,7 +2326,7 @@ const ChatToolResultRequestSchema = z.object({
   tools: z.array(z.any()).optional()
 });
 
-fastify.post('/openai/text-chat/tool-result', async (req, reply) => {
+fastify.post('/api/openai/text-chat/tool-result', async (req, reply) => {
   const parsed = ChatToolResultRequestSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0];
@@ -2474,7 +2459,7 @@ fastify.post('/openai/text-chat/tool-result', async (req, reply) => {
   });
 });
 
-fastify.post('/openai/realtime', async (req, reply) => {
+fastify.post('/api/openai/realtime', async (req, reply) => {
   const { sdp, model } = (req.body as { sdp?: string; model?: string }) ?? {};
   if (!sdp) {
     return reply.status(400).send({ error: 'sdp is required' });
@@ -2554,9 +2539,9 @@ fastify.post('/openai/realtime', async (req, reply) => {
   return reply.send({ sdp: text });
 });
 
-fastify.get('/file-library', async () => ({ files: listStoredFiles() }));
+fastify.get('/api/file-library', async () => ({ files: listStoredFiles() }));
 
-fastify.delete('/file-library/:name', async (req, reply) => {
+fastify.delete('/api/file-library/:name', async (req, reply) => {
   const { name } = req.params as { name?: string };
   if (!name) {
     return reply.status(400).send({ error: 'File name is required' });
@@ -2573,7 +2558,7 @@ fastify.delete('/file-library/:name', async (req, reply) => {
   return reply.send({ ok: true });
 });
 
-fastify.post('/file-library/store-image', async (req, reply) => {
+fastify.post('/api/file-library/store-image', async (req, reply) => {
   const { dataUrl, prompt, filename } = (req.body as { dataUrl?: string; prompt?: string; filename?: string }) ?? {};
   if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
     return reply.status(400).send({ error: 'Invalid image payload' });
@@ -2594,7 +2579,7 @@ fastify.post('/file-library/store-image', async (req, reply) => {
   }
 });
 
-fastify.post('/file-library/upload', async (req, reply) => {
+fastify.post('/api/file-library/upload', async (req, reply) => {
   try {
     const data = await req.file();
     
@@ -2646,7 +2631,7 @@ const ImageGenerationRequestSchema = z.object({
     .optional()
 });
 
-fastify.post('/openai/generate-image', async (req, reply) => {
+fastify.post('/api/openai/generate-image', async (req, reply) => {
   const parsed = ImageGenerationRequestSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0];
@@ -2918,7 +2903,7 @@ const VisionRequestSchema = z.object({
   prompt: z.string().optional()
 });
 
-fastify.post('/openai/vision', async (req, reply) => {
+fastify.post('/api/openai/vision', async (req, reply) => {
   const parsed = VisionRequestSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0];
@@ -2993,7 +2978,7 @@ fastify.post('/openai/vision', async (req, reply) => {
 });
 
 // List all images
-fastify.get('/images', async (req, reply) => {
+fastify.get('/api/images', async (req, reply) => {
   try {
     const files = readdirSync(FILES_DIR);
     const images = files
@@ -3029,7 +3014,7 @@ fastify.get('/images', async (req, reply) => {
   }
 });
 
-fastify.post('/images/upload', async (req, reply) => {
+fastify.post('/api/images/upload', async (req, reply) => {
   const mp: any = await (req as any).file();
   if (!mp) {
     return reply.status(400).send({ error: 'No file uploaded' });
@@ -3480,7 +3465,7 @@ async function processModelJob(id: string, body: CreateModelBody) {
   }
 }
 
-fastify.post('/models/create', async (req, reply) => {
+fastify.post('/api/models/create', async (req, reply) => {
   const body = (req.body as CreateModelBody) ?? ({} as CreateModelBody);
   if (!body.mode) {
     return reply.status(400).send({ error: 'mode is required' });
@@ -3523,7 +3508,7 @@ fastify.post('/models/create', async (req, reply) => {
   return { id };
 });
 
-fastify.get('/models/:id', async (req, reply) => {
+fastify.get('/api/models/:id', async (req, reply) => {
   const job = jobs.get((req.params as any).id);
   if (!job) {
     return reply.status(404).send({ error: 'not found' });
@@ -3826,7 +3811,7 @@ function broadcastCapture(args: { tag: string; resolution?: string }) {
   cameras.to('camera.clients').emit('capture', args);
 }
 
-fastify.post('/tools/invoke', async (req, reply) => {
+fastify.post('/api/tools/invoke', async (req, reply) => {
   const { name, args } = (req.body as any) ?? {};
   if (name === 'cameras.captureAll') {
     broadcastCapture(args ?? {});

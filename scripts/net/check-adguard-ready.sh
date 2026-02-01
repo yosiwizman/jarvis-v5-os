@@ -9,7 +9,7 @@
 #   ./scripts/net/check-adguard-ready.sh [OPTIONS]
 #
 # Options:
-#   -s, --server IP    AdGuard server IP (default: 192.168.1.76)
+#   -s, --server IP    AdGuard server IP (default: 192.168.1.64)
 #   -p, --port PORT    AdGuard admin port (default: 3000)
 #   -h, --help         Show this help
 #
@@ -21,7 +21,7 @@
 set -euo pipefail
 
 # Default configuration
-ADGUARD_IP="${ADGUARD_IP:-192.168.1.76}"
+ADGUARD_IP="${ADGUARD_IP:-192.168.1.64}"
 ADGUARD_PORT="${ADGUARD_PORT:-3000}"
 DNS_PORT=53
 DHCP_PORT=67

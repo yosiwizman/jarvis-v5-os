@@ -9,8 +9,7 @@ import { test, expect } from '@playwright/test';
  * - Client receives heartbeat within expected interval
  * - No console spam or connection thrashing
  * 
- * Note: API tests call the backend directly (via BACKEND_URL) because
- * Next.js rewrites strip the /api prefix but the backend routes include it.
+ * Note: All backend API routes use /api/* prefix (enterprise routing contract).
  */
 
 // Backend URL for direct API calls (bypassing Next.js rewrites)
