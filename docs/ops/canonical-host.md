@@ -212,6 +212,7 @@ The gateway is the router—it doesn't request a DHCP lease from itself.
 
 - `docs/ops/dns-setup.md` - How to configure DNS
 - `docs/ops/production-verification.md` - Post-deploy verification checklist
+- `docs/ops/lan-tls-trust.md` - Trust the local CA for HTTPS
 - `docs/ops/adguard-bgw320.md` - AdGuard Home setup for BGW320
 - `docs/runbooks/deploy-drift.md` - Troubleshooting deployment issues
 - `deploy/adguard-home/docker-compose.yml` - AdGuard Home deployment

@@ -103,7 +103,7 @@ fi
 echo ""
 
 # ==============================================
-# TEST 2: /api/health/build Endpoint
+# TEST 2: /api/health/build Endpoint (HTTPS)
 # ==============================================
 echo -e "Test 2: Build Endpoint (/api/health/build)"
 echo "---------------------------------------"
@@ -152,7 +152,52 @@ fi
 echo ""
 
 # ==============================================
-# TEST 3: /settings Page Loads
+# TEST 3: /api/health Endpoint (HTTPS)
+# ==============================================
+echo -e "Test 3: Health Endpoint (/api/health)"
+echo "---------------------------------------"
+
+HEALTH_ENDPOINT="$BASE_URL/api/health"
+
+if HEALTH_RESPONSE=$(curl -sk --connect-timeout 10 "$HEALTH_ENDPOINT" 2>/dev/null); then
+    if echo "$HEALTH_RESPONSE" | grep -q '"ok":true'; then
+        pass "/api/health returns ok=true"
+    else
+        fail "/api/health did not return ok=true"
+    fi
+else
+    fail "Health endpoint request failed"
+fi
+
+echo ""
+
+# ==============================================
+# TEST 4: HTTP → HTTPS Redirect
+# ==============================================
+echo -e "Test 4: HTTP Redirect (http://akior.local → https://akior.local)"
+echo "---------------------------------------"
+
+REDIRECT_HEADERS=$(curl -sI --connect-timeout 10 "http://$HOSTNAME" 2>/dev/null || echo "CURL_FAILED")
+if [[ "$REDIRECT_HEADERS" == "CURL_FAILED" ]]; then
+    fail "HTTP redirect check failed"
+else
+    STATUS_LINE=$(echo "$REDIRECT_HEADERS" | head -n 1)
+    LOCATION=$(echo "$REDIRECT_HEADERS" | grep -i '^location:' | head -n 1 | awk '{print $2}' | tr -d '\r')
+    if echo "$STATUS_LINE" | grep -Eq " 301 | 302 | 307 | 308 "; then
+        if [[ "$LOCATION" == https://akior.local* ]]; then
+            pass "HTTP redirects to HTTPS ($STATUS_LINE → $LOCATION)"
+        else
+            fail "HTTP redirect location mismatch ($STATUS_LINE → $LOCATION)"
+        fi
+    else
+        fail "HTTP did not redirect (status: $STATUS_LINE)"
+    fi
+fi
+
+echo ""
+
+# ==============================================
+# TEST 5: /settings Page Loads
 # ==============================================
 echo -e "Test 3: Settings Page (/settings)"
 echo "---------------------------------------"
@@ -178,7 +223,7 @@ fi
 echo ""
 
 # ==============================================
-# TEST 4: Network Connectivity
+# TEST 6: Network Connectivity
 # ==============================================
 echo -e "Test 4: Network Connectivity"
 echo "---------------------------------------"

@@ -3,10 +3,12 @@
     Verifies that akior.local DNS resolution and deployment are correct.
 
 .DESCRIPTION
-    This script performs three verification steps:
+    This script performs verification steps:
     1. DNS Resolution: Confirms akior.local resolves to the expected IP
-    2. Build SHA: Confirms the server is running the expected build
-    3. Settings Page: Confirms /settings loads without errors
+    2. Build SHA: Confirms the server is running the expected build (HTTPS)
+    3. Health: Confirms /api/health returns ok=true (HTTPS)
+    4. HTTP Redirect: Confirms http://akior.local redirects to https://akior.local
+    5. Settings Page: Confirms /settings loads without errors
 
 .PARAMETER ExpectedIP
     The expected LAN IP address for akior.local.
@@ -159,9 +161,69 @@ try {
 Write-Host ""
 
 # ==============================================
-# TEST 3: /settings Page Loads
+# TEST 3: /api/health Endpoint (HTTPS)
 # ==============================================
-Write-Host "Test 3: Settings Page (/settings)" -ForegroundColor White
+Write-Host "Test 3: Health Endpoint (/api/health)" -ForegroundColor White
+Write-Host "---------------------------------------"
+
+$healthEndpoint = "$BaseUrl/api/health"
+
+try {
+    $healthResponse = Invoke-RestMethod -Uri $healthEndpoint -Method GET @webParams
+
+    if ($healthResponse.ok -eq $true) {
+        Write-Pass "/api/health returns ok=true"
+        $Results += @{ Test = "Health Endpoint"; Status = "PASS"; Details = "ok=true" }
+    } else {
+        Write-Fail "/api/health returned ok=false"
+        $AllPassed = $false
+        $Results += @{ Test = "Health Endpoint"; Status = "FAIL"; Details = "ok=false" }
+    }
+} catch {
+    Write-Fail "Health endpoint request failed: $_"
+    $AllPassed = $false
+    $Results += @{ Test = "Health Endpoint"; Status = "FAIL"; Details = "Request failed" }
+}
+
+Write-Host ""
+
+# ==============================================
+# TEST 4: HTTP → HTTPS Redirect
+# ==============================================
+Write-Host "Test 4: HTTP Redirect (http://akior.local → https://akior.local)" -ForegroundColor White
+Write-Host "---------------------------------------"
+
+try {
+    $httpUrl = "http://$hostname"
+    $request = [System.Net.HttpWebRequest]::Create($httpUrl)
+    $request.Method = "GET"
+    $request.AllowAutoRedirect = $false
+    $request.Timeout = 10000
+    $response = $request.GetResponse()
+    $status = [int]$response.StatusCode
+    $location = $response.Headers["Location"]
+    $response.Close()
+
+    if (($status -eq 301 -or $status -eq 302 -or $status -eq 307 -or $status -eq 308) -and $location -like "https://akior.local*") {
+        Write-Pass "HTTP redirects to HTTPS ($status → $location)"
+        $Results += @{ Test = "HTTP Redirect"; Status = "PASS"; Details = "$status → $location" }
+    } else {
+        Write-Fail "HTTP redirect missing or incorrect (status=$status, location=$location)"
+        $AllPassed = $false
+        $Results += @{ Test = "HTTP Redirect"; Status = "FAIL"; Details = "status=$status, location=$location" }
+    }
+} catch {
+    Write-Fail "HTTP redirect check failed: $_"
+    $AllPassed = $false
+    $Results += @{ Test = "HTTP Redirect"; Status = "FAIL"; Details = "Request failed" }
+}
+
+Write-Host ""
+
+# ==============================================
+# TEST 5: /settings Page Loads
+# ==============================================
+Write-Host "Test 5: Settings Page (/settings)" -ForegroundColor White
 Write-Host "---------------------------------------"
 
 $settingsUrl = "$BaseUrl/settings"
