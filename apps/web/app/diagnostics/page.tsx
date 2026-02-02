@@ -17,8 +17,14 @@ export default function DiagnosticsPage() {
   const [serverBuild, setServerBuild] = useState<BuildInfo | null>(null);
   const [webError, setWebError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [host, setHost] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Set mounted flag and capture client-only values
+    setMounted(true);
+    setHost(window.location.host);
+    
     // Fetch web build info (directly from web container)
     fetch('/web-build')
       .then((r) => r.json())
@@ -32,7 +38,6 @@ export default function DiagnosticsPage() {
       .catch((err) => setServerError(String(err)));
   }, []);
 
-  const host = typeof window !== 'undefined' ? window.location.host : '';
   const webSha = webBuild?.git_sha || 'loading...';
   const serverSha = serverBuild?.git_sha || 'loading...';
   const webBuildTime = webBuild?.build_time || 'unknown';
@@ -42,7 +47,7 @@ export default function DiagnosticsPage() {
   const bothLoaded = webBuild && serverBuild;
   const shaMatch = bothLoaded && webSha === serverSha && webSha !== 'unknown';
   const shaDrift = bothLoaded && webSha !== serverSha && webSha !== 'unknown' && serverSha !== 'unknown';
-  const legacyHostUsed = host.endsWith('.local');
+  const legacyHostUsed = mounted && host.endsWith('.local');
 
   return (
     <div className="space-y-4" data-testid="diagnostics-page">
