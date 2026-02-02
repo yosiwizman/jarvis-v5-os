@@ -1,7 +1,7 @@
 'use client';
 // AKIOR diagnostics page (client component)
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { BRAND_VERSION, PRIMARY_HOSTNAME, SECONDARY_HOSTNAMES } from '@/lib/brand';
 
@@ -19,11 +19,20 @@ type SecureContextInfo = {
   mediaDevicesAvailable: boolean;
 };
 
+type LLMDetails = {
+  provider?: string;
+  configured?: boolean;
+  baseUrlHost?: string;
+};
+
 type SystemStatus = {
   ok: boolean;
   level: 'healthy' | 'setup_required' | 'needs_trust' | 'degraded' | 'error';
   reasons: string[];
-  details: Record<string, unknown>;
+  details: {
+    llm?: LLMDetails;
+    [key: string]: unknown;
+  };
   git_sha?: string;
   time?: string;
 };
@@ -39,6 +48,17 @@ export default function DiagnosticsPage() {
   const [secureContext, setSecureContext] = useState<SecureContextInfo | null>(null);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+
+  // Render function to avoid type issues
+  const renderStatusError = (): React.ReactNode => {
+    if (!statusError) return null;
+    return (
+      <div className="card p-4 bg-red-500/10 border border-red-500/40 text-red-300" data-testid="status-error">
+        <p className="font-semibold">✗ Status fetch failed</p>
+        <p className="text-sm">{statusError}</p>
+      </div>
+    );
+  };
 
   useEffect(() => {
     // Set mounted flag and capture client-only values
@@ -125,57 +145,58 @@ export default function DiagnosticsPage() {
           )}
         </div>
       )}
-      {statusError && (
-        <div className="card p-4 bg-red-500/10 border border-red-500/40 text-red-300" data-testid="status-error">
-          <p className="font-semibold">✗ Status fetch failed</p>
-          <p className="text-sm">{statusError}</p>
-        </div>
-      )}
+      {renderStatusError()}
 
       {/* LLM Provider Status */}
-      {systemStatus?.details?.llm && (
-        <div 
-          className={`card p-4 space-y-2 ${
-            (systemStatus.details.llm as { configured?: boolean }).configured
-              ? 'bg-green-500/10 border border-green-500/40'
-              : 'bg-amber-500/10 border border-amber-500/40'
-          }`}
-          data-testid="llm-status"
-        >
-          <div className="font-semibold border-b border-white/20 pb-2 mb-2 flex items-center gap-2">
-            {(systemStatus.details.llm as { configured?: boolean }).configured ? (
-              <span className="text-green-300">✓ LLM Provider Configured</span>
-            ) : (
-              <span className="text-amber-300">⚠ LLM Provider Not Configured</span>
+      {systemStatus?.details?.llm && (() => {
+        const llm = systemStatus.details.llm;
+        const isConfigured = llm?.configured ?? false;
+        const provider = llm?.provider;
+        const baseUrlHost = llm?.baseUrlHost;
+        return (
+          <div 
+            className={`card p-4 space-y-2 ${
+              isConfigured
+                ? 'bg-green-500/10 border border-green-500/40'
+                : 'bg-amber-500/10 border border-amber-500/40'
+            }`}
+            data-testid="llm-status"
+          >
+            <div className="font-semibold border-b border-white/20 pb-2 mb-2 flex items-center gap-2">
+              {isConfigured ? (
+                <span className="text-green-300">✓ LLM Provider Configured</span>
+              ) : (
+                <span className="text-amber-300">⚠ LLM Provider Not Configured</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+              <div className="text-white/60">Provider:</div>
+              <div className="font-mono">
+                {provider === 'openai-cloud' 
+                  ? 'OpenAI Cloud' 
+                  : provider === 'local-compatible'
+                    ? 'Local / Compatible'
+                    : provider || 'Not set'}
+              </div>
+              <div className="text-white/60">Configured:</div>
+              <div className={isConfigured ? 'text-green-300' : 'text-amber-300'}>
+                {isConfigured ? 'Yes' : 'No'}
+              </div>
+              {baseUrlHost && (
+                <>
+                  <div className="text-white/60">Endpoint:</div>
+                  <div className="font-mono">{baseUrlHost}</div>
+                </>
+              )}
+            </div>
+            {!isConfigured && (
+              <p className="text-xs text-amber-200 mt-2 pt-2 border-t border-white/10">
+                Complete the <a href="/setup" className="underline hover:text-amber-100">Setup Wizard</a> to configure your LLM provider.
+              </p>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <div className="text-white/60">Provider:</div>
-            <div className="font-mono">
-              {(systemStatus.details.llm as { provider?: string }).provider === 'openai-cloud' 
-                ? 'OpenAI Cloud' 
-                : (systemStatus.details.llm as { provider?: string }).provider === 'local-compatible'
-                  ? 'Local / Compatible'
-                  : (systemStatus.details.llm as { provider?: string }).provider || 'Not set'}
-            </div>
-            <div className="text-white/60">Configured:</div>
-            <div className={(systemStatus.details.llm as { configured?: boolean }).configured ? 'text-green-300' : 'text-amber-300'}>
-              {(systemStatus.details.llm as { configured?: boolean }).configured ? 'Yes' : 'No'}
-            </div>
-            {(systemStatus.details.llm as { baseUrlHost?: string }).baseUrlHost && (
-              <>
-                <div className="text-white/60">Endpoint:</div>
-                <div className="font-mono">{(systemStatus.details.llm as { baseUrlHost?: string }).baseUrlHost}</div>
-              </>
-            )}
-          </div>
-          {!(systemStatus.details.llm as { configured?: boolean }).configured && (
-            <p className="text-xs text-amber-200 mt-2 pt-2 border-t border-white/10">
-              Complete the <a href="/setup" className="underline hover:text-amber-100">Setup Wizard</a> to configure your LLM provider.
-            </p>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* Admin Auth Status */}
       <div 

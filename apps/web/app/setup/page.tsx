@@ -498,7 +498,7 @@ export default function SetupPage() {
             <div className="text-lg font-semibold">Step 3: LLM Provider</div>
             <p className="text-white/60 text-sm">Required for voice assistant and AI features</p>
           </div>
-          {llmConfig?.configured && (
+          {llmConfig?.keyConfigured && (
             <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">
               Configured ✓
             </span>
@@ -516,7 +516,7 @@ export default function SetupPage() {
                     ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
                     : 'border-white/10 hover:border-white/20'
                 }`}
-                onClick={() => setLLMProvider('openai-cloud')}
+                onClick={() => setLlmProvider('openai-cloud')}
                 disabled={llmSaving}
               >
                 <div className="font-medium">OpenAI Cloud</div>
@@ -528,7 +528,7 @@ export default function SetupPage() {
                     ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
                     : 'border-white/10 hover:border-white/20'
                 }`}
-                onClick={() => setLLMProvider('local-compatible')}
+                onClick={() => setLlmProvider('local-compatible')}
                 disabled={llmSaving}
               >
                 <div className="font-medium">Local / Compatible</div>
@@ -546,7 +546,7 @@ export default function SetupPage() {
                   type="password"
                   className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
                   value={llmApiKey}
-                  onChange={(e) => setLLMApiKey(e.target.value)}
+                  onChange={(e) => setLlmApiKey(e.target.value)}
                   placeholder="sk-..."
                   disabled={llmSaving}
                 />
@@ -568,7 +568,7 @@ export default function SetupPage() {
                   type="text"
                   className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
                   value={llmBaseUrl}
-                  onChange={(e) => setLLMBaseUrl(e.target.value)}
+                  onChange={(e) => setLlmBaseUrl(e.target.value)}
                   placeholder="http://localhost:11434/v1"
                   disabled={llmSaving}
                 />
@@ -582,7 +582,7 @@ export default function SetupPage() {
                   type="password"
                   className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
                   value={llmApiKey}
-                  onChange={(e) => setLLMApiKey(e.target.value)}
+                  onChange={(e) => setLlmApiKey(e.target.value)}
                   placeholder="Leave empty if not required"
                   disabled={llmSaving}
                 />
@@ -602,17 +602,15 @@ export default function SetupPage() {
             </div>
           )}
 
-          {/* Error feedback */}
-          {llmError && (
-            <div className="text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
-              ✗ {llmError}
-            </div>
-          )}
-
-          {/* Success feedback */}
-          {llmSuccess && (
-            <div className="text-sm text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-lg">
-              ✓ LLM provider configured successfully!
+          {/* Feedback */}
+          {llmFeedback && (
+            <div className={`text-sm px-3 py-2 rounded-lg ${
+              llmFeedback.type === 'success'
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : 'bg-red-500/10 text-red-400'
+            }`}>
+              {llmFeedback.type === 'success' ? '✓ ' : '✗ '}
+              {llmFeedback.message}
             </div>
           )}
 
@@ -638,12 +636,12 @@ export default function SetupPage() {
                 (llmProvider === 'local-compatible' && !llmBaseUrl.trim())
               }
             >
-              {llmSaving ? 'Saving...' : llmConfig?.configured ? 'Update Provider' : 'Save Provider'}
+              {llmSaving ? 'Saving...' : llmConfig?.keyConfigured ? 'Update Provider' : 'Save Provider'}
             </button>
           </div>
 
           {/* Current config info */}
-          {llmConfig?.configured && (
+          {llmConfig?.keyConfigured && (
             <div className="text-xs text-white/40 pt-2 border-t border-white/5">
               Currently using: <span className="text-white/60">
                 {llmConfig.provider === 'openai-cloud' ? 'OpenAI Cloud' : 'Local/Compatible'}
