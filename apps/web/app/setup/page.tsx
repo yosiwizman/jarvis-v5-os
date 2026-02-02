@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { buildServerUrl } from '@/lib/api';
 import { useSystemStatus, getStatusColor, StatusLevel } from '@/hooks/useSystemStatus';
+import { useAuth } from '@/hooks/useAuth';
 import { BRAND, PRIMARY_HOSTNAME } from '@/lib/brand';
 
 type KeyName = 'openai' | 'meshy';
@@ -11,6 +12,7 @@ type KeyMetaState = Record<KeyName, { present: boolean }>;
 type ValidationState = Record<KeyName, { validating: boolean; result?: { ok: boolean; message?: string; error?: string } }>;
 
 const SETUP_STEPS = [
+  { id: 'pin', title: 'Set Owner PIN', description: 'Secure admin access to settings' },
   { id: 'https', title: 'Trust HTTPS Certificate', description: 'Enable secure mic/camera access' },
   { id: 'openai', title: 'Configure OpenAI API Key', description: 'Required for voice assistant and AI features' },
   { id: 'meshy', title: 'Configure Meshy API Key', description: 'Optional - enables 3D model generation' },
@@ -81,6 +83,7 @@ function SecureContextStatus() {
 
 export default function SetupPage() {
   const { status, isLoading: statusLoading } = useSystemStatus();
+  const { pinConfigured, setPin, loading: authLoading } = useAuth();
   const [keysMeta, setKeysMeta] = useState<KeyMetaState | null>(null);
   const [pendingKeys, setPendingKeys] = useState<Record<KeyName, string>>({ openai: '', meshy: '' });
   const [savingKeys, setSavingKeys] = useState<Record<KeyName, boolean>>({ openai: false, meshy: false });
@@ -89,6 +92,41 @@ export default function SetupPage() {
     openai: undefined,
     meshy: undefined,
   });
+  
+  // PIN state
+  const [pin, setPinValue] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinSaving, setPinSaving] = useState(false);
+  const [pinSuccess, setPinSuccess] = useState(false);
+
+  const handleSetPin = async () => {
+    setPinError(null);
+    
+    // Validate format
+    if (!/^\d{4,8}$/.test(pin)) {
+      setPinError('PIN must be 4-8 digits');
+      return;
+    }
+    
+    // Validate confirmation
+    if (pin !== pinConfirm) {
+      setPinError('PINs do not match');
+      return;
+    }
+    
+    setPinSaving(true);
+    const result = await setPin(pin);
+    setPinSaving(false);
+    
+    if (result.ok) {
+      setPinSuccess(true);
+      setPinValue('');
+      setPinConfirm('');
+    } else {
+      setPinError(result.error || 'Failed to set PIN');
+    }
+  };
 
   const refreshMeta = useCallback(async () => {
     try {
@@ -167,9 +205,14 @@ export default function SetupPage() {
   };
 
   const getStepStatus = (stepId: string): 'complete' | 'current' | 'upcoming' => {
+    if (stepId === 'pin') {
+      if (pinConfigured) return 'complete';
+      return 'current';
+    }
     if (stepId === 'https') {
       if (typeof window !== 'undefined' && window.isSecureContext) return 'complete';
-      return 'current';
+      if (pinConfigured) return 'current';
+      return 'upcoming';
     }
     if (stepId === 'openai') {
       if (keysMeta?.openai?.present) return 'complete';
@@ -249,10 +292,90 @@ export default function SetupPage() {
         })}
       </div>
 
-      {/* Step 1: HTTPS Trust */}
+      {/* Step 1: Owner PIN */}
+      <section className="card p-6 space-y-4">
+        <header className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-semibold">Step 1: Set Owner PIN</div>
+            <p className="text-white/60 text-sm">Secure admin access with a 4-8 digit PIN</p>
+          </div>
+          {pinConfigured && (
+            <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">
+              Configured ✓
+            </span>
+          )}
+        </header>
+
+        {pinConfigured ? (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <span>✓</span>
+              <span>Owner PIN is configured. Admin routes are protected.</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm text-white/60 mb-1 block">Enter PIN (4-8 digits)</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={8}
+                className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 font-mono text-center text-lg tracking-widest"
+                value={pin}
+                onChange={(e) => setPinValue(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="••••"
+                disabled={pinSaving}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-white/60 mb-1 block">Confirm PIN</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={8}
+                className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 font-mono text-center text-lg tracking-widest"
+                value={pinConfirm}
+                onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="••••"
+                disabled={pinSaving}
+              />
+            </div>
+            
+            {pinError && (
+              <div className="text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
+                ✗ {pinError}
+              </div>
+            )}
+            
+            {pinSuccess && (
+              <div className="text-sm text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-lg">
+                ✓ PIN set successfully!
+              </div>
+            )}
+            
+            <button 
+              className="btn w-full"
+              onClick={handleSetPin}
+              disabled={!pin || !pinConfirm || pinSaving}
+            >
+              {pinSaving ? 'Setting PIN...' : 'Set PIN'}
+            </button>
+            
+            <p className="text-xs text-white/40">
+              This PIN protects admin access to Setup and Settings.
+              Store it securely - there is no recovery option.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* Step 2: HTTPS Trust */}
       <section className="card p-6 space-y-4">
         <header>
-          <div className="text-lg font-semibold">Step 1: Trust HTTPS Certificate</div>
+          <div className="text-lg font-semibold">Step 2: Trust HTTPS Certificate</div>
           <p className="text-white/60 text-sm">
             Required for microphone and camera access over LAN
           </p>
@@ -273,11 +396,11 @@ export default function SetupPage() {
         </div>
       </section>
 
-      {/* Step 2: OpenAI Key */}
+      {/* Step 3: OpenAI Key */}
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold">Step 2: OpenAI API Key</div>
+            <div className="text-lg font-semibold">Step 3: OpenAI API Key</div>
             <p className="text-white/60 text-sm">Required for voice assistant and AI features</p>
           </div>
           {keysMeta?.openai?.present && (
@@ -342,11 +465,11 @@ export default function SetupPage() {
         </div>
       </section>
 
-      {/* Step 3: Meshy Key (Optional) */}
+      {/* Step 4: Meshy Key (Optional) */}
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold">Step 3: Meshy API Key <span className="text-white/40 font-normal">(Optional)</span></div>
+            <div className="text-lg font-semibold">Step 4: Meshy API Key <span className="text-white/40 font-normal">(Optional)</span></div>
             <p className="text-white/60 text-sm">Enables 3D model generation from images</p>
           </div>
           {keysMeta?.meshy?.present && (

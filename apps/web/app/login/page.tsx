@@ -1,53 +1,54 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BRAND } from '@/lib/brand';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { admin, pinConfigured, loading: authLoading, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
 
-  // Check if already authenticated
+  // Get redirect destination from query params
+  const nextUrl = searchParams.get('next') || '/menu';
+
+  // If already admin, redirect to destination
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isAuthenticated = window.localStorage.getItem('akior.authenticated');
-      if (isAuthenticated === 'true') {
-        router.replace('/menu');
-      }
+    if (!authLoading && admin) {
+      router.replace(nextUrl as any);
     }
-  }, [router]);
+  }, [admin, authLoading, router, nextUrl]);
+
+  // If PIN not configured, redirect to setup
+  useEffect(() => {
+    if (!authLoading && !pinConfigured) {
+      router.replace('/setup' as any);
+    }
+  }, [pinConfigured, authLoading, router]);
 
   const handleQuickAccess = () => {
-    // Simple local auth - set authenticated flag
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('akior.authenticated', 'true');
-      window.localStorage.setItem('akior.authTime', Date.now().toString());
-    }
+    // Quick access goes to menu without admin privileges
     router.push('/menu');
   };
 
-  const handleCodeSubmit = (e: React.FormEvent) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    // Simple code verification (can be enhanced with server-side auth)
-    setTimeout(() => {
-      if (accessCode === '1234' || accessCode === 'akior' || accessCode.length >= 4) {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('akior.authenticated', 'true');
-          window.localStorage.setItem('akior.authTime', Date.now().toString());
-        }
-        router.push('/menu');
-      } else {
-        setError('Invalid access code');
-        setIsLoading(false);
-      }
-    }, 500);
+    const result = await login(accessCode);
+    
+    if (result.ok) {
+      router.push(nextUrl as any);
+    } else {
+      setError(result.error || 'Invalid PIN');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -129,19 +130,25 @@ export default function LoginPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
-                  <span>Enter Access Code</span>
+                  <span>Admin Login (PIN)</span>
                 </div>
               </button>
+              <p className="text-xs text-white/40 text-center">
+                Quick Access for regular use. Admin Login to access Setup & Settings.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleCodeSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm text-white/60">Access Code</label>
+                <label className="text-sm text-white/60">Owner PIN</label>
                 <input
                   type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={8}
                   value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value)}
-                  placeholder="Enter code..."
+                  onChange={(e) => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="••••"
                   autoFocus
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-center font-mono text-lg tracking-widest"
                 />
