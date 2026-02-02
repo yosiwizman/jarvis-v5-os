@@ -23,6 +23,7 @@ type LLMConfig = {
 const SETUP_STEPS = [
   { id: 'pin', title: 'Set Owner PIN', description: 'Secure admin access to settings' },
   { id: 'https', title: 'Trust HTTPS Certificate', description: 'Enable secure mic/camera access' },
+  { id: 'remote', title: 'Remote Access', description: 'Optional - access AKIOR from anywhere' },
   { id: 'llm', title: 'Configure LLM Provider', description: 'Required for voice assistant and AI features' },
   { id: 'meshy', title: 'Configure Meshy API Key', description: 'Optional - enables 3D model generation' },
 ] as const;
@@ -102,6 +103,24 @@ export default function SetupPage() {
     meshy: undefined,
   });
   
+  // HTTPS Status state
+  const [httpsStatus, setHttpsStatus] = useState<{ caAvailable: boolean; caFingerprint?: string; httpsMode?: string } | null>(null);
+  const [downloadingCert, setDownloadingCert] = useState(false);
+  const [certTab, setCertTab] = useState<'windows' | 'macos' | 'ios' | 'android'>('windows');
+  
+  // Remote Access state
+  const [remoteStatus, setRemoteStatus] = useState<{
+    mode: string;
+    tailscaleInstalled: boolean;
+    tailscaleUp: boolean;
+    serveEnabled: boolean;
+    suggestedUrl?: string;
+  } | null>(null);
+  const [remoteAuthKey, setRemoteAuthKey] = useState('');
+  const [remoteEnabling, setRemoteEnabling] = useState(false);
+  const [remoteDisabling, setRemoteDisabling] = useState(false);
+  const [remoteFeedback, setRemoteFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  
   // LLM Provider state
   const [llmConfig, setLlmConfig] = useState<LLMConfig | null>(null);
   const [llmProvider, setLlmProvider] = useState<LLMProvider>('openai-cloud');
@@ -175,10 +194,112 @@ export default function SetupPage() {
     }
   }, []);
 
+  const refreshHttpsStatus = useCallback(async () => {
+    try {
+      const response = await fetch(buildServerUrl('/admin/https/status'), { credentials: 'include' });
+      if (response.ok) {
+        const payload = await response.json();
+        setHttpsStatus(payload);
+      }
+    } catch (error) {
+      console.error('Failed to load HTTPS status', error);
+    }
+  }, []);
+
+  const refreshRemoteStatus = useCallback(async () => {
+    try {
+      const response = await fetch(buildServerUrl('/admin/remote-access/status'), { credentials: 'include' });
+      if (response.ok) {
+        const payload = await response.json();
+        setRemoteStatus(payload);
+      }
+    } catch (error) {
+      console.error('Failed to load remote access status', error);
+    }
+  }, []);
+
   useEffect(() => {
     refreshMeta();
     refreshLLMConfig();
-  }, [refreshMeta, refreshLLMConfig]);
+    refreshHttpsStatus();
+    refreshRemoteStatus();
+  }, [refreshMeta, refreshLLMConfig, refreshHttpsStatus, refreshRemoteStatus]);
+
+  const handleDownloadCert = async () => {
+    setDownloadingCert(true);
+    try {
+      const response = await fetch(buildServerUrl('/admin/https/ca'), { credentials: 'include' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'akior-local-ca.pem';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to download certificate');
+      }
+    } catch (error) {
+      alert('Failed to download certificate');
+    } finally {
+      setDownloadingCert(false);
+    }
+  };
+
+  const handleEnableRemote = async () => {
+    setRemoteEnabling(true);
+    setRemoteFeedback(null);
+    try {
+      const body: any = { mode: 'tailscale' };
+      if (remoteAuthKey.trim()) {
+        body.authKey = remoteAuthKey.trim();
+      }
+      const response = await fetch(buildServerUrl('/admin/remote-access/enable'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      const result = await response.json();
+      if (result.ok) {
+        setRemoteFeedback({ type: 'success', message: 'Remote access enabled!' });
+        setRemoteAuthKey('');
+        await refreshRemoteStatus();
+      } else {
+        setRemoteFeedback({ type: 'error', message: result.message || 'Failed to enable remote access' });
+      }
+    } catch (error) {
+      setRemoteFeedback({ type: 'error', message: 'Failed to enable remote access' });
+    } finally {
+      setRemoteEnabling(false);
+    }
+  };
+
+  const handleDisableRemote = async () => {
+    setRemoteDisabling(true);
+    setRemoteFeedback(null);
+    try {
+      const response = await fetch(buildServerUrl('/admin/remote-access/disable'), {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (result.ok) {
+        setRemoteFeedback({ type: 'success', message: 'Remote access disabled' });
+        await refreshRemoteStatus();
+      } else {
+        setRemoteFeedback({ type: 'error', message: result.message || 'Failed to disable remote access' });
+      }
+    } catch (error) {
+      setRemoteFeedback({ type: 'error', message: 'Failed to disable remote access' });
+    } finally {
+      setRemoteDisabling(false);
+    }
+  };
 
   const handleLLMTest = async () => {
     setLlmTesting(true);
@@ -304,11 +425,18 @@ export default function SetupPage() {
       if (pinConfigured) return 'current';
       return 'upcoming';
     }
+    if (stepId === 'remote') {
+      // Remote is optional - always show as complete (skippable)
+      if (remoteStatus?.serveEnabled) return 'complete';
+      if (typeof window !== 'undefined' && window.isSecureContext) return 'current';
+      return 'upcoming';
+    }
     if (stepId === 'llm') {
       // LLM is configured if the key is set (for openai-cloud) or baseUrl is set (for local)
       const isConfigured = llmConfig?.keyConfigured || 
         (llmConfig?.provider === 'local-compatible' && llmConfig?.baseUrl);
       if (isConfigured) return 'complete';
+      // Current after https is complete (remote is optional)
       if (typeof window !== 'undefined' && window.isSecureContext) return 'current';
       return 'upcoming';
     }
@@ -468,7 +596,7 @@ export default function SetupPage() {
       </section>
 
       {/* Step 2: HTTPS Trust */}
-      <section className="card p-6 space-y-4">
+      <section id="https" className="card p-6 space-y-4">
         <header>
           <div className="text-lg font-semibold">Step 2: Trust HTTPS Certificate</div>
           <p className="text-white/60 text-sm">
@@ -478,24 +606,185 @@ export default function SetupPage() {
         
         <SecureContextStatus />
         
+        {/* Download Certificate Button */}
+        <div className="flex items-center gap-3">
+          <button
+            className="btn btn-secondary"
+            onClick={handleDownloadCert}
+            disabled={downloadingCert || !httpsStatus?.caAvailable}
+            data-testid="download-cert-btn"
+          >
+            {downloadingCert ? 'Downloading...' : '⬇ Download Certificate'}
+          </button>
+          {httpsStatus?.caFingerprint && (
+            <span className="text-xs text-white/40 font-mono">
+              SHA256: {httpsStatus.caFingerprint.slice(0, 23)}...
+            </span>
+          )}
+        </div>
+        
+        {/* Device Instructions Tabs */}
+        <div className="space-y-3">
+          <div className="text-sm text-white/60">Installation instructions:</div>
+          <div className="flex gap-1 border-b border-white/10 pb-1">
+            {(['windows', 'macos', 'ios', 'android'] as const).map((tab) => (
+              <button
+                key={tab}
+                className={`px-3 py-1.5 text-xs rounded-t transition-colors ${
+                  certTab === tab
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/50 hover:text-white/70'
+                }`}
+                onClick={() => setCertTab(tab)}
+              >
+                {tab === 'ios' ? 'iOS/iPadOS' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div className="bg-black/30 rounded-lg p-3 text-xs">
+            {certTab === 'windows' && (
+              <div className="space-y-2">
+                <p className="text-white/60">Run in PowerShell (as Admin):</p>
+                <code className="block text-cyan-400 font-mono">.\ops\trust-lan-https.ps1 -Apply</code>
+                <p className="text-white/40">Then restart your browser completely.</p>
+              </div>
+            )}
+            {certTab === 'macos' && (
+              <div className="space-y-2">
+                <p className="text-white/60">1. Download the certificate above</p>
+                <p className="text-white/60">2. Open Keychain Access → System → Certificates</p>
+                <p className="text-white/60">3. Drag the .pem file into the list</p>
+                <p className="text-white/60">4. Double-click it → Trust → "Always Trust"</p>
+                <p className="text-white/40">Restart browser after trusting.</p>
+              </div>
+            )}
+            {certTab === 'ios' && (
+              <div className="space-y-2">
+                <p className="text-white/60">1. Download cert on device (or AirDrop from Mac)</p>
+                <p className="text-white/60">2. Settings → Profile Downloaded → Install</p>
+                <p className="text-white/60">3. Settings → General → About → Certificate Trust Settings</p>
+                <p className="text-white/60">4. Enable trust for "Caddy Local Authority"</p>
+              </div>
+            )}
+            {certTab === 'android' && (
+              <div className="space-y-2">
+                <p className="text-white/60">1. Download cert to device</p>
+                <p className="text-white/60">2. Settings → Security → Encryption → Install from storage</p>
+                <p className="text-white/60">3. Select the downloaded .pem file</p>
+                <p className="text-white/60">4. Name it "AKIOR LAN CA" and select "VPN and apps"</p>
+                <p className="text-white/40">Location varies by Android version/vendor.</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg p-2">
+          💡 Prefer <code className="font-mono">akior.home.arpa</code> over <code className="font-mono">akior.local</code> for reliable resolution.
+        </div>
+        
         <div className="text-sm text-white/50">
-          <p>
-            {BRAND.productName} uses Caddy's internal CA for HTTPS on your local network.
-            Installing the certificate allows your browser to access mic/camera securely.
-          </p>
-          <p className="mt-2">
-            <Link href="/diagnostics" className="text-cyan-400 hover:underline">
-              View full diagnostics →
-            </Link>
-          </p>
+          <Link href="/diagnostics" className="text-cyan-400 hover:underline">
+            View full diagnostics →
+          </Link>
         </div>
       </section>
 
-      {/* Step 3: LLM Provider */}
+      {/* Step 3: Remote Access (Optional) */}
+      <section id="remote-access" className="card p-6 space-y-4">
+        <header className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-semibold">Step 3: Remote Access <span className="text-white/40 font-normal">(Optional)</span></div>
+            <p className="text-white/60 text-sm">Access {BRAND.productName} from anywhere via Tailscale</p>
+          </div>
+          {remoteStatus?.serveEnabled && (
+            <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">
+              Enabled ✓
+            </span>
+          )}
+        </header>
+        
+        {/* Status */}
+        <div className={`rounded-xl p-4 ${
+          remoteStatus?.serveEnabled 
+            ? 'bg-emerald-500/10 border border-emerald-500/30'
+            : 'bg-white/5 border border-white/10'
+        }`}>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="text-white/60">Tailscale:</div>
+            <div className={remoteStatus?.tailscaleInstalled ? 'text-emerald-400' : 'text-amber-400'}>
+              {remoteStatus?.tailscaleInstalled ? (remoteStatus.tailscaleUp ? '✓ Connected' : '⚠ Not connected') : '✗ Not installed'}
+            </div>
+            <div className="text-white/60">Serve:</div>
+            <div className={remoteStatus?.serveEnabled ? 'text-emerald-400' : 'text-white/40'}>
+              {remoteStatus?.serveEnabled ? '✓ Enabled' : 'Disabled'}
+            </div>
+            {remoteStatus?.suggestedUrl && (
+              <>
+                <div className="text-white/60">Remote URL:</div>
+                <a href={remoteStatus.suggestedUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline truncate">
+                  {remoteStatus.suggestedUrl}
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+        
+        {/* Enable/Disable Controls */}
+        {!remoteStatus?.serveEnabled ? (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm text-white/60 mb-2">Auth Key <span className="text-white/30">(one-time, optional)</span></label>
+              <input
+                type="password"
+                className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
+                value={remoteAuthKey}
+                onChange={(e) => setRemoteAuthKey(e.target.value)}
+                placeholder="tskey-auth-..."
+                disabled={remoteEnabling}
+              />
+              <p className="text-xs text-amber-400/70 mt-1">⚠ Not stored. Only needed if Tailscale is not already connected.</p>
+            </div>
+            <button
+              className="btn"
+              onClick={handleEnableRemote}
+              disabled={remoteEnabling || !remoteStatus?.tailscaleInstalled}
+            >
+              {remoteEnabling ? 'Enabling...' : 'Enable Remote Access'}
+            </button>
+          </div>
+        ) : (
+          <button
+            className="btn btn-secondary"
+            onClick={handleDisableRemote}
+            disabled={remoteDisabling}
+          >
+            {remoteDisabling ? 'Disabling...' : 'Disable Remote Access'}
+          </button>
+        )}
+        
+        {/* Feedback */}
+        {remoteFeedback && (
+          <div className={`text-sm px-3 py-2 rounded-lg ${
+            remoteFeedback.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+          }`}>
+            {remoteFeedback.type === 'success' ? '✓ ' : '✗ '}
+            {remoteFeedback.message}
+          </div>
+        )}
+        
+        <div className="text-xs text-white/40">
+          Remote access uses Tailscale Serve — no router port-forwarding needed.
+          <a href="https://tailscale.com/download" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline ml-1">
+            Get Tailscale →
+          </a>
+        </div>
+      </section>
+
+      {/* Step 4: LLM Provider */}
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold">Step 3: LLM Provider</div>
+            <div className="text-lg font-semibold">Step 4: LLM Provider</div>
             <p className="text-white/60 text-sm">Required for voice assistant and AI features</p>
           </div>
           {llmConfig?.keyConfigured && (
@@ -654,11 +943,11 @@ export default function SetupPage() {
         </div>
       </section>
 
-      {/* Step 4: Meshy Key (Optional) */}
+      {/* Step 5: Meshy Key (Optional) */}
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold">Step 4: Meshy API Key <span className="text-white/40 font-normal">(Optional)</span></div>
+            <div className="text-lg font-semibold">Step 5: Meshy API Key <span className="text-white/40 font-normal">(Optional)</span></div>
             <p className="text-white/60 text-sm">Enables 3D model generation from images</p>
           </div>
           {keysMeta?.meshy?.present && (
