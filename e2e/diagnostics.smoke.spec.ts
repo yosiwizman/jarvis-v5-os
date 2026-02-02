@@ -163,9 +163,9 @@ test.describe('Diagnostics Link in Settings', () => {
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
-    // Find the diagnostics link
-    const diagLink = page.locator('a[href="/diagnostics"]');
+    // Find the diagnostics link in settings content (not HUD widget)
+    // Use getByRole to find the specific "View Diagnostics" link
+    const diagLink = page.getByRole('link', { name: 'View Diagnostics' });
     await expect(diagLink).toBeVisible({ timeout: 5000 });
-    await expect(diagLink).toContainText('Diagnostics');
   });
 });
