@@ -2407,8 +2407,9 @@ export default function SettingsPage() {
       </section>
 
       {/* Build Info Footer */}
-      <footer className="text-center text-xs text-white/40 pt-4">
+      <footer className="text-center text-xs text-white/40 pt-4 space-y-1">
         <BuildInfo />
+        <a href="/diagnostics" className="hover:text-white/60 underline">View Diagnostics</a>
       </footer>
     </div>
   );
