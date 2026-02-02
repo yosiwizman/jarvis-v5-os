@@ -24,6 +24,13 @@ akior.home.arpa, akior.local, jarvis.local, aifactory-lan {
     # Use Caddy's internal CA for automatic cert generation
     tls internal
 
+    # Web build info - goes to web container (for drift detection)
+    handle /web-build {
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        header Pragma "no-cache"
+        reverse_proxy web:3001
+    }
+
     # Health endpoints - never cache (deployment drift prevention)
     handle /api/health/* {
         header Cache-Control "no-store, no-cache, must-revalidate"
@@ -72,6 +79,14 @@ akior.home.arpa, akior.local, jarvis.local, aifactory-lan {
     # Force HTTPS for canonical hostnames (keep IP-based HTTP for recovery)
     @secureHosts host akior.local jarvis.local aifactory-lan
     redir @secureHosts https://akior.local{uri} 308
+
+    # Web build info - goes to web container (for drift detection)
+    handle /web-build {
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        header Pragma "no-cache"
+        reverse_proxy web:3001
+    }
+
     # Health endpoints - never cache (deployment drift prevention)
     handle /api/health/* {
         header Cache-Control "no-store, no-cache, must-revalidate"
