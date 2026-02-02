@@ -15,9 +15,11 @@ import { registerAuthRoutes } from './routes/auth.routes.js';
 import { register3DPrintRoutes } from './routes/3dprint.routes.js';
 import { registerSmartHomeRoutes } from './routes/smarthome.routes.js';
 import { registerLockdownRoutes } from './routes/lockdown.routes.js';
+import { registerLLMRoutes } from './routes/llm.routes.js';
 import { initializeLockdownService } from './services/lockdownService.js';
 import { readSecrets } from './storage/secretStore.js';
 import { isPinConfigured } from './auth/index.js';
+import { isLLMConfigured, getLLMConfigPublic } from './storage/llmConfigStore.js';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { notificationScheduler } from './notificationScheduler.js';
@@ -207,13 +209,14 @@ fastify.get('/api/health/status', async (req, reply) => {
     reasons.push('Owner PIN not configured');
   }
 
-  // Check if OpenAI key is configured (required for core functionality)
+  // Check LLM provider configuration
+  const llmStatus = isLLMConfigured();
+  const llmConfig = getLLMConfigPublic();
   const secrets = readSecrets();
-  const hasOpenAI = Boolean(secrets.openai);
 
-  if (!hasOpenAI) {
+  if (!llmStatus.configured && llmStatus.reason) {
     level = 'setup_required';
-    reasons.push('OpenAI API key not configured');
+    reasons.push(llmStatus.reason);
   }
 
   // Check notification subsystem health
@@ -234,8 +237,13 @@ fastify.get('/api/health/status', async (req, reply) => {
     auth: {
       pinConfigured,
     },
+    llm: {
+      provider: llmConfig.provider,
+      configured: llmStatus.configured,
+      baseUrlHost: llmConfig.baseUrlHost,
+    },
     keys: {
-      openai: hasOpenAI,
+      openai: Boolean(secrets.openai),
       meshy: Boolean(secrets.meshy)
     },
     notifications: notificationHealth,
@@ -2173,6 +2181,7 @@ async function persistModelOutputs(
 }
 registerKeyRoutes(fastify, io);
 registerAuthRoutes(fastify);
+registerLLMRoutes(fastify);
 register3DPrintRoutes(fastify);
 registerSmartHomeRoutes(fastify);
 registerLockdownRoutes(fastify);

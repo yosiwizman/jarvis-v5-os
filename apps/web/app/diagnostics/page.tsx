@@ -132,6 +132,51 @@ export default function DiagnosticsPage() {
         </div>
       )}
 
+      {/* LLM Provider Status */}
+      {systemStatus?.details?.llm && (
+        <div 
+          className={`card p-4 space-y-2 ${
+            (systemStatus.details.llm as { configured?: boolean }).configured
+              ? 'bg-green-500/10 border border-green-500/40'
+              : 'bg-amber-500/10 border border-amber-500/40'
+          }`}
+          data-testid="llm-status"
+        >
+          <div className="font-semibold border-b border-white/20 pb-2 mb-2 flex items-center gap-2">
+            {(systemStatus.details.llm as { configured?: boolean }).configured ? (
+              <span className="text-green-300">✓ LLM Provider Configured</span>
+            ) : (
+              <span className="text-amber-300">⚠ LLM Provider Not Configured</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div className="text-white/60">Provider:</div>
+            <div className="font-mono">
+              {(systemStatus.details.llm as { provider?: string }).provider === 'openai-cloud' 
+                ? 'OpenAI Cloud' 
+                : (systemStatus.details.llm as { provider?: string }).provider === 'local-compatible'
+                  ? 'Local / Compatible'
+                  : (systemStatus.details.llm as { provider?: string }).provider || 'Not set'}
+            </div>
+            <div className="text-white/60">Configured:</div>
+            <div className={(systemStatus.details.llm as { configured?: boolean }).configured ? 'text-green-300' : 'text-amber-300'}>
+              {(systemStatus.details.llm as { configured?: boolean }).configured ? 'Yes' : 'No'}
+            </div>
+            {(systemStatus.details.llm as { baseUrlHost?: string }).baseUrlHost && (
+              <>
+                <div className="text-white/60">Endpoint:</div>
+                <div className="font-mono">{(systemStatus.details.llm as { baseUrlHost?: string }).baseUrlHost}</div>
+              </>
+            )}
+          </div>
+          {!(systemStatus.details.llm as { configured?: boolean }).configured && (
+            <p className="text-xs text-amber-200 mt-2 pt-2 border-t border-white/10">
+              Complete the <a href="/setup" className="underline hover:text-amber-100">Setup Wizard</a> to configure your LLM provider.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Admin Auth Status */}
       <div 
         className={`card p-4 space-y-2 ${

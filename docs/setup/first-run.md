@@ -6,7 +6,7 @@ This guide walks you through setting up AKIOR for the first time after deploymen
 
 - AKIOR containers are running (`docker compose -f deploy/compose.jarvis.yml up -d`)
 - You can access `https://akior.home.arpa` (or `https://akior.local`)
-- You have an OpenAI API key (required)
+- You have an LLM provider: OpenAI API key OR local OpenAI-compatible server (e.g., Ollama)
 - Optionally: Meshy API key for 3D model generation
 
 ## Quick Start
@@ -34,13 +34,15 @@ This extracts the Caddy CA certificate from the container and installs it to you
 
 **Verify:** Visit `https://akior.home.arpa/diagnostics` and check that "Trusted HTTPS" shows a green checkmark.
 
-### Step 3: Configure API Keys
+### Step 3: Configure LLM Provider
 
 1. Navigate to `https://akior.home.arpa/setup`
-2. Enter your OpenAI API key (starts with `sk-`)
-3. Click "Test Key" to validate
-4. Click "Save Key" to store it
-5. Optionally add your Meshy API key for 3D features
+2. In Step 3, select your LLM provider:
+   - **OpenAI Cloud:** Enter your API key (starts with `sk-`)
+   - **Local/Compatible:** Enter your local server URL (e.g., `http://localhost:11434/v1` for Ollama)
+3. Click "Test Connection" to validate
+4. Click "Save Provider" to store the configuration
+5. Optionally add your Meshy API key for 3D features (Step 4)
 
 ### Step 4: Verify Setup
 
@@ -61,28 +63,31 @@ AKIOR uses Caddy's internal Certificate Authority (CA) to provide HTTPS on your 
 - Without trust, browsers show certificate warnings
 - Web APIs like `navigator.mediaDevices` won't work
 
-### API Keys
+### LLM Provider
 
-**OpenAI (Required):**
+**OpenAI Cloud:**
 - Powers the Voice Assistant (realtime voice conversations)
 - Powers the Chat interface
 - Powers image analysis features
+- Get your key at: https://platform.openai.com/api-keys
 
-Get your key at: https://platform.openai.com/api-keys
+**Local/OpenAI-Compatible:**
+- Use local models with Ollama, LM Studio, vLLM, etc.
+- Point to any OpenAI-compatible API endpoint
+- See [LLM Providers Guide](../ops/llm-providers.md) for setup examples
 
 **Meshy (Optional):**
 - Enables 3D model generation from images
 - Used by the "3D Model" and "Capture" features
-
-Get your key at: https://www.meshy.ai/api
+- Get your key at: https://www.meshy.ai/api
 
 ## Troubleshooting
 
-### "Setup Required" still showing after adding keys
+### "Setup Required" still showing after configuring LLM
 
 1. Hard-refresh the page (Ctrl+Shift+R)
-2. Check `/api/health/status` directly to verify key presence
-3. Ensure the key was saved successfully (look for green confirmation)
+2. Check `/api/health/status` directly to verify LLM provider status
+3. Ensure the configuration was saved successfully (look for green confirmation)
 
 ### Certificate still not trusted after installation
 
@@ -100,9 +105,10 @@ Get your key at: https://www.meshy.ai/api
 
 ### Voice Assistant shows error
 
-1. Verify OpenAI key is configured (check `/setup` or `/settings`)
+1. Verify LLM provider is configured (check `/setup` or `/settings`)
 2. Ensure HTTPS is trusted (mic/camera requires secure context)
 3. Check browser console for specific error messages
+4. Note: Realtime voice requires OpenAI Cloud provider
 
 ## Post-Setup
 
@@ -128,3 +134,4 @@ This rebuilds both web and server containers with matching SHAs.
 - [Owner PIN Authentication](../security/owner-pin.md) - PIN reset and security details
 - [Trusted LAN HTTPS](../networking/trusted-lan-https.md) - Detailed certificate trust guide
 - [DNS Setup](../ops/dns-setup.md) - Hostname configuration
+- [LLM Providers](../ops/llm-providers.md) - OpenAI and local LLM configuration
