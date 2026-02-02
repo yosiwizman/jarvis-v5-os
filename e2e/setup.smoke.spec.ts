@@ -19,12 +19,14 @@ test.describe('Setup Page', () => {
   test('/setup page loads without errors', async ({ page }) => {
     const pageErrors: Error[] = [];
     page.on('pageerror', (err) => {
-      // Filter out hydration warnings
-      const msg = err.message || '';
+      // Filter out hydration warnings (case-insensitive)
+      const msg = (err.message || '').toLowerCase();
       const isHydrationWarning = 
-        msg.includes('Hydration') ||
-        msg.includes('Text content does not match') ||
-        msg.includes('server-rendered HTML');
+        msg.includes('hydrat') ||
+        msg.includes('text content does not match') ||
+        msg.includes('server-rendered html') ||
+        msg.includes('suspense boundary') ||
+        msg.includes('client rendering');
       if (!isHydrationWarning) {
         pageErrors.push(err);
       }
@@ -48,10 +50,10 @@ test.describe('Setup Page', () => {
     await page.goto('/setup', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
-    // Should show the three setup steps
-    await expect(page.getByText('Trust HTTPS Certificate')).toBeVisible();
-    await expect(page.getByText('Configure OpenAI API Key')).toBeVisible();
-    await expect(page.getByText('Configure Meshy API Key')).toBeVisible();
+    // Should show the three setup steps (use first() since text appears in both step indicators and detailed sections)
+    await expect(page.getByText('Trust HTTPS Certificate').first()).toBeVisible();
+    await expect(page.getByText('Configure OpenAI API Key').first()).toBeVisible();
+    await expect(page.getByText('Configure Meshy API Key').first()).toBeVisible();
   });
 
   test('/setup displays system status from API', async ({ page, request }) => {
