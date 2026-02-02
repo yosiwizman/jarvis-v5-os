@@ -20,7 +20,7 @@
 # ============================================
 # HTTPS - Primary secure access (camera works here)
 # ============================================
-akior.local, jarvis.local, aifactory-lan {
+akior.home.arpa, akior.local, jarvis.local, aifactory-lan {
     # Use Caddy's internal CA for automatic cert generation
     tls internal
 

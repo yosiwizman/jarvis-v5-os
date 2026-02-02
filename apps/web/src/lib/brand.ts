@@ -3,11 +3,11 @@
  * Use these constants throughout the app for consistent branding
  */
 
-/** Primary hostname for LAN access (single source of truth) */
-export const PRIMARY_HOSTNAME = 'akior.local';
+/** Primary hostname for LAN access (RFC 8375 recommended) */
+export const PRIMARY_HOSTNAME = 'akior.home.arpa';
 
-/** Legacy hostname alias */
-export const LEGACY_HOSTNAME = 'jarvis.local';
+/** Legacy hostname aliases */
+export const SECONDARY_HOSTNAMES = ['akior.local', 'jarvis.local', 'localhost'];
 
 export const BRAND = {
   productName: 'AKIOR',
@@ -19,7 +19,7 @@ export const BRAND = {
 };
 
 /** Branding version for cache-busting (increment when branding assets change) */
-export const BRAND_VERSION = '2026-02-01-hotfix2';
+export const BRAND_VERSION = '2026-02-02-canonical-host';
 
 export const productName = BRAND.productName;
 export const legacyName = BRAND.legacyName;
