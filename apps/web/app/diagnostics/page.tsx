@@ -1,3 +1,6 @@
+'use client';
+// AKIOR diagnostics page (client component)
+
 import { useEffect, useState } from 'react';
 import { BRAND_VERSION, PRIMARY_HOSTNAME, SECONDARY_HOSTNAMES } from '@/lib/brand';
 
