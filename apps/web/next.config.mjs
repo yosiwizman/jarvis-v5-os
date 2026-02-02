@@ -1,15 +1,20 @@
 import { execSync } from 'child_process';
 
-// Get git SHA at build time (with timeout to prevent CI hang)
-let gitSha = 'unknown';
-try {
-  gitSha = execSync('git rev-parse --short HEAD', {
-    timeout: 5000,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore']
-  }).trim();
-} catch {
-  // Git not available, not a git repo, or timed out
+// Get git SHA at build time
+// Priority: env var (from Docker build arg) > git command > 'unknown'
+let gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
+
+// If no env var, try git command (for local dev)
+if (gitSha === 'unknown') {
+  try {
+    gitSha = execSync('git rev-parse --short HEAD', {
+      timeout: 5000,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+  } catch {
+    // Git not available, not a git repo, or timed out
+  }
 }
 
 // Backend server URL (Fastify runs on port 1234 with HTTPS)
