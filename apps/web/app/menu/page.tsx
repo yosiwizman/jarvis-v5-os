@@ -57,10 +57,10 @@ export default function MenuPage() {
     if (setupIncomplete) {
       return [
         {
-          href: '/settings#provider-keys',
-          title: 'Setup',
-          desc: 'Configure API keys and complete onboarding.',
-          badge: 'Not configured'
+          href: '/setup',
+          title: 'Setup Wizard',
+          desc: 'Configure API keys, trust HTTPS, and complete onboarding.',
+          badge: 'Action required'
         },
         ...baseCards
       ];

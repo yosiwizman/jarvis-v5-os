@@ -17,8 +17,8 @@
 .PARAMETER Verify
     Only run verification, don't rebuild. Default: false
     
-.PARAMETER Host
-    Target hostname for verification. Default: https://akior.local
+.PARAMETER TargetUrl
+    Target URL for verification. Default: https://akior.local
     
 .EXAMPLE
     .\ops\deploy.ps1
@@ -37,7 +37,7 @@ param(
     [switch]$Rebuild = $true,
     [switch]$NoCache = $false,
     [switch]$Verify = $false,
-    [string]$Host = "https://akior.local"
+    [string]$TargetUrl = "https://akior.local"
 )
 
 $ErrorActionPreference = "Stop"
@@ -228,7 +228,7 @@ Write-Host ""
 
 if ($Verify) {
     Write-Status "Verification-only mode"
-    $result = Invoke-Verification -ExpectedSha $gitSha -TargetHost $Host
+    $result = Invoke-Verification -ExpectedSha $gitSha -TargetHost $TargetUrl
     if ($result) {
         Write-Host ""
         Write-Success "Deployment verified successfully!"
@@ -248,7 +248,7 @@ if ($Rebuild) {
 Invoke-Deploy
 Write-Host ""
 
-$result = Invoke-Verification -ExpectedSha $gitSha -TargetHost $Host
+$result = Invoke-Verification -ExpectedSha $gitSha -TargetHost $TargetUrl
 
 Write-Host ""
 if ($result) {
