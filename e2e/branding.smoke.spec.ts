@@ -1,6 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('AKIOR Branding Consistency', () => {
+  test('health build exposes git_sha and matches client env if set', async ({ page }) => {
+    const res = await page.request.get('/api/health/build');
+    expect(res.ok()).toBeTruthy();
+    const data = await res.json();
+    expect(data.git_sha).toBeTruthy();
+    const clientSha = process.env.NEXT_PUBLIC_GIT_SHA;
+    if (clientSha) {
+      expect(data.git_sha).toBe(clientSha);
+    }
+  });
   test('login page shows AKIOR branding without J.A.R.V.I.S.', async ({ page }) => {
     const pageErrors: Error[] = [];
     page.on('pageerror', (err) => pageErrors.push(err));
