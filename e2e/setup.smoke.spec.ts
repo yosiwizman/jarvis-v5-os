@@ -52,7 +52,7 @@ test.describe('Setup Page', () => {
 
     // Should show the three setup steps (use first() since text appears in both step indicators and detailed sections)
     await expect(page.getByText('Trust HTTPS Certificate').first()).toBeVisible();
-    await expect(page.getByText('Configure OpenAI API Key').first()).toBeVisible();
+    await expect(page.getByText('Configure LLM Provider').first()).toBeVisible();
     await expect(page.getByText('Configure Meshy API Key').first()).toBeVisible();
   });
 
@@ -99,16 +99,16 @@ test.describe('System Status Semantics', () => {
     }
   });
 
-  test('/api/health/status returns setup_required when OpenAI key missing', async ({ request }) => {
+  test('/api/health/status returns setup_required when LLM not configured', async ({ request }) => {
     const response = await request.get('/api/health/status');
     expect(response.ok()).toBe(true);
 
     const data = await response.json();
     
-    // If OpenAI key is not configured, level should be setup_required (not error)
-    if (data.details?.keys?.openai === false) {
+    // If LLM provider is not configured, level should be setup_required (not error)
+    if (data.details?.llm?.configured === false) {
       expect(data.level).toBe('setup_required');
-      expect(data.reasons).toContain('OpenAI API key not configured');
+      expect(data.reasons.some((r: string) => r.toLowerCase().includes('llm'))).toBe(true);
     }
   });
 });

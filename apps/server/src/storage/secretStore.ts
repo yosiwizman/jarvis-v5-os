@@ -4,6 +4,7 @@ import path from 'path';
 export type Secrets = {
   meshy?: string;
   openai?: string;
+  llmApiKey?: string; // API key for local/compatible LLM providers
 };
 
 const dir = path.resolve(process.cwd(), 'data');

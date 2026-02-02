@@ -11,10 +11,19 @@ type KeyName = 'openai' | 'meshy';
 type KeyMetaState = Record<KeyName, { present: boolean }>;
 type ValidationState = Record<KeyName, { validating: boolean; result?: { ok: boolean; message?: string; error?: string } }>;
 
+type LLMProvider = 'openai-cloud' | 'local-compatible';
+type LLMConfig = {
+  provider: LLMProvider;
+  baseUrl?: string;
+  baseUrlHost?: string;
+  keyConfigured: boolean;
+  updatedAt: string;
+};
+
 const SETUP_STEPS = [
   { id: 'pin', title: 'Set Owner PIN', description: 'Secure admin access to settings' },
   { id: 'https', title: 'Trust HTTPS Certificate', description: 'Enable secure mic/camera access' },
-  { id: 'openai', title: 'Configure OpenAI API Key', description: 'Required for voice assistant and AI features' },
+  { id: 'llm', title: 'Configure LLM Provider', description: 'Required for voice assistant and AI features' },
   { id: 'meshy', title: 'Configure Meshy API Key', description: 'Optional - enables 3D model generation' },
 ] as const;
 
@@ -93,6 +102,16 @@ export default function SetupPage() {
     meshy: undefined,
   });
   
+  // LLM Provider state
+  const [llmConfig, setLlmConfig] = useState<LLMConfig | null>(null);
+  const [llmProvider, setLlmProvider] = useState<LLMProvider>('openai-cloud');
+  const [llmBaseUrl, setLlmBaseUrl] = useState('');
+  const [llmApiKey, setLlmApiKey] = useState('');
+  const [llmSaving, setLlmSaving] = useState(false);
+  const [llmTesting, setLlmTesting] = useState(false);
+  const [llmTestResult, setLlmTestResult] = useState<{ ok: boolean; message?: string; error?: string; latencyMs?: number } | null>(null);
+  const [llmFeedback, setLlmFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  
   // PIN state
   const [pin, setPinValue] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
@@ -140,9 +159,80 @@ export default function SetupPage() {
     }
   }, []);
 
+  const refreshLLMConfig = useCallback(async () => {
+    try {
+      const response = await fetch(buildServerUrl('/admin/llm/config'), { credentials: 'include' });
+      if (response.ok) {
+        const payload = await response.json();
+        if (payload.config) {
+          setLlmConfig(payload.config as LLMConfig);
+          setLlmProvider(payload.config.provider);
+          setLlmBaseUrl(payload.config.baseUrl || '');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load LLM config', error);
+    }
+  }, []);
+
   useEffect(() => {
     refreshMeta();
-  }, [refreshMeta]);
+    refreshLLMConfig();
+  }, [refreshMeta, refreshLLMConfig]);
+
+  const handleLLMTest = async () => {
+    setLlmTesting(true);
+    setLlmTestResult(null);
+    
+    try {
+      const response = await fetch(buildServerUrl('/admin/llm/test'), {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const result = await response.json();
+      setLlmTestResult(result);
+    } catch (error) {
+      setLlmTestResult({ ok: false, error: 'Failed to test connection' });
+    } finally {
+      setLlmTesting(false);
+    }
+  };
+
+  const handleLLMSave = async () => {
+    setLlmSaving(true);
+    setLlmFeedback(null);
+    
+    try {
+      const body: any = { provider: llmProvider };
+      if (llmProvider === 'local-compatible') {
+        body.baseUrl = llmBaseUrl;
+      }
+      if (llmApiKey) {
+        body.apiKey = llmApiKey;
+      }
+      
+      const response = await fetch(buildServerUrl('/admin/llm/config'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      
+      const result = await response.json();
+      
+      if (result.ok) {
+        setLlmFeedback({ type: 'success', message: 'LLM provider configured successfully!' });
+        setLlmApiKey(''); // Clear the key input
+        await refreshLLMConfig();
+      } else {
+        setLlmFeedback({ type: 'error', message: result.error || 'Failed to save configuration' });
+      }
+    } catch (error) {
+      setLlmFeedback({ type: 'error', message: 'Failed to save configuration' });
+    } finally {
+      setLlmSaving(false);
+    }
+  };
 
   const validateKey = async (name: KeyName) => {
     const key = pendingKeys[name].trim();
@@ -214,14 +304,19 @@ export default function SetupPage() {
       if (pinConfigured) return 'current';
       return 'upcoming';
     }
-    if (stepId === 'openai') {
-      if (keysMeta?.openai?.present) return 'complete';
+    if (stepId === 'llm') {
+      // LLM is configured if the key is set (for openai-cloud) or baseUrl is set (for local)
+      const isConfigured = llmConfig?.keyConfigured || 
+        (llmConfig?.provider === 'local-compatible' && llmConfig?.baseUrl);
+      if (isConfigured) return 'complete';
       if (typeof window !== 'undefined' && window.isSecureContext) return 'current';
       return 'upcoming';
     }
     if (stepId === 'meshy') {
       if (keysMeta?.meshy?.present) return 'complete';
-      if (keysMeta?.openai?.present) return 'current';
+      const llmConfigured = llmConfig?.keyConfigured || 
+        (llmConfig?.provider === 'local-compatible' && llmConfig?.baseUrl);
+      if (llmConfigured) return 'current';
       return 'upcoming';
     }
     return 'upcoming';
@@ -396,72 +491,166 @@ export default function SetupPage() {
         </div>
       </section>
 
-      {/* Step 3: OpenAI Key */}
+      {/* Step 3: LLM Provider */}
       <section className="card p-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold">Step 3: OpenAI API Key</div>
+            <div className="text-lg font-semibold">Step 3: LLM Provider</div>
             <p className="text-white/60 text-sm">Required for voice assistant and AI features</p>
           </div>
-          {keysMeta?.openai?.present && (
+          {llmConfig?.keyConfigured && (
             <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full">
               Configured ✓
             </span>
           )}
         </header>
 
-        <div className="space-y-3">
-          <input
-            type="password"
-            className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
-            value={pendingKeys.openai}
-            onChange={(e) => setPendingKeys(prev => ({ ...prev, openai: e.target.value }))}
-            placeholder="sk-..."
-            disabled={savingKeys.openai}
-          />
-          
-          {/* Validation result */}
-          {validation.openai.result && (
+        <div className="space-y-4">
+          {/* Provider selector */}
+          <div>
+            <label className="block text-sm text-white/60 mb-2">Provider Type</label>
+            <div className="flex gap-3">
+              <button
+                className={`flex-1 px-4 py-3 rounded-xl border transition-colors ${
+                  llmProvider === 'openai-cloud'
+                    ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
+                onClick={() => setLlmProvider('openai-cloud')}
+                disabled={llmSaving}
+              >
+                <div className="font-medium">OpenAI Cloud</div>
+                <div className="text-xs text-white/40 mt-1">Use OpenAI's API directly</div>
+              </button>
+              <button
+                className={`flex-1 px-4 py-3 rounded-xl border transition-colors ${
+                  llmProvider === 'local-compatible'
+                    ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
+                onClick={() => setLlmProvider('local-compatible')}
+                disabled={llmSaving}
+              >
+                <div className="font-medium">Local / Compatible</div>
+                <div className="text-xs text-white/40 mt-1">OpenAI-compatible endpoint</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Provider-specific inputs */}
+          {llmProvider === 'openai-cloud' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-white/60 mb-2">API Key</label>
+                <input
+                  type="password"
+                  className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
+                  value={llmApiKey}
+                  onChange={(e) => setLlmApiKey(e.target.value)}
+                  placeholder="sk-..."
+                  disabled={llmSaving}
+                />
+              </div>
+              <p className="text-xs text-white/40">
+                Get your API key from{' '}
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                  platform.openai.com/api-keys
+                </a>
+              </p>
+            </div>
+          )}
+
+          {llmProvider === 'local-compatible' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-white/60 mb-2">Base URL</label>
+                <input
+                  type="text"
+                  className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
+                  value={llmBaseUrl}
+                  onChange={(e) => setLlmBaseUrl(e.target.value)}
+                  placeholder="http://localhost:11434/v1"
+                  disabled={llmSaving}
+                />
+                <p className="text-xs text-white/40 mt-1">
+                  OpenAI-compatible endpoint (e.g., Ollama, LM Studio, vLLM)
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm text-white/60 mb-2">API Key <span className="text-white/30">(optional)</span></label>
+                <input
+                  type="password"
+                  className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3"
+                  value={llmApiKey}
+                  onChange={(e) => setLlmApiKey(e.target.value)}
+                  placeholder="Leave empty if not required"
+                  disabled={llmSaving}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Test result */}
+          {llmTestResult && (
             <div className={`text-sm px-3 py-2 rounded-lg ${
-              validation.openai.result.ok 
+              llmTestResult.ok 
                 ? 'bg-emerald-500/10 text-emerald-400' 
                 : 'bg-red-500/10 text-red-400'
             }`}>
-              {validation.openai.result.ok ? '✓ ' : '✗ '}
-              {validation.openai.result.message || validation.openai.result.error}
-            </div>
-          )}
-          
-          {/* Feedback */}
-          {feedback.openai && (
-            <div className={`text-sm ${feedback.openai.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
-              {feedback.openai.message}
+              {llmTestResult.ok ? '✓ ' : '✗ '}
+              {llmTestResult.message || llmTestResult.error}
             </div>
           )}
 
+          {/* Feedback */}
+          {llmFeedback && (
+            <div className={`text-sm px-3 py-2 rounded-lg ${
+              llmFeedback.type === 'success'
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : 'bg-red-500/10 text-red-400'
+            }`}>
+              {llmFeedback.type === 'success' ? '✓ ' : '✗ '}
+              {llmFeedback.message}
+            </div>
+          )}
+
+          {/* Action buttons */}
           <div className="flex gap-2">
             <button 
               className="btn btn-secondary"
-              onClick={() => validateKey('openai')}
-              disabled={!pendingKeys.openai.trim() || validation.openai.validating || savingKeys.openai}
+              onClick={handleLLMTest}
+              disabled={
+                llmTesting || llmSaving ||
+                (llmProvider === 'openai-cloud' && !llmApiKey.trim()) ||
+                (llmProvider === 'local-compatible' && !llmBaseUrl.trim())
+              }
             >
-              {validation.openai.validating ? 'Validating...' : 'Test Key'}
+              {llmTesting ? 'Testing...' : 'Test Connection'}
             </button>
             <button 
               className="btn"
-              onClick={() => saveKey('openai')}
-              disabled={!pendingKeys.openai.trim() || savingKeys.openai}
+              onClick={handleLLMSave}
+              disabled={
+                llmSaving ||
+                (llmProvider === 'openai-cloud' && !llmApiKey.trim()) ||
+                (llmProvider === 'local-compatible' && !llmBaseUrl.trim())
+              }
             >
-              {savingKeys.openai ? 'Saving...' : keysMeta?.openai?.present ? 'Replace Key' : 'Save Key'}
+              {llmSaving ? 'Saving...' : llmConfig?.keyConfigured ? 'Update Provider' : 'Save Provider'}
             </button>
           </div>
 
-          <p className="text-xs text-white/40">
-            Get your API key from{' '}
-            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
-              platform.openai.com/api-keys
-            </a>
-          </p>
+          {/* Current config info */}
+          {llmConfig?.keyConfigured && (
+            <div className="text-xs text-white/40 pt-2 border-t border-white/5">
+              Currently using: <span className="text-white/60">
+                {llmConfig.provider === 'openai-cloud' ? 'OpenAI Cloud' : 'Local/Compatible'}
+              </span>
+              {llmConfig.baseUrlHost && (
+                <> at <span className="text-white/60">{llmConfig.baseUrlHost}</span></>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
