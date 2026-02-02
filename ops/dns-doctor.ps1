@@ -64,12 +64,19 @@ function Get-HostsPath {
 }
 
 function Remove-ManagedBlock([string]$content) {
-  return ($content -replace "(?ms)^# AKIOR HOST OVERRIDES \(managed\).*?# END AKIOR HOST OVERRIDES\\s*", "")
+  return ($content -replace "(?ms)^\s*# AKIOR HOST OVERRIDES \(managed\).*?# END AKIOR HOST OVERRIDES\s*", "")
+}
+function Strip-StaleHosts([string]$content) {
+  $pattern = '\\b(akior\\.local|jarvis\\.local|akior\\.home\\.arpa)\\b'
+  $lines = $content -split "`r`n"
+  $filtered = $lines | Where-Object { $_ -notmatch $pattern }
+  return ($filtered -join "`r`n")
 }
 
 function Write-ManagedBlock([string]$path, [string]$ip) {
   $content = Get-Content -Raw -Path $path -ErrorAction SilentlyContinue
   $content = Remove-ManagedBlock $content
+  $content = Strip-StaleHosts $content
   $block = @(
     "# AKIOR HOST OVERRIDES (managed)",
     "$ip akior.local",
@@ -84,7 +91,7 @@ function Write-ManagedBlock([string]$path, [string]$ip) {
 
 function Remove-Block([string]$path) {
   $content = Get-Content -Raw -Path $path -ErrorAction SilentlyContinue
-  $newContent = Remove-ManagedBlock $content
+  $newContent = Strip-StaleHosts (Remove-ManagedBlock $content)
   Set-Content -Path $path -Value $newContent -Encoding ASCII
 }
 
