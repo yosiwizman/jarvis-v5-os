@@ -186,6 +186,57 @@ fastify.get('/api/health/build', async (req, reply) => {
   };
 });
 
+// System status endpoint - semantic levels for UI status indicators
+// Levels: healthy | setup_required | degraded | error
+fastify.get('/api/health/status', async (req, reply) => {
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+  reply.header('Pragma', 'no-cache');
+
+  const reasons: string[] = [];
+  let level: 'healthy' | 'setup_required' | 'degraded' | 'error' = 'healthy';
+
+  // Check if OpenAI key is configured (required for core functionality)
+  const secrets = readSecrets();
+  const hasOpenAI = Boolean(secrets.openai);
+
+  if (!hasOpenAI) {
+    level = 'setup_required';
+    reasons.push('OpenAI API key not configured');
+  }
+
+  // Check notification subsystem health
+  let notificationHealth = { ok: true, clientCount: 0 };
+  try {
+    const sseHealth = notificationScheduler.getSSEHealth();
+    // SSE is healthy if it's enabled (always true for now)
+    notificationHealth = { 
+      ok: sseHealth.enabled, 
+      clientCount: sseHealth.connected_clients 
+    };
+  } catch {
+    // Scheduler not yet initialized, treat as ok
+  }
+
+  // Build details object
+  const details = {
+    keys: {
+      openai: hasOpenAI,
+      meshy: Boolean(secrets.meshy)
+    },
+    notifications: notificationHealth,
+    uptime: process.uptime()
+  };
+
+  return {
+    ok: level === 'healthy',
+    level,
+    reasons,
+    details,
+    git_sha: process.env.GIT_SHA || 'unknown',
+    time: new Date().toISOString()
+  };
+});
+
 // Initialize storage systems
 logSystemEvent('server_starting');
 

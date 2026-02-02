@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useSystemMetrics } from '@/hooks/useSystemMetrics';
+import { useSystemStatus, getStatusDisplayText, getStatusColor } from '@/hooks/useSystemStatus';
 import { useWeather } from '@/hooks/useWeather';
 import { useNotifications } from '@/context/NotificationContext';
 import { HudNotificationDropdown } from './HudNotificationDropdown';
+import Link from 'next/link';
 
 // Map OpenWeather icon codes to simple emoji
 function getWeatherEmoji(iconCode: string): string {
@@ -27,7 +29,8 @@ export function HudWidget() {
   const [systemTime, setSystemTime] = useState(new Date());
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const { metrics, isLoading, error, isOnline } = useSystemMetrics();
+  const { metrics, isLoading } = useSystemMetrics();
+  const { status: systemStatus } = useSystemStatus();
   const { data: weather, integrationDisabled: weatherDisabled } = useWeather();
   const { unreadCount, loadHistory } = useNotifications();
 
@@ -77,9 +80,11 @@ export function HudWidget() {
     day: 'numeric'
   });
 
-  // Determine connection status
-  const connectionStatus = !isOnline ? 'OFFLINE' : error ? 'ERROR' : 'SYNCED';
-  const statusColor = !isOnline || error ? 'rgba(239, 68, 68, 0.8)' : `rgba(var(--jarvis-accent), 0.8)`; // red-500 for offline/error
+  // Determine connection status from semantic system status
+  const connectionStatus = getStatusDisplayText(systemStatus.level);
+  const statusColor = getStatusColor(systemStatus.level);
+  const isHealthy = systemStatus.level === 'healthy';
+  const needsAttention = systemStatus.level === 'setup_required' || systemStatus.level === 'degraded';
 
   // Get metrics values with fallback
   const cpuLoad = metrics?.cpuLoad ?? 0;
@@ -131,18 +136,23 @@ export function HudWidget() {
               </div>
               <div className="flex items-center gap-2">
                 {/* Connection Status */}
-                <div className="flex items-center">
+                <Link href="/diagnostics" className="flex items-center hover:opacity-80 transition-opacity" title={systemStatus.reasons.length > 0 ? systemStatus.reasons.join(', ') : 'View diagnostics'}>
                   <div 
-                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${connectionStatus === 'SYNCED' ? 'animate-pulse' : ''}`}
+                    data-testid="hud-status-indicator"
+                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isHealthy ? 'animate-pulse bg-green-500' : needsAttention ? 'bg-yellow-500' : 'bg-red-500'}`}
                     style={{ backgroundColor: statusColor }}
                   ></div>
                   <div 
+                    data-testid="hud-connection-status"
                     className="text-xs"
                     style={{ color: statusColor.replace('0.8', '0.6') }}
                   >
                     {connectionStatus}
                   </div>
-                </div>
+                  {needsAttention && (
+                    <span className="ml-1 text-[10px]" style={{ color: statusColor }}>⚠</span>
+                  )}
+                </Link>
                 
                 {/* Notifications Bell */}
                 <button
@@ -252,8 +262,8 @@ export function HudWidget() {
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span style={{ color: `rgba(var(--jarvis-accent), 0.6)` }}>STATUS</span>
-                  <span style={{ color: `rgba(var(--jarvis-accent), 0.9)` }}>
-                    {isOnline ? 'ONLINE' : 'OFFLINE'}
+                  <span style={{ color: statusColor }}>
+                    {connectionStatus}
                   </span>
                 </div>
                 <div 
@@ -263,7 +273,7 @@ export function HudWidget() {
                   <div
                     className="h-full rounded-full transition-all duration-300"
                     style={{
-                      width: isOnline ? '100%' : '0%',
+                      width: isHealthy ? '100%' : needsAttention ? '50%' : '0%',
                       backgroundColor: `rgba(var(--jarvis-glow), 0.5)`
                     }}
                   ></div>

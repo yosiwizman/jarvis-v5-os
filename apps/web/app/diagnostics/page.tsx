@@ -12,6 +12,21 @@ type BuildInfo = {
   brand_version?: string;
 };
 
+type SecureContextInfo = {
+  isSecureContext: boolean;
+  protocol: string;
+  mediaDevicesAvailable: boolean;
+};
+
+type SystemStatus = {
+  ok: boolean;
+  level: 'healthy' | 'setup_required' | 'needs_trust' | 'degraded' | 'error';
+  reasons: string[];
+  details: Record<string, unknown>;
+  git_sha?: string;
+  time?: string;
+};
+
 export default function DiagnosticsPage() {
   const [webBuild, setWebBuild] = useState<BuildInfo | null>(null);
   const [serverBuild, setServerBuild] = useState<BuildInfo | null>(null);
@@ -19,11 +34,21 @@ export default function DiagnosticsPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [host, setHost] = useState<string>('');
   const [mounted, setMounted] = useState(false);
+  const [secureContext, setSecureContext] = useState<SecureContextInfo | null>(null);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   useEffect(() => {
     // Set mounted flag and capture client-only values
     setMounted(true);
     setHost(window.location.host);
+    
+    // Check secure context status
+    setSecureContext({
+      isSecureContext: window.isSecureContext,
+      protocol: window.location.protocol,
+      mediaDevicesAvailable: typeof navigator !== 'undefined' && 'mediaDevices' in navigator,
+    });
     
     // Fetch web build info (directly from web container)
     fetch('/web-build')
@@ -36,6 +61,12 @@ export default function DiagnosticsPage() {
       .then((r) => r.json())
       .then((data) => setServerBuild(data))
       .catch((err) => setServerError(String(err)));
+
+    // Fetch system status
+    fetch('/api/health/status')
+      .then((r) => r.json())
+      .then((data) => setSystemStatus(data))
+      .catch((err) => setStatusError(String(err)));
   }, []);
 
   const webSha = webBuild?.git_sha || 'loading...';
@@ -52,6 +83,52 @@ export default function DiagnosticsPage() {
   return (
     <div className="space-y-4" data-testid="diagnostics-page">
       <h1 className="text-2xl font-bold">AKIOR Diagnostics</h1>
+
+      {/* System Status Card */}
+      {systemStatus && (
+        <div 
+          className={`card p-4 space-y-2 ${
+            systemStatus.level === 'healthy' 
+              ? 'bg-green-500/10 border border-green-500/40'
+              : systemStatus.level === 'error'
+                ? 'bg-red-500/10 border border-red-500/40'
+                : 'bg-amber-500/10 border border-amber-500/40'
+          }`}
+          data-testid="system-status"
+        >
+          <div className="font-semibold border-b border-white/20 pb-2 mb-2 flex items-center gap-2">
+            {systemStatus.level === 'healthy' ? (
+              <span className="text-green-300">✓ System Healthy</span>
+            ) : systemStatus.level === 'error' ? (
+              <span className="text-red-300">✗ System Error</span>
+            ) : (
+              <span className="text-amber-300">⚠ {systemStatus.level === 'setup_required' ? 'Setup Required' : systemStatus.level === 'degraded' ? 'Degraded' : 'Needs Trust'}</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div className="text-white/60">Status level:</div>
+            <div className="font-mono">{systemStatus.level}</div>
+            <div className="text-white/60">Server SHA:</div>
+            <div className="font-mono">{systemStatus.git_sha || 'unknown'}</div>
+          </div>
+          {systemStatus.reasons.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-white/10">
+              <div className="text-white/60 text-sm mb-1">Reasons:</div>
+              <ul className="text-sm list-disc list-inside text-amber-200">
+                {systemStatus.reasons.map((reason, i) => (
+                  <li key={i}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+      {statusError && (
+        <div className="card p-4 bg-red-500/10 border border-red-500/40 text-red-300" data-testid="status-error">
+          <p className="font-semibold">✗ Status fetch failed</p>
+          <p className="text-sm">{statusError}</p>
+        </div>
+      )}
       
       {/* Build Info Card */}
       <div className="card p-4 space-y-2">
@@ -115,6 +192,48 @@ export default function DiagnosticsPage() {
           <p className="font-semibold">⚠ Legacy Hostname</p>
           <p className="text-sm">You are using a .local hostname which may have mDNS issues.</p>
           <p className="text-sm">Prefer: <code className="bg-black/40 px-2 py-0.5 rounded">https://{PRIMARY_HOSTNAME}</code></p>
+        </div>
+      )}
+
+      {/* HTTPS Trust Status */}
+      {secureContext && (
+        <div 
+          className={`card p-4 space-y-2 ${
+            secureContext.isSecureContext 
+              ? 'bg-green-500/10 border border-green-500/40' 
+              : 'bg-amber-500/10 border border-amber-500/40'
+          }`}
+          data-testid="https-trust-status"
+        >
+          <div className="font-semibold border-b border-white/20 pb-2 mb-2 flex items-center gap-2">
+            {secureContext.isSecureContext ? (
+              <span className="text-green-300">✓ Trusted HTTPS</span>
+            ) : (
+              <span className="text-amber-300">⚠ HTTPS Not Trusted</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div className="text-white/60">Secure context:</div>
+            <div className={secureContext.isSecureContext ? 'text-green-300' : 'text-amber-300'}>
+              {secureContext.isSecureContext ? 'Yes' : 'No'}
+            </div>
+            <div className="text-white/60">Protocol:</div>
+            <div className="font-mono">{secureContext.protocol}</div>
+            <div className="text-white/60">MediaDevices API:</div>
+            <div className={secureContext.mediaDevicesAvailable ? 'text-green-300' : 'text-red-300'}>
+              {secureContext.mediaDevicesAvailable ? 'Available' : 'Unavailable'}
+            </div>
+          </div>
+          {!secureContext.isSecureContext && (
+            <div className="mt-3 pt-3 border-t border-white/10 text-sm">
+              <p className="text-amber-200 mb-2">
+                Mic/camera access requires a trusted HTTPS certificate.
+              </p>
+              <p className="text-white/80">To install the Caddy CA certificate on Windows:</p>
+              <pre className="bg-black/40 p-2 rounded border border-white/10 mt-1">.\ops\trust-lan-https.ps1 -Apply</pre>
+              <p className="text-white/60 mt-2 text-xs">Then restart your browser completely.</p>
+            </div>
+          )}
         </div>
       )}
 

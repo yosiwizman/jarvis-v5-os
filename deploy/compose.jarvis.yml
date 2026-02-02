@@ -2,15 +2,14 @@
 # 
 # Runs web + server with Caddy reverse proxy for same-origin routing.
 # Access methods:
-#   - HTTPS (secure): https://akior.local/ or https://jarvis.local/ (camera works)
+#   - HTTPS (secure): https://akior.home.arpa/ or https://akior.local/ (camera works)
 #   - HTTP (fallback): http://<host-ip>/ (port 80)
 #   - Localhost: http://localhost:3000/ (for Tailscale Serve)
 #
 # HTTPS uses Caddy's internal CA (tls internal) - no manual cert generation needed.
-# To trust on Windows:
-#   1. Export CA: docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt
-#   2. Import: Run ops/windows/import-lan-rootca.ps1 as Admin
-#   3. See docs/runbook/lan-access.md for details
+# To trust on Windows (enables mic/camera access):
+#   .\ops\trust-lan-https.ps1 -Apply
+# See docs/networking/trusted-lan-https.md for details.
 #
 # Usage:
 #   docker compose -f deploy/compose.jarvis.yml up -d --build
