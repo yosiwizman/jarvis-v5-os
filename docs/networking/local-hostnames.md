@@ -36,3 +36,14 @@
 ## Operator quick helper (CLI)
 - Run `./ops/dns-doctor.ps1` to print your LAN IP and a ready-to-paste hosts entry.
 
+## Quick Fix (Windows, single machine)
+Run:
+```
+.\ops\dns-doctor.ps1 -Apply -UseLoopback
+```
+What it does:
+- Adds a managed block to `C:\Windows\System32\drivers\etc\hosts` for:
+  - akior.home.arpa, akior.local, jarvis.local → 127.0.0.1
+- Flushes DNS cache.
+- Verifies `/api/health/build` on akior.home.arpa and akior.local match the local build SHA.
+
