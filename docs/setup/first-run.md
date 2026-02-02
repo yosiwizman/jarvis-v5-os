@@ -20,7 +20,9 @@ This guide walks you through setting up AKIOR for the first time after deploymen
 
 **Important:** This PIN protects access to Setup and Settings. Store it securely - there is no automated recovery.
 
-### Step 2: Trust HTTPS Certificate (Windows)
+### Step 2: Trust HTTPS Certificate
+
+**On the primary Windows machine:**
 
 Run this command in PowerShell from the repository root:
 
@@ -33,6 +35,20 @@ This extracts the Caddy CA certificate from the container and installs it to you
 **After installation, restart your browser completely** (close all windows).
 
 **Verify:** Visit `https://akior.home.arpa/diagnostics` and check that "Trusted HTTPS" shows a green checkmark.
+
+#### Multi-Device Trust (Other Devices on LAN)
+
+To access AKIOR from other devices (phones, tablets, laptops), you need to install the CA certificate on each device:
+
+1. In the Setup Wizard (`/setup`), click "Download Certificate" in Step 2
+2. Transfer the `akior-ca.crt` file to your other device
+3. Follow the device-specific instructions in the Setup Wizard:
+   - **Windows:** Double-click → Install Certificate → Local Machine → Trusted Root
+   - **macOS:** Double-click → Keychain Access → Always Trust
+   - **iOS:** AirDrop/email → Settings → Profile Downloaded → Install → Trust
+   - **Android:** Settings → Security → Install certificate (varies by manufacturer)
+
+Alternatively, download from Settings or Diagnostics pages.
 
 ### Step 3: Configure LLM Provider
 
@@ -110,6 +126,19 @@ AKIOR uses Caddy's internal Certificate Authority (CA) to provide HTTPS on your 
 3. Check browser console for specific error messages
 4. Note: Realtime voice requires OpenAI Cloud provider
 
+### Step 5: Remote Access (Optional)
+
+If you want to access AKIOR from outside your home network (e.g., from work or while traveling), you can enable secure remote access via Tailscale:
+
+1. Install [Tailscale](https://tailscale.com/download) on the AKIOR host machine
+2. Login: `tailscale login`
+3. In the Setup Wizard, Step 3 (Remote Access), click "Enable Remote Access"
+4. Access AKIOR from any device on your Tailscale network using your machine's Tailscale hostname
+
+**Security:** This uses Tailscale's WireGuard VPN - no ports are opened on your router.
+
+See [Remote Access Guide](../ops/remote-access.md) for details.
+
 ## Post-Setup
 
 Once setup is complete:
@@ -135,3 +164,4 @@ This rebuilds both web and server containers with matching SHAs.
 - [Trusted LAN HTTPS](../networking/trusted-lan-https.md) - Detailed certificate trust guide
 - [DNS Setup](../ops/dns-setup.md) - Hostname configuration
 - [LLM Providers](../ops/llm-providers.md) - OpenAI and local LLM configuration
+- [Remote Access](../ops/remote-access.md) - Tailscale Serve for secure remote access

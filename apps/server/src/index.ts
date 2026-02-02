@@ -16,6 +16,8 @@ import { register3DPrintRoutes } from './routes/3dprint.routes.js';
 import { registerSmartHomeRoutes } from './routes/smarthome.routes.js';
 import { registerLockdownRoutes } from './routes/lockdown.routes.js';
 import { registerLLMRoutes } from './routes/llm.routes.js';
+import { registerHttpsRoutes } from './routes/https.routes.js';
+import { registerRemoteAccessRoutes } from './routes/remote-access.routes.js';
 import { initializeLockdownService } from './services/lockdownService.js';
 import { readSecrets } from './storage/secretStore.js';
 import { isPinConfigured } from './auth/index.js';
@@ -2182,6 +2184,8 @@ async function persistModelOutputs(
 registerKeyRoutes(fastify, io);
 registerAuthRoutes(fastify);
 registerLLMRoutes(fastify);
+registerHttpsRoutes(fastify);
+registerRemoteAccessRoutes(fastify);
 register3DPrintRoutes(fastify);
 registerSmartHomeRoutes(fastify);
 registerLockdownRoutes(fastify);

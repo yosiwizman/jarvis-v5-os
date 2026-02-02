@@ -49,6 +49,15 @@ export default function DiagnosticsPage() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
 
+  // CA Status state
+  type CaStatus = {
+    caAvailable: boolean;
+    caFingerprint: string | null;
+    httpsMode: string;
+  };
+  const [caStatus, setCaStatus] = useState<CaStatus | null>(null);
+  const [downloadingCert, setDownloadingCert] = useState(false);
+
   // Render function to avoid type issues
   const renderStatusError = (): React.ReactNode => {
     if (!statusError) return null;
@@ -89,6 +98,12 @@ export default function DiagnosticsPage() {
       .then((r) => r.json())
       .then((data) => setSystemStatus(data))
       .catch((err) => setStatusError(String(err)));
+
+    // Fetch CA status
+    fetch('/api/admin/https/status')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => data && setCaStatus(data))
+      .catch(() => {});
   }, []);
 
   const webSha = webBuild?.git_sha || 'loading...';
@@ -327,6 +342,72 @@ export default function DiagnosticsPage() {
               <p className="text-white/80">To install the Caddy CA certificate on Windows:</p>
               <pre className="bg-black/40 p-2 rounded border border-white/10 mt-1">.\ops\trust-lan-https.ps1 -Apply</pre>
               <p className="text-white/60 mt-2 text-xs">Then restart your browser completely.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CA Certificate Status */}
+      {caStatus && (
+        <div 
+          className={`card p-4 space-y-2 ${
+            caStatus.caAvailable 
+              ? 'bg-green-500/10 border border-green-500/40' 
+              : 'bg-amber-500/10 border border-amber-500/40'
+          }`}
+          data-testid="ca-status"
+        >
+          <div className="font-semibold border-b border-white/20 pb-2 mb-2 flex items-center gap-2">
+            {caStatus.caAvailable ? (
+              <span className="text-green-300">✓ CA Certificate Available</span>
+            ) : (
+              <span className="text-amber-300">⚠ CA Certificate Not Found</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div className="text-white/60">HTTPS mode:</div>
+            <div className="font-mono">{caStatus.httpsMode}</div>
+            {caStatus.caFingerprint && (
+              <>
+                <div className="text-white/60">CA fingerprint:</div>
+                <div className="font-mono text-xs break-all text-cyan-400" data-testid="diag-ca-fingerprint">
+                  {caStatus.caFingerprint}
+                </div>
+              </>
+            )}
+          </div>
+          {caStatus.caAvailable && (
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <button
+                type="button"
+                className="btn btn-secondary text-sm flex items-center gap-2"
+                disabled={downloadingCert}
+                data-testid="diag-download-cert-btn"
+                onClick={async () => {
+                  setDownloadingCert(true);
+                  try {
+                    const res = await fetch('/api/admin/https/ca');
+                    if (!res.ok) throw new Error('Failed to download');
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'akior-ca.crt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  } finally {
+                    setDownloadingCert(false);
+                  }
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                {downloadingCert ? 'Downloading...' : 'Download CA Certificate'}
+              </button>
+              <p className="text-xs text-white/50 mt-2">
+                Install this certificate on other devices to trust AKIOR's HTTPS on your LAN.
+              </p>
             </div>
           )}
         </div>

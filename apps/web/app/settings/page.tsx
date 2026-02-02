@@ -61,8 +61,36 @@ export default function SettingsPage() {
   // Smart Home integration test state
   const [smarthomeTestResults, setSmarthomeTestResults] = useState<Record<string, { type: 'success' | 'error'; message: string } | undefined>>({});
 
+  // HTTPS Trust & Remote Access state
+  interface HttpsStatus {
+    caAvailable: boolean;
+    caFingerprint: string | null;
+    httpsMode: string;
+  }
+  interface RemoteAccessStatus {
+    enabled: boolean;
+    mode: 'disabled' | 'tailscale';
+    tailscaleStatus?: { running: boolean; serveActive: boolean; hostname: string | null };
+    servePort?: number;
+  }
+  const [httpsStatus, setHttpsStatus] = useState<HttpsStatus | null>(null);
+  const [remoteStatus, setRemoteStatus] = useState<RemoteAccessStatus | null>(null);
+  const [downloadingCert, setDownloadingCert] = useState(false);
+
   useEffect(() => {
     setSettings(readSettings());
+  }, []);
+
+  // Fetch HTTPS and Remote Access status on mount
+  useEffect(() => {
+    fetch(buildServerUrl('/api/admin/https/status'))
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setHttpsStatus(data))
+      .catch(() => {});
+    fetch(buildServerUrl('/api/admin/remote-access/status'))
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setRemoteStatus(data))
+      .catch(() => {});
   }, []);
   
   // Check Bambu Labs login status on mount
@@ -570,6 +598,138 @@ export default function SettingsPage() {
           Revisit the Setup Wizard to change your LLM provider configuration, update API keys, or re-verify HTTPS certificates.
           Owner PIN authentication is required.
         </p>
+      </section>
+
+      {/* HTTPS Trust Card */}
+      <section className="card p-6 space-y-4" data-testid="https-trust-card">
+        <header>
+          <div className="text-lg font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            HTTPS Trust
+          </div>
+          <div className="text-white/60 text-sm">Manage HTTPS certificate trust for LAN devices</div>
+        </header>
+
+        {httpsStatus ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                httpsStatus.caAvailable 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+              }`}>
+                {httpsStatus.caAvailable ? '✓ CA Available' : '⚠ CA Not Found'}
+              </span>
+              <span className="text-white/50 text-xs">Mode: {httpsStatus.httpsMode}</span>
+            </div>
+
+            {httpsStatus.caFingerprint && (
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-xs text-white/50 mb-1">CA Fingerprint (SHA-256)</div>
+                <code className="text-xs text-cyan-400 font-mono break-all" data-testid="ca-fingerprint">
+                  {httpsStatus.caFingerprint}
+                </code>
+              </div>
+            )}
+
+            {httpsStatus.caAvailable && (
+              <button
+                type="button"
+                className="btn btn-secondary text-sm flex items-center gap-2"
+                disabled={downloadingCert}
+                data-testid="settings-download-cert-btn"
+                onClick={async () => {
+                  setDownloadingCert(true);
+                  try {
+                    const res = await fetch(buildServerUrl('/api/admin/https/ca'));
+                    if (!res.ok) throw new Error('Failed to download');
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'akior-ca.crt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  } finally {
+                    setDownloadingCert(false);
+                  }
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                {downloadingCert ? 'Downloading...' : 'Download CA Certificate'}
+              </button>
+            )}
+
+            <p className="text-xs text-white/40">
+              Install this certificate on other devices (phones, tablets, laptops) to trust AKIOR's HTTPS on your LAN.
+              See the <a href="/setup" className="text-cyan-400 underline">Setup Wizard</a> for device-specific instructions.
+            </p>
+          </div>
+        ) : (
+          <div className="text-white/50 text-sm">Loading HTTPS status...</div>
+        )}
+      </section>
+
+      {/* Remote Access Card */}
+      <section className="card p-6 space-y-4" data-testid="remote-access-card">
+        <header>
+          <div className="text-lg font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            Remote Access
+          </div>
+          <div className="text-white/60 text-sm">Access AKIOR securely from outside your home network</div>
+        </header>
+
+        {remoteStatus ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                remoteStatus.enabled 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                  : 'bg-white/10 text-white/50 border border-white/20'
+              }`}>
+                {remoteStatus.enabled ? '✓ Enabled' : '○ Disabled'}
+              </span>
+              <span className="text-white/50 text-xs capitalize">Mode: {remoteStatus.mode}</span>
+            </div>
+
+            {remoteStatus.enabled && remoteStatus.tailscaleStatus && (
+              <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={remoteStatus.tailscaleStatus.running ? 'text-emerald-400' : 'text-amber-400'}>
+                    {remoteStatus.tailscaleStatus.running ? '● Tailscale running' : '○ Tailscale stopped'}
+                  </span>
+                </div>
+                {remoteStatus.tailscaleStatus.hostname && (
+                  <div className="text-xs">
+                    <span className="text-white/50">Hostname: </span>
+                    <code className="text-purple-400" data-testid="tailscale-hostname">
+                      {remoteStatus.tailscaleStatus.hostname}
+                    </code>
+                  </div>
+                )}
+                {remoteStatus.tailscaleStatus.serveActive && (
+                  <div className="text-xs text-emerald-400">
+                    ✓ Tailscale Serve active on port {remoteStatus.servePort || 3000}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p className="text-xs text-white/40">
+              Remote access uses <a href="https://tailscale.com" target="_blank" rel="noopener noreferrer" className="text-purple-400 underline">Tailscale</a> to securely connect from anywhere.
+              Configure in the <a href="/setup" className="text-cyan-400 underline">Setup Wizard</a>.
+            </p>
+          </div>
+        ) : (
+          <div className="text-white/50 text-sm">Loading remote access status...</div>
+        )}
       </section>
 
       {/* Appearance / Theme Section */}
