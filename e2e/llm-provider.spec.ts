@@ -27,14 +27,17 @@ test.describe('Settings → Setup Wizard Link', () => {
 
   test('Settings → Setup link navigates correctly', async ({ page }) => {
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000); // Wait longer for hydration in CI
+
+    // Wait for the Setup Wizard link to be visible
+    const setupLink = page.locator('[data-testid="setup-wizard-link"]');
+    await expect(setupLink).toBeVisible({ timeout: 10000 });
 
     // Click the Setup Wizard link
-    const setupLink = page.locator('[data-testid="setup-wizard-link"]');
     await setupLink.click();
 
     // Should navigate to /setup
-    await page.waitForURL(/\/setup/, { timeout: 10000 });
+    await page.waitForURL(/\/setup/, { timeout: 15000 });
     await expect(page).toHaveURL(/\/setup/);
   });
 });
