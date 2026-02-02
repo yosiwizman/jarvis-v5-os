@@ -237,6 +237,97 @@ fastify.get('/api/health/status', async (req, reply) => {
   };
 });
 
+// API key validation endpoint - tests keys without exposing them
+fastify.post('/api/admin/keys/validate', async (req, reply) => {
+  const body = req.body as { key?: string; provider?: string };
+  
+  if (!body.key || typeof body.key !== 'string') {
+    return reply.status(400).send({ ok: false, error: 'key is required' });
+  }
+  
+  const provider = body.provider || 'openai';
+  
+  if (provider === 'openai') {
+    // Test OpenAI key with a minimal models list request
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${body.key}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        return reply.send({ 
+          ok: true, 
+          provider: 'openai',
+          message: 'API key is valid'
+        });
+      } else if (response.status === 401) {
+        return reply.send({ 
+          ok: false, 
+          provider: 'openai',
+          error: 'Invalid API key'
+        });
+      } else {
+        return reply.send({ 
+          ok: false, 
+          provider: 'openai',
+          error: `API returned status ${response.status}`
+        });
+      }
+    } catch (error) {
+      return reply.status(500).send({ 
+        ok: false, 
+        provider: 'openai',
+        error: 'Failed to validate key - network error'
+      });
+    }
+  } else if (provider === 'meshy') {
+    // Test Meshy key with a balance check
+    try {
+      const response = await fetch('https://api.meshy.ai/v1/balance', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${body.key}`
+        }
+      });
+      
+      if (response.ok) {
+        return reply.send({ 
+          ok: true, 
+          provider: 'meshy',
+          message: 'API key is valid'
+        });
+      } else if (response.status === 401 || response.status === 403) {
+        return reply.send({ 
+          ok: false, 
+          provider: 'meshy',
+          error: 'Invalid API key'
+        });
+      } else {
+        return reply.send({ 
+          ok: false, 
+          provider: 'meshy',
+          error: `API returned status ${response.status}`
+        });
+      }
+    } catch (error) {
+      return reply.status(500).send({ 
+        ok: false, 
+        provider: 'meshy',
+        error: 'Failed to validate key - network error'
+      });
+    }
+  } else {
+    return reply.status(400).send({ 
+      ok: false, 
+      error: `Unknown provider: ${provider}` 
+    });
+  }
+});
+
 // Initialize storage systems
 logSystemEvent('server_starting');
 
