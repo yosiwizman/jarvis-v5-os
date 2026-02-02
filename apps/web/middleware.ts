@@ -72,12 +72,13 @@ export async function middleware(request: NextRequest) {
   // Check auth state from backend
   const { admin, pinConfigured } = await getAuthState(request);
   
-  // First-run scenario: allow /setup access when PIN not configured
-  if (pathname.startsWith('/setup') && !pinConfigured) {
+  // First-run scenario: allow access to ALL admin routes when PIN not configured
+  // This enables initial setup before any auth is required
+  if (!pinConfigured) {
     return NextResponse.next();
   }
   
-  // If PIN configured but not admin, redirect to login
+  // PIN is configured - require admin auth
   if (!admin) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('next', pathname);

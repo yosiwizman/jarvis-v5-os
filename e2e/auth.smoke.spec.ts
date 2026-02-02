@@ -148,26 +148,36 @@ test.describe('Login Page', () => {
     await expect(page.locator('[data-testid="brand-mark"]')).toBeVisible();
   });
 
-  test('/login shows Admin Login (PIN) option', async ({ page }) => {
+  test('/login shows appropriate options based on PIN status', async ({ page, request }) => {
+    // Check PIN status
+    const meResponse = await request.get('/api/auth/me');
+    const meData = await meResponse.json();
+    
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
     
-    // Should see Admin Login button
-    await expect(page.getByText('Admin Login (PIN)')).toBeVisible();
+    if (meData.pinConfigured) {
+      // Should see Admin Login button when PIN is configured
+      await expect(page.getByText('Admin Login (PIN)')).toBeVisible();
+    } else {
+      // Should see setup prompt when PIN is not configured
+      await expect(page.getByText('Go to Setup Wizard')).toBeVisible();
+    }
   });
 
-  test('/login redirects to setup when PIN not configured', async ({ page, request }) => {
+  test('/login shows setup prompt when PIN not configured', async ({ page, request }) => {
     // Check PIN status
     const meResponse = await request.get('/api/auth/me');
     const meData = await meResponse.json();
     
     if (!meData.pinConfigured) {
       await page.goto('/login', { waitUntil: 'domcontentloaded' });
-      // Wait for potential redirect
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(2000);
       
-      // Should redirect to setup
-      expect(page.url()).toContain('/setup');
+      // Should show first run setup required message
+      await expect(page.getByText('First Run Setup Required')).toBeVisible();
+      // Should show Go to Setup Wizard button
+      await expect(page.getByText('Go to Setup Wizard')).toBeVisible();
     } else {
       test.skip();
     }

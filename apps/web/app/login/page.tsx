@@ -24,13 +24,6 @@ function LoginContent() {
     }
   }, [admin, authLoading, router, nextUrl]);
 
-  // If PIN not configured, redirect to setup
-  useEffect(() => {
-    if (!authLoading && !pinConfigured) {
-      router.replace('/setup' as any);
-    }
-  }, [pinConfigured, authLoading, router]);
-
   const handleQuickAccess = () => {
     // Quick access goes to menu without admin privileges
     router.push('/menu');
@@ -108,7 +101,45 @@ function LoginContent() {
           </div>
 
           {/* Access Options */}
-          {!showCodeInput ? (
+          {!pinConfigured ? (
+            // PIN not configured - show setup prompt
+            <div className="space-y-4">
+              <div className="text-center py-4">
+                <div className="text-amber-400/80 text-sm mb-2">
+                  <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  First Run Setup Required
+                </div>
+                <p className="text-white/50 text-xs">
+                  An Owner PIN has not been configured yet.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/setup')}
+                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-amber-600/80 to-orange-600/80 hover:from-amber-500 hover:to-orange-500 text-white font-medium transition-all duration-300 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Go to Setup Wizard</span>
+                </div>
+              </button>
+              <button
+                onClick={handleQuickAccess}
+                className="w-full py-3 px-6 rounded-xl border border-white/10 hover:border-cyan-500/50 text-white/70 hover:text-white font-medium transition-all duration-300 hover:bg-white/5"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Quick Access (Skip Setup)</span>
+                </div>
+              </button>
+            </div>
+          ) : !showCodeInput ? (
             <div className="space-y-4">
               <button
                 onClick={handleQuickAccess}
