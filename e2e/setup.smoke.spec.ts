@@ -114,25 +114,35 @@ test.describe('System Status Semantics', () => {
 });
 
 test.describe('Setup Navigation', () => {
-  test('menu shows Setup Wizard card when keys missing', async ({ page, request }) => {
-    // Check if keys are missing via API
-    const keysResponse = await request.get('/api/admin/keys/meta');
-    if (!keysResponse.ok()) {
-      test.skip();
-      return;
+  test('menu shows Setup Wizard card when setup needed', async ({ page, request }) => {
+    // Check auth and key status
+    const [meResponse, keysResponse] = await Promise.all([
+      request.get('/api/auth/me'),
+      request.get('/api/admin/keys/meta')
+    ]);
+    
+    const meData = await meResponse.json();
+    const pinConfigured = meData.pinConfigured;
+    
+    let hasOpenAI = true;
+    let hasMeshy = true;
+    if (keysResponse.ok()) {
+      const keysData = await keysResponse.json();
+      hasOpenAI = keysData.meta?.openai?.present ?? false;
+      hasMeshy = keysData.meta?.meshy?.present ?? false;
     }
-
-    const keysData = await keysResponse.json();
-    const hasOpenAI = keysData.meta?.openai?.present;
-    const hasMeshy = keysData.meta?.meshy?.present;
 
     await page.goto('/menu', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
-    // If keys are missing, Setup Wizard card should appear
-    if (!hasOpenAI || !hasMeshy) {
+    // Setup Wizard card should appear when PIN not configured OR keys are missing
+    if (!pinConfigured || !hasOpenAI || !hasMeshy) {
       await expect(page.getByText('Setup Wizard')).toBeVisible({ timeout: 5000 });
-      await expect(page.getByText('Action required')).toBeVisible({ timeout: 5000 });
+      // Badge varies based on what's missing:
+      // - "First run" when PIN not configured
+      // - "Action required" when PIN configured but keys missing
+      const badge = !pinConfigured ? 'First run' : 'Action required';
+      await expect(page.getByText(badge)).toBeVisible({ timeout: 5000 });
     }
   });
 

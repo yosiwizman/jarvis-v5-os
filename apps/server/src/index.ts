@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyCors from '@fastify/cors';
+import fastifyCookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import { Server as IOServer } from 'socket.io';
 import { readFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
@@ -10,11 +11,13 @@ import { setTimeout as delay } from 'timers/promises';
 import { z } from 'zod';
 import type { ModelJob, ModelJobOutputs } from '@shared/core';
 import { registerKeyRoutes } from './routes/keys.routes.js';
+import { registerAuthRoutes } from './routes/auth.routes.js';
 import { register3DPrintRoutes } from './routes/3dprint.routes.js';
 import { registerSmartHomeRoutes } from './routes/smarthome.routes.js';
 import { registerLockdownRoutes } from './routes/lockdown.routes.js';
 import { initializeLockdownService } from './services/lockdownService.js';
 import { readSecrets } from './storage/secretStore.js';
+import { isPinConfigured } from './auth/index.js';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { notificationScheduler } from './notificationScheduler.js';
@@ -129,8 +132,10 @@ await fastify.register(fastifyCors, {
   origin: (origin, cb) => {
     cb(null, true);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
 });
+await fastify.register(fastifyCookie);
 await fastify.register(multipart);
 
 const config = {
@@ -195,6 +200,13 @@ fastify.get('/api/health/status', async (req, reply) => {
   const reasons: string[] = [];
   let level: 'healthy' | 'setup_required' | 'degraded' | 'error' = 'healthy';
 
+  // Check if owner PIN is configured (required for first-run setup)
+  const pinConfigured = isPinConfigured();
+  if (!pinConfigured) {
+    level = 'setup_required';
+    reasons.push('Owner PIN not configured');
+  }
+
   // Check if OpenAI key is configured (required for core functionality)
   const secrets = readSecrets();
   const hasOpenAI = Boolean(secrets.openai);
@@ -219,6 +231,9 @@ fastify.get('/api/health/status', async (req, reply) => {
 
   // Build details object
   const details = {
+    auth: {
+      pinConfigured,
+    },
     keys: {
       openai: hasOpenAI,
       meshy: Boolean(secrets.meshy)
@@ -2157,6 +2172,7 @@ async function persistModelOutputs(
   return next;
 }
 registerKeyRoutes(fastify, io);
+registerAuthRoutes(fastify);
 register3DPrintRoutes(fastify);
 registerSmartHomeRoutes(fastify);
 registerLockdownRoutes(fastify);

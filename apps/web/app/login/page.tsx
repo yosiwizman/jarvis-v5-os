@@ -1,53 +1,47 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BRAND } from '@/lib/brand';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { admin, pinConfigured, loading: authLoading, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
 
-  // Check if already authenticated
+  // Get redirect destination from query params
+  const nextUrl = searchParams.get('next') || '/menu';
+
+  // If already admin, redirect to destination
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isAuthenticated = window.localStorage.getItem('akior.authenticated');
-      if (isAuthenticated === 'true') {
-        router.replace('/menu');
-      }
+    if (!authLoading && admin) {
+      router.replace(nextUrl as any);
     }
-  }, [router]);
+  }, [admin, authLoading, router, nextUrl]);
 
   const handleQuickAccess = () => {
-    // Simple local auth - set authenticated flag
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('akior.authenticated', 'true');
-      window.localStorage.setItem('akior.authTime', Date.now().toString());
-    }
+    // Quick access goes to menu without admin privileges
     router.push('/menu');
   };
 
-  const handleCodeSubmit = (e: React.FormEvent) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    // Simple code verification (can be enhanced with server-side auth)
-    setTimeout(() => {
-      if (accessCode === '1234' || accessCode === 'akior' || accessCode.length >= 4) {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('akior.authenticated', 'true');
-          window.localStorage.setItem('akior.authTime', Date.now().toString());
-        }
-        router.push('/menu');
-      } else {
-        setError('Invalid access code');
-        setIsLoading(false);
-      }
-    }, 500);
+    const result = await login(accessCode);
+    
+    if (result.ok) {
+      router.push(nextUrl as any);
+    } else {
+      setError(result.error || 'Invalid PIN');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -107,7 +101,45 @@ export default function LoginPage() {
           </div>
 
           {/* Access Options */}
-          {!showCodeInput ? (
+          {!pinConfigured ? (
+            // PIN not configured - show setup prompt
+            <div className="space-y-4">
+              <div className="text-center py-4">
+                <div className="text-amber-400/80 text-sm mb-2">
+                  <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  First Run Setup Required
+                </div>
+                <p className="text-white/50 text-xs">
+                  An Owner PIN has not been configured yet.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/setup')}
+                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-amber-600/80 to-orange-600/80 hover:from-amber-500 hover:to-orange-500 text-white font-medium transition-all duration-300 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Go to Setup Wizard</span>
+                </div>
+              </button>
+              <button
+                onClick={handleQuickAccess}
+                className="w-full py-3 px-6 rounded-xl border border-white/10 hover:border-cyan-500/50 text-white/70 hover:text-white font-medium transition-all duration-300 hover:bg-white/5"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Quick Access (Skip Setup)</span>
+                </div>
+              </button>
+            </div>
+          ) : !showCodeInput ? (
             <div className="space-y-4">
               <button
                 onClick={handleQuickAccess}
@@ -129,19 +161,25 @@ export default function LoginPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
-                  <span>Enter Access Code</span>
+                  <span>Admin Login (PIN)</span>
                 </div>
               </button>
+              <p className="text-xs text-white/40 text-center">
+                Quick Access for regular use. Admin Login to access Setup & Settings.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleCodeSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm text-white/60">Access Code</label>
+                <label className="text-sm text-white/60">Owner PIN</label>
                 <input
                   type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={8}
                   value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value)}
-                  placeholder="Enter code..."
+                  onChange={(e) => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="••••"
                   autoFocus
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all text-center font-mono text-lg tracking-widest"
                 />
@@ -189,5 +227,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white/40">Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

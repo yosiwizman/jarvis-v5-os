@@ -11,7 +11,16 @@ This guide walks you through setting up AKIOR for the first time after deploymen
 
 ## Quick Start
 
-### Step 1: Trust HTTPS Certificate (Windows)
+### Step 1: Set Owner PIN
+
+1. Navigate to `https://akior.home.arpa/setup`
+2. In Step 1, enter a 4-8 digit PIN
+3. Confirm the PIN
+4. Click "Set PIN"
+
+**Important:** This PIN protects access to Setup and Settings. Store it securely - there is no automated recovery.
+
+### Step 2: Trust HTTPS Certificate (Windows)
 
 Run this command in PowerShell from the repository root:
 
@@ -25,7 +34,7 @@ This extracts the Caddy CA certificate from the container and installs it to you
 
 **Verify:** Visit `https://akior.home.arpa/diagnostics` and check that "Trusted HTTPS" shows a green checkmark.
 
-### Step 2: Configure API Keys
+### Step 3: Configure API Keys
 
 1. Navigate to `https://akior.home.arpa/setup`
 2. Enter your OpenAI API key (starts with `sk-`)
@@ -33,7 +42,7 @@ This extracts the Caddy CA certificate from the container and installs it to you
 4. Click "Save Key" to store it
 5. Optionally add your Meshy API key for 3D features
 
-### Step 3: Verify Setup
+### Step 4: Verify Setup
 
 Visit `https://akior.home.arpa/diagnostics` and confirm:
 
@@ -116,5 +125,6 @@ This rebuilds both web and server containers with matching SHAs.
 
 ## Related Documentation
 
+- [Owner PIN Authentication](../security/owner-pin.md) - PIN reset and security details
 - [Trusted LAN HTTPS](../networking/trusted-lan-https.md) - Detailed certificate trust guide
 - [DNS Setup](../ops/dns-setup.md) - Hostname configuration

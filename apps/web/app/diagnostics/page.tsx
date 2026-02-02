@@ -2,6 +2,7 @@
 // AKIOR diagnostics page (client component)
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { BRAND_VERSION, PRIMARY_HOSTNAME, SECONDARY_HOSTNAMES } from '@/lib/brand';
 
 type BuildInfo = {
@@ -28,6 +29,7 @@ type SystemStatus = {
 };
 
 export default function DiagnosticsPage() {
+  const { admin, pinConfigured, loading: authLoading } = useAuth();
   const [webBuild, setWebBuild] = useState<BuildInfo | null>(null);
   const [serverBuild, setServerBuild] = useState<BuildInfo | null>(null);
   const [webError, setWebError] = useState<string | null>(null);
@@ -129,6 +131,33 @@ export default function DiagnosticsPage() {
           <p className="text-sm">{statusError}</p>
         </div>
       )}
+
+      {/* Admin Auth Status */}
+      <div 
+        className={`card p-4 space-y-2 ${
+          pinConfigured 
+            ? admin ? 'bg-green-500/10 border border-green-500/40' : 'bg-white/5 border border-white/10'
+            : 'bg-amber-500/10 border border-amber-500/40'
+        }`}
+        data-testid="auth-status"
+      >
+        <div className="font-semibold border-b border-white/20 pb-2 mb-2">Admin Authentication</div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          <div className="text-white/60">Owner PIN:</div>
+          <div className={pinConfigured ? 'text-green-300' : 'text-amber-300'}>
+            {authLoading ? 'Loading...' : pinConfigured ? 'Configured' : 'Not configured'}
+          </div>
+          <div className="text-white/60">Admin session:</div>
+          <div className={admin ? 'text-green-300' : 'text-white/50'}>
+            {authLoading ? 'Loading...' : admin ? 'Active' : 'Inactive'}
+          </div>
+        </div>
+        {!pinConfigured && (
+          <p className="text-xs text-amber-200 mt-2 pt-2 border-t border-white/10">
+            Complete the Setup Wizard to configure owner PIN and protect admin routes.
+          </p>
+        )}
+      </div>
       
       {/* Build Info Card */}
       <div className="card p-4 space-y-2">
