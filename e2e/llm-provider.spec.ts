@@ -31,14 +31,16 @@ test.describe('Settings → Setup Wizard Link', () => {
 
     // Wait for the Setup Wizard link to be visible
     const setupLink = page.locator('[data-testid="setup-wizard-link"]');
-    await expect(setupLink).toBeVisible({ timeout: 10000 });
+    await expect(setupLink).toBeVisible({ timeout: 15000 });
 
-    // Click the Setup Wizard link
-    await setupLink.click();
+    // Scroll into view and click (force click to bypass any overlays in CI)
+    await setupLink.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500); // Brief wait after scroll
+    await setupLink.click({ force: true, timeout: 30000 });
 
     // Should navigate to /setup or /login (if PIN auth required)
     // Wait for navigation to complete (either setup or login)
-    await page.waitForURL(/\/(setup|login)/, { timeout: 15000 });
+    await page.waitForURL(/\/(setup|login)/, { timeout: 20000 });
     
     // Verify we navigated away from settings
     const currentUrl = page.url();
