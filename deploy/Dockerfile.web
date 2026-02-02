@@ -23,6 +23,14 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
+# Build arguments - must be declared before use
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+
+# Set env vars for Next.js build (used by next.config.mjs)
+ENV NEXT_PUBLIC_GIT_SHA=${GIT_SHA}
+ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
+
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy source files
@@ -34,7 +42,7 @@ COPY package.json package-lock.json ./
 WORKDIR /app/packages/shared
 RUN npm run build
 
-# Build Next.js app
+# Build Next.js app (picks up NEXT_PUBLIC_* from env)
 WORKDIR /app/apps/web
 RUN npm run build
 

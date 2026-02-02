@@ -45,9 +45,9 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 $ComposeFile = Join-Path $RepoRoot "deploy/compose.jarvis.yml"
 
 function Write-Status($msg) { Write-Host "[$((Get-Date).ToString('HH:mm:ss'))] $msg" -ForegroundColor Cyan }
-function Write-Success($msg) { Write-Host "✓ $msg" -ForegroundColor Green }
-function Write-Fail($msg) { Write-Host "✗ $msg" -ForegroundColor Red }
-function Write-Warn($msg) { Write-Host "! $msg" -ForegroundColor Yellow }
+function Write-Success($msg) { Write-Host "[OK] $msg" -ForegroundColor Green }
+function Write-Fail($msg) { Write-Host "[FAIL] $msg" -ForegroundColor Red }
+function Write-Warn($msg) { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
 
 function Get-GitSha {
     $sha = git -C $RepoRoot rev-parse --short HEAD 2>$null
