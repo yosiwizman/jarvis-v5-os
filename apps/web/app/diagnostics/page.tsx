@@ -20,7 +20,7 @@ export default function DiagnosticsPage() {
 
   useEffect(() => {
     // Fetch web build info (directly from web container)
-    fetch('/__web_build')
+    fetch('/web-build')
       .then((r) => r.json())
       .then((data) => setWebBuild(data))
       .catch((err) => setWebError(String(err)));

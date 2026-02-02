@@ -121,9 +121,9 @@ function Invoke-Verification {
     $success = $true
     
     # Verify web build
-    Write-Status "Checking /__web_build..."
+    Write-Status "Checking /web-build..."
     try {
-        $webResponse = Invoke-RestMethod -Uri "$TargetHost/__web_build" -SkipCertificateCheck -TimeoutSec 15 -ErrorAction Stop
+        $webResponse = Invoke-RestMethod -Uri "$TargetHost/web-build" -SkipCertificateCheck -TimeoutSec 15 -ErrorAction Stop
         $webSha = $webResponse.git_sha
         if ($webSha -eq $ExpectedSha) {
             Write-Success "Web SHA matches: $webSha"
@@ -135,7 +135,7 @@ function Invoke-Verification {
         # Fallback for older PowerShell without SkipCertificateCheck
         try {
             [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
-            $webResponse = Invoke-RestMethod -Uri "$TargetHost/__web_build" -TimeoutSec 15
+            $webResponse = Invoke-RestMethod -Uri "$TargetHost/web-build" -TimeoutSec 15
             $webSha = $webResponse.git_sha
             if ($webSha -eq $ExpectedSha) {
                 Write-Success "Web SHA matches: $webSha"
@@ -144,7 +144,7 @@ function Invoke-Verification {
                 $success = $false
             }
         } catch {
-            Write-Fail "Failed to reach /__web_build: $_"
+            Write-Fail "Failed to reach /web-build: $_"
             $success = $false
         }
     }

@@ -4,15 +4,15 @@ import { test, expect } from '@playwright/test';
  * Diagnostics Page & Web/Server Drift Detection Tests
  * 
  * These tests verify:
- * - /__web_build endpoint returns web-specific build info
+ * - /web-build endpoint returns web-specific build info
  * - /api/health/build returns server build info  
  * - Web and server SHAs match (no deployment drift)
  * - /diagnostics page loads and displays both SHAs
  */
 
 test.describe('Web Build Endpoint', () => {
-  test('/__web_build returns valid build info', async ({ request }) => {
-    const response = await request.get('/__web_build');
+  test('/web-build returns valid build info', async ({ request }) => {
+    const response = await request.get('/web-build');
     
     expect(response.status()).toBe(200);
     
@@ -29,8 +29,8 @@ test.describe('Web Build Endpoint', () => {
     expect(data.git_sha).toMatch(/^(unknown|[a-f0-9]{7,8})$/i);
   });
 
-  test('/__web_build has no-cache headers', async ({ request }) => {
-    const response = await request.get('/__web_build');
+  test('/web-build has no-cache headers', async ({ request }) => {
+    const response = await request.get('/web-build');
     
     expect(response.status()).toBe(200);
     
@@ -42,7 +42,7 @@ test.describe('Web Build Endpoint', () => {
 test.describe('Web/Server SHA Consistency', () => {
   test('web and server report the same SHA', async ({ request }) => {
     const [webResponse, serverResponse] = await Promise.all([
-      request.get('/__web_build'),
+      request.get('/web-build'),
       request.get('/api/health/build'),
     ]);
     
@@ -125,7 +125,7 @@ test.describe('Diagnostics Page', () => {
   test('/diagnostics detects drift when web/server mismatch', async ({ page, request }) => {
     // First check if there's actual drift via API
     const [webResponse, serverResponse] = await Promise.all([
-      request.get('/__web_build'),
+      request.get('/web-build'),
       request.get('/api/health/build'),
     ]);
 

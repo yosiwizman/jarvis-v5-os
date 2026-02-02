@@ -29,7 +29,7 @@
 ## Self-check (non-technical)
 - Open `/diagnostics` in the AKIOR UI. It shows:
   - Current hostname
-  - Web build SHA (from `/__web_build`)
+  - Web build SHA (from `/web-build`)
   - Server build SHA (from `/api/health/build`)
   - Warning if you're on `.local` or if web/server SHAs differ (deployment drift).
 
@@ -38,13 +38,13 @@ AKIOR runs two containers: `jarvis-web` (Next.js frontend) and `jarvis-server` (
 Both must be built and deployed together to stay in sync.
 
 ### Endpoints
-- **Web build**: `/__web_build` - served by jarvis-web container
+- **Web build**: `/web-build` - served by jarvis-web container
 - **Server build**: `/api/health/build` - served by jarvis-server container
 
 ### Quick verification (curl)
 ```bash
 # Web SHA
-curl -sk https://akior.local/__web_build | jq .git_sha
+curl -sk https://akior.local/web-build | jq .git_sha
 
 # Server SHA
 curl -sk https://akior.local/api/health/build | jq .git_sha

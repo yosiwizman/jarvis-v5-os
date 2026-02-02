@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { BRAND_VERSION } from '@/lib/brand';
 
 /**
- * GET /__web_build
+ * GET /web-build
  * 
  * Returns build information for the Next.js web frontend specifically.
  * This endpoint is NOT routed through /api/* so it stays on the web container,
