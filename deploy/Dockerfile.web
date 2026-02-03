@@ -54,11 +54,18 @@ WORKDIR /app
 ARG GIT_SHA=unknown
 ARG BUILD_TIME=unknown
 
+# OCI Image Labels for deployment tracking
+LABEL org.opencontainers.image.revision=${GIT_SHA}
+LABEL org.opencontainers.image.created=${BUILD_TIME}
+LABEL org.opencontainers.image.title="AKIOR Web"
+LABEL org.opencontainers.image.description="Next.js frontend for AKIOR"
+
 ENV NODE_ENV=production
 ENV PORT=3001
 ENV HOSTNAME="0.0.0.0"
 ENV NEXT_PUBLIC_GIT_SHA=${GIT_SHA}
 ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
+ENV WEB_GIT_SHA=${GIT_SHA}
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \

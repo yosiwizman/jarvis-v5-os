@@ -47,9 +47,16 @@ WORKDIR /app
 ARG GIT_SHA=unknown
 ARG BUILD_TIME=unknown
 
+# OCI Image Labels for deployment tracking
+LABEL org.opencontainers.image.revision=${GIT_SHA}
+LABEL org.opencontainers.image.created=${BUILD_TIME}
+LABEL org.opencontainers.image.title="AKIOR Server"
+LABEL org.opencontainers.image.description="Fastify + Socket.IO backend for AKIOR"
+
 ENV NODE_ENV=production
 ENV PORT=1234
 ENV GIT_SHA=${GIT_SHA}
+ENV APP_GIT_SHA=${GIT_SHA}
 ENV BUILD_TIME=${BUILD_TIME}
 
 # Create non-root user for security
