@@ -13,7 +13,8 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const buildInfo = {
     ok: true,
-    git_sha: process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
+    // WEB_GIT_SHA is the primary runtime env var, fallback to NEXT_PUBLIC_GIT_SHA (baked at build)
+    git_sha: process.env.WEB_GIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
     build_time: process.env.NEXT_PUBLIC_BUILD_TIME || 'unknown',
     app_version: process.env.npm_package_version || '6.2.0',
     env: {

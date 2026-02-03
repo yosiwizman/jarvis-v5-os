@@ -2,7 +2,7 @@
 # 
 # Runs web + server with Caddy reverse proxy for same-origin routing.
 # Access methods:
-#   - HTTPS (secure): https://akior.home.arpa/ or https://akior.local/ (camera works)
+#   - HTTPS (secure): https://akior.local/ or https://akior.home.arpa/ (camera works)
 #   - HTTP (fallback): http://<host-ip>/ (port 80)
 #   - Localhost: http://localhost:3000/ (for Tailscale Serve)
 #
@@ -11,9 +11,17 @@
 #   .\ops\trust-lan-https.ps1 -Apply
 # See docs/networking/trusted-lan-https.md for details.
 #
-# Usage:
-#   docker compose -f deploy/compose.jarvis.yml up -d --build
+# Deployment (single-command):
+#   cd /opt/jarvis/JARVIS-V5-OS && git pull
+#   GIT_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/compose.jarvis.yml up -d --build
+#
+# Verify deployment:
+#   curl -sk https://akior.local/api/ops/drift
+#
+# Logs:
 #   docker compose -f deploy/compose.jarvis.yml logs -f
+#
+# Shutdown:
 #   docker compose -f deploy/compose.jarvis.yml down
 
 services:
@@ -55,6 +63,8 @@ services:
       - NODE_ENV=production
       - PORT=3001
       - HOSTNAME=0.0.0.0
+      # Runtime SHA for /api/health/build endpoint
+      - WEB_GIT_SHA=${GIT_SHA:-unknown}
     expose:
       - "3001"
     networks:
@@ -82,6 +92,9 @@ services:
       - NODE_ENV=production
       - PORT=1234
       - HOST=0.0.0.0
+      # Runtime SHA for /api/ops/drift endpoint
+      - GIT_SHA=${GIT_SHA:-unknown}
+      - APP_GIT_SHA=${GIT_SHA:-unknown}
     env_file:
       - jarvis.env
     expose:
@@ -91,7 +104,7 @@ services:
     networks:
       - jarvis-net
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://*********:1234/api/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:1234/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

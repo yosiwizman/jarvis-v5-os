@@ -122,7 +122,7 @@ The drift check compares:
 
 ## Fixing Drift
 
-When drift is detected, rebuild and redeploy:
+When drift is detected, rebuild and redeploy using the single-command procedure:
 
 ```bash
 cd /opt/jarvis/JARVIS-V5-OS
@@ -130,11 +130,47 @@ cd /opt/jarvis/JARVIS-V5-OS
 # Pull latest code
 git pull origin main
 
-# Rebuild and restart containers
-docker compose -f deploy/compose.jarvis.yml up -d --build
+# Single-command deploy with SHA tracking
+GIT_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/compose.jarvis.yml up -d --build
 
-# Verify drift is resolved
-curl -s https://akior.local/api/ops/drift | jq .ok
+# Verify all containers are healthy
+docker compose -f deploy/compose.jarvis.yml ps
+
+# Verify drift is resolved (both server and web SHA should match)
+curl -sk https://akior.local/api/ops/drift | jq .
+```
+
+Expected output after successful deployment:
+```json
+{
+  "ok": true,
+  "expectedSha": "abc1234",
+  "running": {
+    "server": "abc1234",
+    "web": "abc1234"
+  },
+  "drift": false,
+  "driftDetails": [],
+  "time": "2026-02-03T12:00:00.000Z"
+}
+```
+
+### Quick Smoke Test
+
+After deployment, verify these endpoints:
+
+```bash
+# 1. Drift detection (shows both SHAs)
+curl -sk https://akior.local/api/ops/drift | jq '.running'
+
+# 2. Kiosk menu loads
+curl -sk https://akior.local/menu | grep -o '<title>.*</title>'
+
+# 3. Socket.IO health (should return 400, not 404)
+curl -sk https://akior.local/socket.io/ -w '%{http_code}'
+
+# 4. Caddy is running from compose (not manual)
+docker compose -f deploy/compose.jarvis.yml ps | grep caddy
 ```
 
 ## Monitoring Integration
