@@ -1,0 +1,40 @@
+# AKIOR Deployment Drift Check Timer
+#
+# Runs drift check periodically to detect deployment mismatches.
+# NOT enabled by default - enable explicitly if you want scheduled checks.
+#
+# Installation:
+#   sudo cp akior-drift-check.service /etc/systemd/system/
+#   sudo cp akior-drift-check.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#
+# Enable (runs every 6 hours):
+#   sudo systemctl enable --now akior-drift-check.timer
+#
+# Disable:
+#   sudo systemctl disable --now akior-drift-check.timer
+#
+# Check timer status:
+#   systemctl list-timers akior-drift-check.timer
+#
+# View last results:
+#   journalctl -u akior-drift-check.service -n 20
+
+[Unit]
+Description=AKIOR Deployment Drift Check Timer
+Documentation=https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/ops/DEPLOYMENT_DRIFT.md
+
+[Timer]
+# Run every 6 hours
+OnCalendar=*-*-* 00/6:00:00
+# Run 5 minutes after boot
+OnBootSec=5min
+# Add some randomness to avoid thundering herd
+RandomizedDelaySec=5min
+# Persist timer across reboots
+Persistent=true
+# Unit to trigger
+Unit=akior-drift-check.service
+
+[Install]
+WantedBy=timers.target
