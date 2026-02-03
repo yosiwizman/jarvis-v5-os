@@ -121,12 +121,12 @@ export default function GlobalError({
           <button
             onClick={() => {
               if (typeof window !== 'undefined') {
-                window.location.href = '/';
+                window.location.href = '/menu';
               }
             }}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white/70 rounded-lg transition-colors"
+            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
           >
-            Go Home
+            Back to Menu
           </button>
           <a
             href="/api/health/build"

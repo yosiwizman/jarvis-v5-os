@@ -385,7 +385,8 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
   async function handleListFiles() {
     try {
       const response = await fetch(buildServerUrl('/files'));
-      const files = await response.json();
+      const data = await response.json();
+      const files = Array.isArray(data) ? data : (data.files ?? []);
       
       router.push('/files');
       
