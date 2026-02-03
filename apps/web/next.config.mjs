@@ -62,6 +62,11 @@ const nextConfig = {
         source: '/api/proxy-model/:path*',
         destination: '/api/proxy-model/:path*',
       },
+      // Keep health/build local - used by error screens for build info
+      {
+        source: '/api/health/build',
+        destination: '/api/health/build',
+      },
       // Forward all other /api/* to the backend server (preserving /api prefix)
       {
         source: '/api/:path*',

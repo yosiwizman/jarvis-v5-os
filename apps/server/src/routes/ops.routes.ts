@@ -143,5 +143,7 @@ export function registerOpsRoutes(app: FastifyInstance) {
     };
   });
 
+  // Note: /api/health/build is registered in index.ts (not here) to avoid duplication
+
   logger.info('Ops routes registered: /api/ops/drift, /api/ops/health');
 }

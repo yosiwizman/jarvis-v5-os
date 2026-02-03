@@ -160,6 +160,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               >
                 Reload Page
               </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/menu';
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
+              >
+                Back to Menu
+              </button>
               <a
                 href="/api/health/build"
                 target="_blank"
