@@ -116,7 +116,7 @@ function LoginContent() {
                 </p>
               </div>
               <button
-                onClick={() => router.push('/setup')}
+                onClick={() => router.push('/setup' as any)}
                 className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-amber-600/80 to-orange-600/80 hover:from-amber-500 hover:to-orange-500 text-white font-medium transition-all duration-300 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="flex items-center justify-center gap-3">
