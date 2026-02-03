@@ -978,15 +978,7 @@ export default function JarvisPage() {
   const glowIntensity = 0;
 
   return (
-    <div 
-      className="fixed inset-0 left-0 flex items-center justify-center"
-      style={{
-        backgroundImage: 'url(/assets/hex.png)',
-        backgroundSize: '45%',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
+    <div className="fixed inset-0 left-0 flex items-center justify-center bg-[#0a0a0f]">
       {/* Fullscreen Button - Top Right */}
       <button
         onClick={toggleFullscreen}
@@ -1007,7 +999,7 @@ export default function JarvisPage() {
       </button>
       
       {/* AKIOR Visualizer - Full Screen */}
-      <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square">
+      <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square overflow-hidden">
         {/* Ring 2 - Outer */}
         <div
           className="absolute inset-0 flex items-center justify-center"

@@ -1,0 +1,46 @@
+# AKIOR Deployment Drift Check Service
+#
+# This service runs the drift check script on-demand or via timer.
+# It logs results to the journal for monitoring/alerting.
+#
+# Installation:
+#   sudo cp akior-drift-check.service /etc/systemd/system/
+#   sudo cp akior-drift-check.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#
+# Enable/disable timer:
+#   sudo systemctl enable --now akior-drift-check.timer   # Enable
+#   sudo systemctl disable --now akior-drift-check.timer  # Disable
+#
+# Manual run:
+#   sudo systemctl start akior-drift-check.service
+#
+# View logs:
+#   journalctl -u akior-drift-check.service
+
+[Unit]
+Description=AKIOR Deployment Drift Check
+Documentation=https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/ops/DEPLOYMENT_DRIFT.md
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/jarvis/JARVIS-V5-OS/deploy/scripts/drift-check.sh
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment="AKIOR_REPO_DIR=/opt/jarvis/JARVIS-V5-OS"
+Environment="AKIOR_COMPOSE_FILE=deploy/compose.jarvis.yml"
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+# Allow docker access
+ReadOnlyPaths=/
+
+[Install]
+WantedBy=multi-user.target

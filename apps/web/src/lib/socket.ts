@@ -64,18 +64,26 @@ type CamerasClientToServerEvents = {
 /**
  * Creates a Socket.IO client that connects to the current page's origin.
  * The dev proxy (dev-proxy.mjs) handles routing /socket.io to the backend.
- * This ensures all devices connect to the same server when accessing via the same URL.
+ * In production, Caddy reverse-proxies /socket.io/* to the server container.
+ * 
+ * Transport order: websocket first (low latency), polling fallback (reliability).
+ * This ensures consistent behavior across all network conditions and proxies.
  */
 function createCamerasSocket() {
   return io('/cameras', {
     path: '/socket.io',
-    transports: ['websocket'],
+    // WebSocket preferred, polling fallback for reliability through proxies
+    transports: ['websocket', 'polling'],
     withCredentials: true,
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     reconnectionAttempts: Infinity,
-    timeout: 20000
+    timeout: 20000,
+    // Upgrade from polling to websocket when possible
+    upgrade: true,
+    // Force new connection on reconnect to avoid stale state
+    forceNew: false,
   });
 }
 
@@ -105,9 +113,57 @@ export function getRootSocket() {
   if (!rootSocketSingleton && typeof window !== 'undefined') {
     rootSocketSingleton = io('/', {
       path: '/socket.io',
-      transports: ['websocket'],
-      withCredentials: true
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity,
+      upgrade: true,
     });
   }
   return rootSocketSingleton;
+}
+
+/**
+ * Connection state for UI status indicators
+ */
+export type SocketConnectionState = {
+  connected: boolean;
+  transport: string | null;
+  lastError: string | null;
+  reconnectAttempts: number;
+};
+
+/**
+ * Get the current connection state of a socket.
+ * Useful for status displays in the UI.
+ */
+export function getSocketConnectionState(socket: Socket | null): SocketConnectionState {
+  if (!socket) {
+    return {
+      connected: false,
+      transport: null,
+      lastError: 'Socket not initialized',
+      reconnectAttempts: 0,
+    };
+  }
+  
+  return {
+    connected: socket.connected,
+    transport: socket.io?.engine?.transport?.name ?? null,
+    lastError: null, // Socket.IO doesn't expose last error directly
+    reconnectAttempts: 0, // Would need to track this manually
+  };
+}
+
+/**
+ * Check if any socket is connected.
+ * Useful for global connection status indicators.
+ */
+export function isAnySocketConnected(): boolean {
+  const cameras = cameraSocketSingleton?.connected ?? false;
+  const security = securitySocketSingleton?.connected ?? false;
+  const root = rootSocketSingleton?.connected ?? false;
+  return cameras || security || root;
 }
