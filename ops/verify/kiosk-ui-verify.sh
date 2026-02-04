@@ -1,31 +1,129 @@
 #!/usr/bin/env bash
 # ops/verify/kiosk-ui-verify.sh
-# Verifies kiosk service, processes, logs, and recent journal output.
+# Deterministic kiosk bring-up verification for AKIOR console UI.
+# Fails the deploy if kiosk is not actually up.
 
 set -euo pipefail
 
-section() {
-  echo ""
-  echo "=== $1 ==="
+log() {
+  echo "[$(date -Is)] $*"
 }
 
-LOG_FILE="/home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log"
+fail() {
+  log "FAIL: $*"
+  exit 1
+}
 
-section "systemd status"
-systemctl status akior-kiosk.service --no-pager -l || true
+log "kiosk-ui-verify start host=$(hostname)"
 
-section "processes"
-pgrep -a Xorg || true
-pgrep -a openbox || true
-pgrep -a chromium || true
-pgrep -a chromium-browser || true
-
-section "kiosk log tail"
-if [ -f "$LOG_FILE" ]; then
-  tail -n 120 "$LOG_FILE" || true
+if systemctl is-active --quiet akior-kiosk; then
+  log "systemd: akior-kiosk is active"
 else
-  echo "(missing $LOG_FILE)"
+  systemctl status akior-kiosk.service --no-pager -l || true
+  fail "akior-kiosk.service is not active"
 fi
 
-section "journal tail"
-journalctl -u akior-kiosk.service -n 100 --no-pager || true
+X_OK=0
+if pgrep -a Xorg | grep -q " :0"; then
+  X_OK=1
+fi
+if [ "$X_OK" -eq 0 ]; then
+  if [ -S /tmp/.X11-unix/X0 ] || [ -f /tmp/.X0-lock ]; then
+    X_OK=1
+  fi
+fi
+if [ "$X_OK" -eq 1 ]; then
+  log "Xorg :0 detected"
+else
+  pgrep -a Xorg || true
+  ls -la /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true
+  fail "No indication Xorg is running for :0"
+fi
+
+if pgrep -af chromium >/dev/null 2>&1 || pgrep -af chromium-browser >/dev/null 2>&1; then
+  pgrep -af chromium || true
+  pgrep -af chromium-browser || true
+  log "Chromium process detected"
+else
+  pgrep -af chromium || true
+  pgrep -af chromium-browser || true
+  fail "Chromium process not found"
+fi
+
+KIOSK_URL=""
+if [ -f /etc/systemd/system/akior-kiosk.service ]; then
+  KIOSK_URL="$(grep -E '^Environment=KIOSK_URL=' /etc/systemd/system/akior-kiosk.service | head -n 1 | sed 's/^Environment=KIOSK_URL=//')"
+fi
+KIOSK_URL="${KIOSK_URL:-https://akior.local/menu}"
+
+VERIFY_URL="${KIOSK_VERIFY_URL:-$KIOSK_URL}"
+VERIFY_PORT="${KIOSK_VERIFY_PORT:-}"
+if [ -z "$VERIFY_PORT" ]; then
+  if [[ "$VERIFY_URL" =~ :([0-9]+)(/|$) ]]; then
+    VERIFY_PORT="${BASH_REMATCH[1]}"
+  elif [[ "$VERIFY_URL" == https://* ]]; then
+    VERIFY_PORT="443"
+  else
+    VERIFY_PORT="80"
+  fi
+fi
+
+log "verify url: ${VERIFY_URL}"
+log "verify port: ${VERIFY_PORT}"
+
+LISTEN_OK=0
+if command -v ss >/dev/null 2>&1; then
+  if ss -ltnp | grep -q ":${VERIFY_PORT}"; then
+    LISTEN_OK=1
+  fi
+elif command -v netstat >/dev/null 2>&1; then
+  if netstat -ltnp 2>/dev/null | grep -q ":${VERIFY_PORT}"; then
+    LISTEN_OK=1
+  fi
+fi
+
+if [ "$LISTEN_OK" -eq 1 ]; then
+  log "Listener :${VERIFY_PORT} present"
+else
+  log "Listener :${VERIFY_PORT} missing"
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltnp || true
+  elif command -v netstat >/dev/null 2>&1; then
+    netstat -ltnp || true
+  else
+    log "Neither ss nor netstat available"
+  fi
+  fail "Port ${VERIFY_PORT} is not listening"
+fi
+
+if ! command -v curl >/dev/null 2>&1; then
+  fail "curl is required for HTTP verification"
+fi
+
+BODY_FILE="$(mktemp /tmp/kiosk_verify_body.XXXXXX)"
+trap 'rm -f "$BODY_FILE"' EXIT
+
+CURL_ARGS=(-sS --max-time 10)
+if [[ "$VERIFY_URL" == https://* ]]; then
+  CURL_ARGS+=(-k)
+fi
+
+HTTP_CODE="$(curl "${CURL_ARGS[@]}" -o "$BODY_FILE" -w '%{http_code}' "$VERIFY_URL" || true)"
+if [ "$HTTP_CODE" != "200" ]; then
+  log "HTTP $HTTP_CODE from $VERIFY_URL"
+  if [ -s "$BODY_FILE" ]; then
+    log "Body (first 5 lines):"
+    head -n 5 "$BODY_FILE" || true
+  fi
+  fail "Non-200 response from $VERIFY_URL"
+fi
+
+if [ ! -s "$BODY_FILE" ]; then
+  fail "Empty response body from $VERIFY_URL"
+fi
+
+log "HTTP 200 from $VERIFY_URL"
+log "Body (first 5 lines):"
+head -n 5 "$BODY_FILE" || true
+
+log "Kiosk UI verification PASSED"
