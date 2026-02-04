@@ -9,6 +9,21 @@ From the repo root on the server:
 ```bash
 sudo bash ops/verify/kiosk-diagnostics.sh
 ```
+## Chromium logging / verification
+Chromium supervisor log (xinitrc):
+- `/home/akior-kiosk/.local/share/kiosk/chromium.log`
+
+Tail it:
+```bash
+sudo tail -n 120 /home/akior-kiosk/.local/share/kiosk/chromium.log
+```
+
+Expected processes:
+```bash
+pgrep -a Xorg || true
+pgrep -a openbox || true
+pgrep -a chromium || true
+```
 
 ## Break a Restart Storm (service flapping)
 ```bash
