@@ -88,7 +88,6 @@ while :; do
   if [ "$USE_DBUS" -eq 1 ]; then
     dbus-run-session -- "$CHROME_BIN" \
       --kiosk \
-      --incognito \
       --start-fullscreen \
       --no-first-run \
       --password-store=basic \
@@ -109,7 +108,6 @@ while :; do
   else
     "$CHROME_BIN" \
       --kiosk \
-      --incognito \
       --start-fullscreen \
       --no-first-run \
       --password-store=basic \
