@@ -52,7 +52,7 @@ ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x Xorg
 ExecStartPre=/bin/sh -lc 'set -x; echo "[akior-kiosk] preflight: cleaning stale X state"; if [ -f /tmp/.X0-lock ]; then pid="$(cat /tmp/.X0-lock 2>/dev/null || true)"; if echo "$pid" | grep -qE "^[0-9]+$"; then if ps -p "$pid" -o comm= 2>/dev/null | grep -q "^Xorg"; then echo "[akior-kiosk] preflight: killing stale Xorg pid=$pid"; kill -TERM "$pid" 2>/dev/null || true; sleep 1; kill -KILL "$pid" 2>/dev/null || true; fi; fi; fi; rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true; ls -la /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true; echo "[akior-kiosk] preflight: done"; exit 0'
 
 # Start X server on VT7 with kiosk xinitrc
-ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -nolisten tcp -nocursor
+ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -nolisten tcp
 
 # Ensure VT7 is active (non-fatal; chvt requires root)
 ExecStartPost=-/usr/bin/chvt 7

@@ -126,4 +126,14 @@ log "HTTP 200 from $VERIFY_URL"
 log "Body (first 5 lines):"
 head -n 5 "$BODY_FILE" || true
 
+log "Additional health checks"
+HEALTH_32137="$(curl -sS --max-time 5 -o /dev/null -w '%{http_code}' http://*********:32137/health || echo 000)"
+HEALTH_443="$(curl -ksS --max-time 5 -o /dev/null -w '%{http_code}' https://*********:443/health || echo 000)"
+log "HTTP 32137 /health: $HEALTH_32137"
+log "HTTPS 443 /health: $HEALTH_443"
+
+if [ "$HEALTH_32137" != "200" ] && [ "$HEALTH_443" != "200" ]; then
+  log "WARNING: No /health endpoint returned HTTP 200 (32137=$HEALTH_32137, 443=$HEALTH_443)"
+fi
+
 log "Kiosk UI verification PASSED"
