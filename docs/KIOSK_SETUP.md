@@ -170,6 +170,15 @@ sudo bash ops/verify/kiosk-diagnostics.sh
 
 For GPU/nouveau failures and restart-storm recovery, see `docs/ops/KIOSK_TROUBLESHOOTING.md`.
 
+### Verify kiosk bring-up (deploy gate)
+
+```bash
+# From the repo root on the server
+sudo bash ops/verify/kiosk-ui-verify.sh
+```
+
+For details on what it checks (and how to override the URL), see `docs/ops/KIOSK_VERIFY.md`.
+
 ### Verify URL Configuration
 
 ```bash

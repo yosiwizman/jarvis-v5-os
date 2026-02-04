@@ -52,9 +52,16 @@ systemctl restart akior-kiosk.service
 log "Verify kiosk"
 VERIFY_OUT="/tmp/kiosk_verify_$(date +%Y%m%dT%H%M%S).out"
 if [ -x ops/verify/kiosk-ui-verify.sh ]; then
-  bash ops/verify/kiosk-ui-verify.sh > "$VERIFY_OUT" 2>&1 || true
+  if ! bash ops/verify/kiosk-ui-verify.sh > "$VERIFY_OUT" 2>&1; then
+    log "Verification failed (see $VERIFY_OUT)"
+    tail -n 120 "$VERIFY_OUT" || true
+    exit 1
+  fi
 else
-  echo "(missing ops/verify/kiosk-ui-verify.sh)" > "$VERIFY_OUT"
+  echo "verify script missing: ops/verify/kiosk-ui-verify.sh" > "$VERIFY_OUT"
+  log "Verification failed: verify script missing (see $VERIFY_OUT)"
+  cat "$VERIFY_OUT" || true
+  exit 1
 fi
 
 log "Verification output: $VERIFY_OUT"

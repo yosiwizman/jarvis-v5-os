@@ -40,6 +40,8 @@ ls -t /tmp/kiosk_verify_*.out | head -n 1
 tail -n 120 /tmp/kiosk_verify_YYYYMMDDTHHMMSS.out
 ```
 
+The deploy now **fails hard** if the verify gate fails. For the exact checks and overrides, see `docs/ops/KIOSK_VERIFY.md`.
+
 SSH keepalive (optional):
 ```bash
 ssh -tt -o ServerAliveInterval=30 -o ServerAliveCountMax=4 aifactory-lan
