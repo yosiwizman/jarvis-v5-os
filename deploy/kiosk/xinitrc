@@ -1,6 +1,7 @@
 #!/bin/sh
-set -e
+set -eu
 
+export DISPLAY="${DISPLAY:-:0}"
 KIOSK_URL="${KIOSK_URL:-https://akior.local/menu}"
 
 # Keep display awake
@@ -12,25 +13,26 @@ xset s noblank || true
 openbox-session &
 sleep 1
 
-launch_chromium() {
-    chromium-browser \
-        --kiosk \
-        --incognito \
-        --start-fullscreen \
-        --no-first-run \
-        --noerrdialogs \
-        --disable-infobars \
-        --disable-session-crashed-bubble \
-        --disable-restore-session-state \
-        --disable-features=TranslateUI \
-        --disable-pinch \
-        --overscroll-history-navigation=0 \
-        --ignore-certificate-errors \
-        --user-data-dir=/home/akior-kiosk/.chromium-kiosk \
-        "$KIOSK_URL"
-}
+CHROME_BIN="$(command -v chromium-browser || command -v chromium || command -v /snap/bin/chromium || true)"
+if [ -z "$CHROME_BIN" ]; then
+  echo "[akior-kiosk] chromium not found (expected chromium-browser/chromium)"
+  exit 1
+fi
 
-while true; do
-    launch_chromium || true
-    sleep 2
-done
+# Run chromium in foreground; if it exits, systemd will restart the whole kiosk session
+exec "$CHROME_BIN" \
+  --kiosk \
+  --incognito \
+  --start-fullscreen \
+  --no-first-run \
+  --no-default-browser-check \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --disable-restore-session-state \
+  --disable-features=TranslateUI \
+  --disable-pinch \
+  --overscroll-history-navigation=0 \
+  --ignore-certificate-errors \
+  --user-data-dir=/home/akior-kiosk/.chromium-kiosk \
+  "$KIOSK_URL"
