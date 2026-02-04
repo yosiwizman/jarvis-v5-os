@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { BuildInfoModal } from '@/components/BuildInfoModal';
 
 /**
  * Generate a short error ID from error message for tracking
@@ -29,6 +30,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [showBuildModal, setShowBuildModal] = useState(false);
   const errorId = generateErrorId(error);
   const gitSha = process.env.NEXT_PUBLIC_GIT_SHA || 'unknown';
   const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME || 'unknown';
@@ -128,20 +130,21 @@ export default function GlobalError({
           >
             Back to Menu
           </button>
-          <a
-            href="/api/health/build"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setShowBuildModal(true)}
             className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white/70 rounded-lg transition-colors text-center"
           >
             Check Build
-          </a>
+          </button>
         </div>
 
         {/* Help Text */}
         <p className="text-xs text-white/40 text-center">
-          If this error persists, compare the build SHA above with <code className="text-cyan-400/70">/api/health/build</code> to check for deployment drift.
+          If this error persists, click &quot;Check Build&quot; to verify deployment status.
         </p>
+
+        {/* Build Info Modal */}
+        <BuildInfoModal isOpen={showBuildModal} onClose={() => setShowBuildModal(false)} />
       </div>
     </div>
   );

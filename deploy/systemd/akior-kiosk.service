@@ -1,0 +1,55 @@
+# AKIOR Kiosk Service
+# Runs Chromium in kiosk mode on VT7
+#
+# Install:
+#   sudo cp deploy/systemd/akior-kiosk.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now akior-kiosk.service
+#
+# Recovery:
+#   Ctrl+Alt+F7 to return to kiosk (always)
+#   Ctrl+Alt+F1 for console/TTY access
+
+[Unit]
+Description=AKIOR Console Kiosk
+Documentation=https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/ops/KIOSK_SETUP.md
+After=network-online.target systemd-logind.service
+Wants=network-online.target
+
+# Conflict with getty on VT7 to take exclusive control
+Conflicts=getty@tty7.service
+
+[Service]
+Type=simple
+User=akior-kiosk
+
+# Kiosk configuration
+Environment=KIOSK_URL=https://akior.local/menu
+Environment=DISPLAY=:0
+
+# PAM session for proper login handling
+PAMName=login
+TTYPath=/dev/tty7
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+
+# Allow access to GPU/framebuffer
+SupplementaryGroups=video audio input tty
+
+# Start X server on VT7 with kiosk xinitrc
+ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp
+
+# After start, switch to VT7 to ensure kiosk is visible
+ExecStartPost=/usr/bin/chvt 7
+
+# Always restart (even on success exit), with no rate limiting
+Restart=always
+RestartSec=2
+StartLimitIntervalSec=0
+
+# Give chromium time to shut down gracefully
+TimeoutStopSec=10
+
+[Install]
+WantedBy=graphical.target
