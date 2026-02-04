@@ -14,10 +14,31 @@ sudo bash ops/verify/kiosk-diagnostics.sh
 ```bash
 sudo systemctl disable --now akior-kiosk.service || true
 sudo systemctl reset-failed akior-kiosk.service || true
-sudo pkill -9 Xorg startx xinit openbox chromium || true
+sudo pkill -9 Xorg || true
+sudo pkill -9 startx || true
+sudo pkill -9 xinit || true
+sudo pkill -9 openbox || true
+sudo pkill -9 chromium || true
 sudo rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 || true
 ```
 Then reinstall unit + xinitrc from the repo and restart the service.
+
+## Symptom: logind session / VT permission denied
+Journal/Xorg excerpt:
+- `systemd-logind: failed to get session: PID ... does not belong to any known session`
+- `xf86OpenConsole: Cannot open virtual console 7 (Permission denied)`
+
+Rootless Xorg launched by systemd without a login session cannot access the VT.
+
+Fix (service directives under `[Service]`):
+- `PAMName=login`
+- `StandardInput=tty`
+- `TTYPath=/dev/tty7`
+- `TTYReset=yes`
+- `TTYVHangup=yes`
+- `TTYVTDisallocate=yes`
+
+Also remove `-keeptty` from the Xorg args in `ExecStart` to avoid conflicting with systemd-managed TTYs.
 
 ## Symptom: "Server is already active for display 0" / stale X locks
 Typical journal excerpt:
