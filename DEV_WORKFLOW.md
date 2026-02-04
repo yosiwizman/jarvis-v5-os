@@ -25,6 +25,8 @@ Every push to `main` triggers `.github/workflows/jarvis-ci.yml`, which runs:
 3. `npm run build` — Production build (19 routes expected)
 4. `npm run ci:smoke` — Smoke tests (8/8 checks expected)
 
+Note: `ci:smoke` uses a Node-based delay so it runs on Windows PowerShell (no `sleep` dependency).
+
 If CI fails, the developer fixes issues locally and pushes again. The GitHub commit history shows a linear sequence of commits with green CI badges.
 
 ### When This Is Okay
