@@ -79,7 +79,7 @@ Key features:
 - Disables screen blanking (`xset s off`, `xset -dpms`, `xset s noblank`)
 - Starts `openbox-session`
 - Runs Chromium in kiosk/incognito with crash bubbles suppressed
-- Chromium is supervised from `xinitrc` and restarts on crash (logs to `/home/akior-kiosk/.local/share/kiosk/chromium.log`)
+- Chromium is supervised by `/home/akior-kiosk/kiosk-session.sh` and restarts on crash (logs to `/home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log`)
 
 ### Environment Variables
 

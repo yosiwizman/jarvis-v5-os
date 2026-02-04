@@ -10,12 +10,12 @@ From the repo root on the server:
 sudo bash ops/verify/kiosk-diagnostics.sh
 ```
 ## Chromium logging / verification
-Chromium supervisor log (xinitrc):
-- `/home/akior-kiosk/.local/share/kiosk/chromium.log`
+Kiosk session log:
+- `/home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log`
 
 Tail it:
 ```bash
-sudo tail -n 120 /home/akior-kiosk/.local/share/kiosk/chromium.log
+sudo tail -n 120 /home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log
 ```
 If Chromium exits immediately, check whether `XDG_RUNTIME_DIR` is present in the log (missing runtime dir can break snap chromium sessions).
 
@@ -24,6 +24,25 @@ Expected processes:
 pgrep -a Xorg || true
 pgrep -a openbox || true
 pgrep -a chromium || true
+```
+
+## Remote deploy (tmux + bounded verify)
+Prefer tmux so deploys survive SSH disconnects:
+```bash
+tmux new-session -Ad -s kioskdeploy 'sudo /opt/jarvis/JARVIS-V5-OS/ops/deploy/deploy-kiosk.sh'
+tmux attach -t kioskdeploy
+```
+
+The deploy script writes a verification output file under `/tmp/kiosk_verify_<timestamp>.out`.
+Tail it:
+```bash
+ls -t /tmp/kiosk_verify_*.out | head -n 1
+tail -n 120 /tmp/kiosk_verify_YYYYMMDDTHHMMSS.out
+```
+
+SSH keepalive (optional):
+```bash
+ssh -tt -o ServerAliveInterval=30 -o ServerAliveCountMax=4 aifactory-lan
 ```
 
 ## Break a Restart Storm (service flapping)

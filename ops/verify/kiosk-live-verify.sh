@@ -15,7 +15,7 @@ if [ -z "$KIOSK_URL" ] && [ -f /etc/systemd/system/akior-kiosk.service ]; then
 fi
 KIOSK_URL="${KIOSK_URL:-https://akior.local/menu}"
 
-LOG_FILE="/home/akior-kiosk/.local/share/kiosk/chromium.log"
+LOG_FILE="/home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log"
 
 section "systemd status"
 systemctl status akior-kiosk.service --no-pager -l || true
