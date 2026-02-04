@@ -38,13 +38,18 @@ StandardOutput=journal
 StandardError=journal
 
 # Pre-start cleanup (best-effort; runs as root to remove root-owned locks)
-ExecStartPre=+/bin/sh -lc 'set -x; echo "[akior-kiosk] preflight: cleaning stale X state"; pkill -u akior-kiosk -x chromium 2>/dev/null || true; pkill -u akior-kiosk -x openbox 2>/dev/null || true; pkill -u akior-kiosk -x Xorg 2>/dev/null || true; pkill -u akior-kiosk -x startx 2>/dev/null || true; pkill -u akior-kiosk -x xinit 2>/dev/null || true; pkill -f "Xorg.*:0" 2>/dev/null || true; pkill -f "xinit.*:0" 2>/dev/null || true; pkill -f "startx.*:0" 2>/dev/null || true; rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true; ls -la /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true; echo "[akior-kiosk] preflight: done"; exit 0'
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x chromium
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x openbox
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x startx
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x xinit
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x Xorg
+ExecStartPre=/bin/sh -lc 'set -x; echo "[akior-kiosk] preflight: cleaning stale X state"; if [ -f /tmp/.X0-lock ]; then pid="$(cat /tmp/.X0-lock 2>/dev/null || true)"; if echo "$pid" | grep -qE "^[0-9]+$"; then if ps -p "$pid" -o comm= 2>/dev/null | grep -q "^Xorg"; then echo "[akior-kiosk] preflight: killing stale Xorg pid=$pid"; kill -TERM "$pid" 2>/dev/null || true; sleep 1; kill -KILL "$pid" 2>/dev/null || true; fi; fi; fi; rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true; ls -la /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true; echo "[akior-kiosk] preflight: done"; exit 0'
 
 # Start X server on VT7 with kiosk xinitrc
 ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp -nocursor
 
 # Ensure VT7 is active (non-fatal; chvt requires root)
-ExecStartPost=+/bin/sh -lc '/usr/bin/chvt 7 || true'
+ExecStartPost=-/usr/bin/chvt 7
 
 Restart=on-failure
 RestartSec=2
