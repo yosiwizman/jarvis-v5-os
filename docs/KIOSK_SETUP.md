@@ -68,8 +68,8 @@ Key settings (deterministic VT7 + self-heal):
 - `ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp -nocursor`
 - `ExecStartPre=+/bin/sh -lc ...` does best-effort cleanup as root (kills stray `Xorg`/`startx`/`xinit` on `:0`, removes `/tmp/.X0-lock` + `/tmp/.X11-unix/X0`, logs what it did)
 - `ExecStartPost=+/bin/sh -lc '/usr/bin/chvt 7 || true'` forces VT7 after start (root, non-fatal)
-- `Restart=always`, `RestartSec=2`, `TimeoutStartSec=30`, `TimeoutStopSec=15`
-- `StartLimitIntervalSec=0` in `[Unit]` to avoid rate limiting during recovery
+- `Restart=on-failure`, `RestartSec=2`, `TimeoutStartSec=30`, `TimeoutStopSec=15`
+- `StartLimitIntervalSec=60` + `StartLimitBurst=10` in `[Unit]` to prevent restart storms when Xorg cannot start
 - `WantedBy=multi-user.target` for headless reliability
 
 ### xinitrc: `/home/akior-kiosk/.xinitrc`
@@ -79,7 +79,7 @@ Key features:
 - Disables screen blanking (`xset s off`, `xset -dpms`, `xset s noblank`)
 - Starts `openbox-session`
 - Runs Chromium in kiosk/incognito with crash bubbles suppressed
-- Runs Chromium in the foreground; if it exits, systemd restarts the entire kiosk session
+- Runs Chromium in the foreground; if it exits abnormally, systemd restarts the kiosk session
 
 ### Environment Variables
 
@@ -138,6 +138,12 @@ sudo systemctl start akior-kiosk.service
 ```
 
 ## Troubleshooting
+
+### Common systemd pitfalls
+
+- `StartLimitIntervalSec=` / `StartLimitBurst=` belong in the `[Unit]` section (not `[Service]`). If they are placed under `[Service]`, systemd will ignore them.
+- `chvt` typically requires root privileges. The kiosk unit runs `chvt` as root and makes it non-fatal to avoid killing `startx` when VT switching is restricted.
+- If you are deploying from Windows/PowerShell, prefer copying and running a remote script (scp + ssh) rather than embedding large quoted bash one-liners (quoting can break and stall automation).
 
 ### Check Service Status
 
