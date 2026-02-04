@@ -17,6 +17,7 @@ Tail it:
 ```bash
 sudo tail -n 120 /home/akior-kiosk/.local/share/kiosk/chromium.log
 ```
+If Chromium exits immediately, check whether `XDG_RUNTIME_DIR` is present in the log (missing runtime dir can break snap chromium sessions).
 
 Expected processes:
 ```bash
