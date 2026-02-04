@@ -1,0 +1,71 @@
+#!/bin/sh
+# AKIOR Kiosk X Session Configuration
+#
+# This script is executed by startx to configure the X session.
+# It starts openbox and chromium in kiosk mode.
+#
+# Install:
+#   sudo cp deploy/kiosk/xinitrc /home/akior-kiosk/.xinitrc
+#   sudo chown akior-kiosk:akior-kiosk /home/akior-kiosk/.xinitrc
+#   sudo chmod 755 /home/akior-kiosk/.xinitrc
+
+# Get kiosk URL from environment (set by systemd) or use default
+KIOSK_URL="${KIOSK_URL:-https://akior.local/menu}"
+
+# Disable screen blanking and DPMS (power management)
+xset s off        # Disable screensaver
+xset s noblank    # Don't blank the screen
+xset -dpms        # Disable Display Power Management Signaling
+
+# Hide cursor after 1 second of inactivity
+unclutter -idle 1 -root &
+
+# Set background to black (cleaner look before chromium loads)
+xsetroot -solid black
+
+# Start openbox window manager (required for chromium to work properly)
+openbox &
+OPENBOX_PID=$!
+
+# Wait for openbox to be ready
+sleep 1
+
+# Chromium kiosk launch function
+launch_chromium() {
+    chromium-browser \
+        --kiosk \
+        --start-fullscreen \
+        --start-maximized \
+        --no-first-run \
+        --disable-translate \
+        --disable-infobars \
+        --disable-suggestions-service \
+        --disable-save-password-bubble \
+        --disable-session-crashed-bubble \
+        --disable-restore-session-state \
+        --disable-component-update \
+        --disable-background-networking \
+        --disable-sync \
+        --disable-features=TranslateUI \
+        --noerrdialogs \
+        --check-for-update-interval=31536000 \
+        --password-store=basic \
+        --disable-pinch \
+        --overscroll-history-navigation=0 \
+        --autoplay-policy=no-user-gesture-required \
+        --ignore-certificate-errors \
+        --user-data-dir=/home/akior-kiosk/.chromium-kiosk \
+        "$KIOSK_URL"
+}
+
+# Supervised chromium loop - restart if it crashes
+while true; do
+    echo "[AKIOR Kiosk] Starting chromium at $KIOSK_URL"
+    launch_chromium
+    EXIT_CODE=$?
+    echo "[AKIOR Kiosk] Chromium exited with code $EXIT_CODE, restarting in 2 seconds..."
+    sleep 2
+done
+
+# This won't be reached, but clean up if we somehow exit the loop
+kill $OPENBOX_PID 2>/dev/null

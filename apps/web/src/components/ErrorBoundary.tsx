@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Component, type ReactNode } from 'react';
+import { BuildInfoModal } from './BuildInfoModal';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -11,6 +12,7 @@ interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   errorId: string | null;
+  showBuildModal: boolean;
 }
 
 /**
@@ -44,10 +46,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       hasError: false, 
       error: null,
       errorId: null,
+      showBuildModal: false,
     };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     const errorId = generateErrorId(error);
     return { 
       hasError: true, 
@@ -69,11 +72,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorId: null });
+    this.setState({ hasError: false, error: null, errorId: null, showBuildModal: false });
     // Optionally reload the page for a clean slate
     if (typeof window !== 'undefined') {
       window.location.reload();
     }
+  };
+
+  openBuildModal = () => {
+    this.setState({ showBuildModal: true });
+  };
+
+  closeBuildModal = () => {
+    this.setState({ showBuildModal: false });
   };
 
   render() {
@@ -170,21 +181,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               >
                 Back to Menu
               </button>
-              <a
-                href="/api/health/build"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={this.openBuildModal}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white/70 rounded-lg transition-colors text-center"
               >
                 Check Build Info
-              </a>
+              </button>
             </div>
 
             {/* Help Text */}
             <p className="text-xs text-white/40 text-center">
               If this error persists after reloading, the deployment may need to be refreshed.
-              Compare the SHA above with <code className="text-cyan-400/70">/api/health/build</code> to verify.
+              Click &quot;Check Build Info&quot; to verify deployment status.
             </p>
+
+            {/* Build Info Modal */}
+            <BuildInfoModal isOpen={this.state.showBuildModal} onClose={this.closeBuildModal} />
           </div>
         </div>
       );
