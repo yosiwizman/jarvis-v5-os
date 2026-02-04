@@ -17,11 +17,17 @@ Documentation=https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/ops/KIOS
 After=network-online.target systemd-logind.service
 Wants=network-online.target
 Conflicts=getty@tty7.service
-StartLimitIntervalSec=0
+
+# Prevent infinite restart storms if Xorg cannot start (e.g., GPU driver issue)
+StartLimitIntervalSec=60
+StartLimitBurst=10
 
 [Service]
 Type=simple
 User=akior-kiosk
+
+# Run ExecStartPre/ExecStartPost as root (ExecStart still runs as User=)
+PermissionsStartOnly=true
 WorkingDirectory=/home/akior-kiosk
 Environment=HOME=/home/akior-kiosk
 Environment=DISPLAY=:0
@@ -40,7 +46,7 @@ ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -noliste
 # Ensure VT7 is active (non-fatal; chvt requires root)
 ExecStartPost=+/bin/sh -lc '/usr/bin/chvt 7 || true'
 
-Restart=always
+Restart=on-failure
 RestartSec=2
 TimeoutStartSec=30
 TimeoutStopSec=15
