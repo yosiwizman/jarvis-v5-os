@@ -8,48 +8,40 @@
 #
 # Recovery:
 #   Ctrl+Alt+F7 to return to kiosk (always)
-#   Ctrl+Alt+F1 for console/TTY access
+#   Ctrl+Alt+F3 for console/TTY access
 
 [Unit]
 Description=AKIOR Console Kiosk
 Documentation=https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/ops/KIOSK_SETUP.md
 After=network-online.target systemd-logind.service
 Wants=network-online.target
-
-# Conflict with getty on VT7 to take exclusive control
 Conflicts=getty@tty7.service
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 User=akior-kiosk
-
-# Kiosk configuration
-Environment=KIOSK_URL=https://akior.local/menu
+WorkingDirectory=/home/akior-kiosk
+Environment=HOME=/home/akior-kiosk
 Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/akior-kiosk/.Xauthority
+Environment=KIOSK_URL=https://akior.local/menu
 
-# PAM session for proper login handling
-PAMName=login
-TTYPath=/dev/tty7
-StandardInput=tty
-StandardOutput=journal
-StandardError=journal
+# Pre-start cleanup (non-fatal)
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x chromium
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x openbox
+ExecStartPre=-/usr/bin/pkill -u akior-kiosk -x Xorg
+ExecStartPre=-/bin/rm -f /tmp/.X0-lock
+ExecStartPre=-/bin/rm -f /tmp/.X11-unix/X0
 
-# Allow access to GPU/framebuffer
-SupplementaryGroups=video audio input tty
+# Start X server on VT7 with kiosk xinitrc (no post-start VT switch required)
+ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp -nocursor
 
-# Start X server on VT7 with kiosk xinitrc
-ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp
-
-# After start, switch to VT7 to ensure kiosk is visible
-ExecStartPost=/usr/bin/chvt 7
-
-# Always restart (even on success exit), with no rate limiting
 Restart=always
 RestartSec=2
-StartLimitIntervalSec=0
-
-# Give chromium time to shut down gracefully
-TimeoutStopSec=10
+TimeoutStartSec=30
+TimeoutStopSec=15
+KillMode=control-group
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target

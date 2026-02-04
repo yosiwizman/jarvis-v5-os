@@ -7,7 +7,7 @@ This document describes the kiosk system configuration for AKIOR displays.
 The AKIOR kiosk runs Chromium in full-screen kiosk mode on a dedicated virtual terminal (VT7). This ensures:
 
 - **Deterministic display**: Always on VT7 (Ctrl+Alt+F7)
-- **Auto-recovery**: Restarts automatically on crash
+- **Auto-recovery**: Restarts automatically on crash and clears stale X locks before each start
 - **No navigation escape**: Chromium is locked to the menu URL
 - **No screen blanking**: Display stays on indefinitely
 
@@ -15,12 +15,12 @@ The AKIOR kiosk runs Chromium in full-screen kiosk mode on a dedicated virtual t
 
 | VT | Purpose |
 |-----|---------|
-| VT1-6 | System consoles (login, logs) |
+| VT1-6 | System consoles (login, logs). Use VT3 (Ctrl+Alt+F3) for admin console. |
 | **VT7** | AKIOR Kiosk (Chromium) |
 
 **To access the kiosk display**: Press `Ctrl+Alt+F7`
 
-**To access system console**: Press `Ctrl+Alt+F1` (requires login)
+**To access system console**: Press `Ctrl+Alt+F3` (requires login)
 
 ## Installation
 
@@ -63,22 +63,22 @@ sudo systemctl start akior-kiosk.service
 
 ### Service File: `/etc/systemd/system/akior-kiosk.service`
 
-Key settings:
+Key settings (deterministic VT7 + self-heal):
 
-- `ExecStart`: Runs X server on VT7
-- `ExecStartPost=/usr/bin/chvt 7`: Auto-switches to VT7 on start
-- `Restart=always`: Restarts on any exit
-- `RestartSec=2`: 2-second delay between restarts
-- `StartLimitIntervalSec=0`: No rate limiting
+- `ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp -nocursor`
+- `ExecStartPre` cleans stale X/chromium/openbox and removes `/tmp/.X0-lock` + `/tmp/.X11-unix/X0`
+- `Restart=always`, `RestartSec=2`, `TimeoutStartSec=30`, `TimeoutStopSec=15`
+- `StartLimitIntervalSec=0` in `[Unit]` to avoid rate limiting during recovery
+- `WantedBy=multi-user.target` for headless reliability
 
 ### xinitrc: `/home/akior-kiosk/.xinitrc`
 
 Key features:
 
-- Disables screen blanking (`xset s off`, `xset -dpms`)
-- Hides cursor after 1 second idle
-- Runs Chromium with kiosk flags
-- Supervised loop: restarts Chromium if it crashes
+- Disables screen blanking (`xset s off`, `xset -dpms`, `xset s noblank`)
+- Starts `openbox-session`
+- Runs Chromium in kiosk/incognito with crash bubbles suppressed
+- Supervised loop: restarts Chromium if it crashes (2s backoff)
 
 ### Environment Variables
 
@@ -96,7 +96,7 @@ Environment=KIOSK_URL=https://akior.local/menu
 1. Switch to VT7: `Ctrl+Alt+F7`
 2. If black screen, check service status:
    ```bash
-   sudo systemctl status akior-kiosk.service
+   sudo systemctl status akior-kiosk.service --no-pager
    ```
 3. Restart service:
    ```bash
@@ -113,7 +113,7 @@ Environment=KIOSK_URL=https://akior.local/menu
 
 ### Screen Showing Console/Logs
 
-The display is likely on VT1 (console). Press `Ctrl+Alt+F7` to switch to the kiosk.
+The display is likely on VT3 (console). Press `Ctrl+Alt+F7` to switch to the kiosk.
 
 ### Chromium Crashed
 
@@ -130,7 +130,7 @@ The xinitrc script includes a supervisor loop that automatically restarts Chromi
 sudo systemctl stop akior-kiosk.service
 
 # Clear Chromium state (if needed)
-sudo rm -rf /home/akior-kiosk/.config/chromium
+sudo rm -rf /home/akior-kiosk/.chromium-kiosk
 
 # Restart
 sudo systemctl start akior-kiosk.service
@@ -141,14 +141,14 @@ sudo systemctl start akior-kiosk.service
 ### Check Service Status
 
 ```bash
-sudo systemctl status akior-kiosk.service
+sudo systemctl status akior-kiosk.service --no-pager
 ```
 
 ### View Logs
 
 ```bash
 # Recent logs
-journalctl -u akior-kiosk.service --since "10 minutes ago"
+journalctl -u akior-kiosk.service --since "10 minutes ago" --no-pager
 
 # Follow logs in real-time
 journalctl -u akior-kiosk.service -f
@@ -165,7 +165,8 @@ grep KIOSK_URL /etc/systemd/system/akior-kiosk.service
 
 ```bash
 # From the server
-curl -k https://akior.local/menu
+curl -ks https://akior.local/menu
+curl -ks https://akior.local/api/health/build
 ```
 
 ## Security Notes
