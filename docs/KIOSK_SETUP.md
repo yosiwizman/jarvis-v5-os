@@ -66,7 +66,8 @@ sudo systemctl start akior-kiosk.service
 Key settings (deterministic VT7 + self-heal):
 
 - `ExecStart=/usr/bin/startx /home/akior-kiosk/.xinitrc -- :0 vt7 -keeptty -nolisten tcp -nocursor`
-- `ExecStartPre` cleans stale X/chromium/openbox and removes `/tmp/.X0-lock` + `/tmp/.X11-unix/X0`
+- `ExecStartPre=+/bin/sh -lc ...` does best-effort cleanup as root (kills stray `Xorg`/`startx`/`xinit` on `:0`, removes `/tmp/.X0-lock` + `/tmp/.X11-unix/X0`, logs what it did)
+- `ExecStartPost=+/bin/sh -lc '/usr/bin/chvt 7 || true'` forces VT7 after start (root, non-fatal)
 - `Restart=always`, `RestartSec=2`, `TimeoutStartSec=30`, `TimeoutStopSec=15`
 - `StartLimitIntervalSec=0` in `[Unit]` to avoid rate limiting during recovery
 - `WantedBy=multi-user.target` for headless reliability
@@ -78,7 +79,7 @@ Key features:
 - Disables screen blanking (`xset s off`, `xset -dpms`, `xset s noblank`)
 - Starts `openbox-session`
 - Runs Chromium in kiosk/incognito with crash bubbles suppressed
-- Supervised loop: restarts Chromium if it crashes (2s backoff)
+- Runs Chromium in the foreground; if it exits, systemd restarts the entire kiosk session
 
 ### Environment Variables
 
@@ -117,7 +118,7 @@ The display is likely on VT3 (console). Press `Ctrl+Alt+F7` to switch to the kio
 
 ### Chromium Crashed
 
-The xinitrc script includes a supervisor loop that automatically restarts Chromium. If crashes persist:
+If Chromium crashes/exits, systemd restarts the kiosk service (Xorg + session). If crashes persist:
 
 1. Check logs: `journalctl -u akior-kiosk.service -f`
 2. Look for memory issues or GPU errors
@@ -153,6 +154,15 @@ journalctl -u akior-kiosk.service --since "10 minutes ago" --no-pager
 # Follow logs in real-time
 journalctl -u akior-kiosk.service -f
 ```
+
+### Run bounded diagnostics (recommended)
+
+```bash
+# From the repo root on the server
+sudo bash ops/verify/kiosk-diagnostics.sh
+```
+
+For GPU/nouveau failures and restart-storm recovery, see `docs/ops/KIOSK_TROUBLESHOOTING.md`.
 
 ### Verify URL Configuration
 
