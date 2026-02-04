@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -u
 
 export DISPLAY="${DISPLAY:-:0}"
 export PATH="$PATH:/snap/bin"
@@ -20,6 +20,15 @@ log() {
 log "[akior-kiosk] session start"
 log "[akior-kiosk] KIOSK_URL=$KIOSK_URL"
 
+USER_ID="$(id -u)"
+export XDG_RUNTIME_DIR="/run/user/${USER_ID}"
+if [ -d "$XDG_RUNTIME_DIR" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+  log "[akior-kiosk] XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR"
+else
+  log "[akior-kiosk] XDG_RUNTIME_DIR missing: $XDG_RUNTIME_DIR"
+fi
+
 # Keep display awake
 xset -dpms || true
 xset s off || true
@@ -34,6 +43,7 @@ if [ -z "$CHROME_BIN" ]; then
   log "[akior-kiosk] chromium not found (expected chromium-browser/chromium)"
   exit 1
 fi
+log "[akior-kiosk] chromium bin=$CHROME_BIN"
 
 USE_DBUS=0
 if command -v dbus-run-session >/dev/null 2>&1 && [ "$CHROME_BIN" = "/snap/bin/chromium" ]; then
