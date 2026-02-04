@@ -91,6 +91,7 @@ while :; do
       --incognito \
       --start-fullscreen \
       --no-first-run \
+      --password-store=basic \
       --no-default-browser-check \
       --noerrdialogs \
       --disable-infobars \
@@ -100,6 +101,8 @@ while :; do
       --disable-pinch \
       --overscroll-history-navigation=0 \
       --ignore-certificate-errors \
+      --disable-background-networking \
+      --autoplay-policy=no-user-gesture-required \
       --user-data-dir="$PROFILE_DIR" \
       $GPU_FLAGS \
       "$KIOSK_URL" &
@@ -109,6 +112,7 @@ while :; do
       --incognito \
       --start-fullscreen \
       --no-first-run \
+      --password-store=basic \
       --no-default-browser-check \
       --noerrdialogs \
       --disable-infobars \
@@ -118,6 +122,8 @@ while :; do
       --disable-pinch \
       --overscroll-history-navigation=0 \
       --ignore-certificate-errors \
+      --disable-background-networking \
+      --autoplay-policy=no-user-gesture-required \
       --user-data-dir="$PROFILE_DIR" \
       $GPU_FLAGS \
       "$KIOSK_URL" &

@@ -43,6 +43,18 @@ chmod 755 "$KIOSK_HOME/.xinitrc" "$KIOSK_HOME/kiosk-session.sh"
 mkdir -p "$KIOSK_HOME/.local/share/jarvis-kiosk"
 chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_HOME/.local/share/jarvis-kiosk"
 
+if [ -f "deploy/compose.jarvis.yml" ]; then
+  log "Docker compose: pull + up -d"
+  if command -v docker >/dev/null 2>&1; then
+    GIT_SHA="$(git rev-parse --short HEAD || echo unknown)" docker compose -f deploy/compose.jarvis.yml pull --quiet || true
+    GIT_SHA="$(git rev-parse --short HEAD || echo unknown)" docker compose -f deploy/compose.jarvis.yml up -d || true
+    sleep 3
+    docker compose -f deploy/compose.jarvis.yml ps || true
+  else
+    log "docker not found; skipping compose"
+  fi
+fi
+
 systemctl daemon-reload
 systemctl enable akior-kiosk.service
 
