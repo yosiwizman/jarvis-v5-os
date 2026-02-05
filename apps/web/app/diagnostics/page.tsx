@@ -277,7 +277,7 @@ export default function DiagnosticsPage() {
                 <span>DEPLOYMENT DRIFT DETECTED</span>
               </p>
               <p className="text-sm mt-1">Web ({webSha}) and Server ({serverSha}) are running different builds.</p>
-              <p className="text-sm mt-1">Run: <code className="bg-black/40 px-2 py-0.5 rounded">ops/deploy.ps1 -Rebuild</code> to sync both containers.</p>
+              <p className="text-sm mt-1">Fix: <code className="bg-black/40 px-2 py-0.5 rounded">cd /opt/jarvis/JARVIS-V5-OS && bash ops/deploy/rebuild.sh</code></p>
             </div>
           )}
         </div>

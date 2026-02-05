@@ -122,7 +122,35 @@ The drift check compares:
 
 ## Fixing Drift
 
-When drift is detected, rebuild and redeploy using the single-command procedure:
+When drift is detected, use the deterministic rebuild script to sync both containers:
+
+### Method 1: Rebuild Script (Recommended)
+
+The rebuild script ensures both containers are stamped with identical build metadata:
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+
+# Pull latest code
+git pull origin main
+
+# Rebuild and deploy with guaranteed sync
+bash ops/deploy/rebuild.sh
+```
+
+The script will:
+1. Compute the current git SHA and build timestamp
+2. Build both web and server containers with identical metadata
+3. Deploy with force-recreate
+4. Automatically verify build sync
+
+Options:
+- `--no-cache`: Force rebuild without Docker cache (slower but guaranteed fresh)
+- `--verify-only`: Skip rebuild, only verify existing deployment
+
+### Method 2: Manual Rebuild
+
+If you prefer manual control:
 
 ```bash
 cd /opt/jarvis/JARVIS-V5-OS
@@ -131,13 +159,14 @@ cd /opt/jarvis/JARVIS-V5-OS
 git pull origin main
 
 # Single-command deploy with SHA tracking
-GIT_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/compose.jarvis.yml up -d --build
+GIT_SHA=$(git rev-parse --short HEAD) BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+  docker compose -f deploy/compose.jarvis.yml up -d --build
 
 # Verify all containers are healthy
 docker compose -f deploy/compose.jarvis.yml ps
 
-# Verify drift is resolved (both server and web SHA should match)
-curl -sk https://akior.local/api/ops/drift | jq .
+# Verify drift is resolved
+bash ops/verify/build-sync-check.sh
 ```
 
 Expected output after successful deployment:
@@ -154,6 +183,24 @@ Expected output after successful deployment:
   "time": "2026-02-03T12:00:00.000Z"
 }
 ```
+
+### Build Sync Verification
+
+After any deployment, verify build sync with the dedicated script:
+
+```bash
+# Verify web and server SHAs match
+bash ops/verify/build-sync-check.sh
+
+# Or specify a custom target URL
+bash ops/verify/build-sync-check.sh https://192.168.1.100
+```
+
+The script will:
+1. Fetch web build SHA from `/web-build`
+2. Fetch server build SHA from `/api/health/build`
+3. Compare both with repository HEAD (if in git repo)
+4. Report PASS (exit 0) or FAIL (exit 1) with remediation steps
 
 ### Quick Smoke Test
 
