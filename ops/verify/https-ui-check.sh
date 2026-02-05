@@ -2,8 +2,41 @@
 # ops/verify/https-ui-check.sh
 # Verifies AKIOR HTTPS is configured and camera APIs are available
 # Exit codes: 0 = all checks pass, 1 = failure
+#
+# Usage:
+#   bash ops/verify/https-ui-check.sh
+#   bash ops/verify/https-ui-check.sh --skip-public
 
 set -euo pipefail
+
+# === Flags ===
+SKIP_PUBLIC=0
+
+# === Parse arguments ===
+for arg in "$@"; do
+  case $arg in
+    --skip-public)
+      SKIP_PUBLIC=1
+      shift || true
+      ;;
+    --help|-h)
+      cat <<EOF
+Usage: $0 [OPTIONS]
+
+Verify AKIOR HTTPS configuration and camera API availability.
+
+Options:
+  --skip-public   Skip public endpoint checks (LAN-only mode)
+  --help          Show this help message
+EOF
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $arg (use --help for usage)"
+      exit 1
+      ;;
+  esac
+done
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -140,6 +173,10 @@ fi
 echo ""
 echo "=== Summary ==="
 echo ""
+if [[ $SKIP_PUBLIC -eq 1 ]]; then
+    echo -e "${YELLOW}Mode:${NC} LAN-only (public checks skipped)"
+    echo ""
+fi
 echo -e "${GREEN}HTTPS URL:${NC} https://jarvis.local/"
 echo -e "${GREEN}HTTP Fallback:${NC} http://jarvis.local/"
 echo ""
