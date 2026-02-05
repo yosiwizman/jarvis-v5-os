@@ -110,6 +110,7 @@ while :; do
       --overscroll-history-navigation=0 \
       --ignore-certificate-errors \
       --disable-background-networking \
+      --disable-dev-shm-usage \
       --autoplay-policy=no-user-gesture-required \
       --user-data-dir="$PROFILE_DIR" \
       $GPU_FLAGS \
@@ -130,6 +131,7 @@ while :; do
       --overscroll-history-navigation=0 \
       --ignore-certificate-errors \
       --disable-background-networking \
+      --disable-dev-shm-usage \
       --autoplay-policy=no-user-gesture-required \
       --user-data-dir="$PROFILE_DIR" \
       $GPU_FLAGS \
