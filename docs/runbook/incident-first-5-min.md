@@ -269,6 +269,80 @@ docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d web
 
 ---
 
+## Symptom: TLS/UI Down (LAN)
+
+UI is unreachable on LAN via https://akior.local/ or https://akior.home.arpa/
+
+### Diagnosis
+
+```bash
+# Check if Caddy is running
+docker ps | grep jarvis-caddy
+
+# Check Caddy logs for TLS errors
+docker logs --tail=50 jarvis-caddy | grep -i tls
+
+# Check if port 443 is listening
+ss -tlnp | grep 443
+
+# Test HTTPS endpoint
+curl -vkI https://akior.local/ 2>&1 | grep -E "(Connected|SSL|certificate)"
+```
+
+### Common Causes
+
+| Issue | Symptoms | Solution |
+|-------|----------|----------|
+| **Caddy not running** | Port 443 not listening | Restart: `docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml restart caddy` |
+| **Internal CA expired** | "certificate has expired" error | Recreate Caddy data volume (see below) |
+| **Config syntax error** | Caddy restart loop | Check: `docker logs jarvis-caddy` for parse errors |
+| **Port conflict** | "bind: address already in use" | Find process: `sudo lsof -i :443` |
+| **mDNS not working** | "could not resolve akior.local" | Restart Avahi: `sudo systemctl restart avahi-daemon` |
+
+### Resolution: Recreate Internal CA
+
+If Caddy's internal CA is corrupted or expired:
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+
+# Stop Caddy
+docker compose -f deploy/compose.jarvis.yml stop caddy
+
+# Remove Caddy data volume (includes internal CA)
+docker volume rm deploy_caddy_data
+
+# Restart Caddy (will regenerate internal CA)
+docker compose -f deploy/compose.jarvis.yml up -d caddy
+
+# Verify TLS
+curl -vkI https://akior.local/
+```
+
+**Note:** After recreating the CA, Windows clients will need to re-trust the certificate:
+```powershell
+.\ops\trust-lan-https.ps1 -Apply
+```
+
+### Emergency Rollback to LAN-Only
+
+If TLS issues persist after troubleshooting:
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+sudo bash ops/rollback/switch-to-local-only-mode.sh
+```
+
+This will:
+- Stop any remote-access containers
+- Ensure Caddy uses internal TLS
+- Restart the stack cleanly
+- Run verification
+
+See [Remote Access Docs](../ops/remote-access.md#rollback-to-lan-only-mode) for details.
+
+---
+
 ## Escalation
 
 If service is not restored within 15 minutes:
@@ -276,7 +350,7 @@ If service is not restored within 15 minutes:
 1. Document what you've tried
 2. Capture full logs: `docker logs jarvis-server > server.log 2>&1`
 3. Check recent commits: `git log --oneline -10`
-4. Consider rollback (see [Deploy Ops](./deploy-ops.md#rollback-procedure))
+4. Consider rollback (see [Deploy Ops](./deploy-ops.md#rollback-procedure) or [LAN Rollback](../ops/remote-access.md#rollback-to-lan-only-mode))
 
 ---
 

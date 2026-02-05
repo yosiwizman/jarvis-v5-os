@@ -167,9 +167,75 @@ curl -X POST https://akior.home.arpa/api/admin/remote-access/disable
 
 Or in the Setup Wizard/Settings page, click "Disable Remote Access".
 
+## Rollback to LAN-Only Mode
+
+If you need to disable all remote access features and return to LAN-only operation:
+
+### Quick Rollback
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+sudo bash ops/rollback/switch-to-local-only-mode.sh
+```
+
+**What this does:**
+- Stops any remote-access Docker containers (Tailscale, etc.)
+- Ensures Caddy is using internal TLS (self-signed certificates)
+- Removes any Cloudflare DNS sync cron jobs
+- Restarts the core Docker stack
+- Restarts the kiosk service
+- Runs LAN verification to confirm everything works
+
+### Safe Testing (Dry-Run)
+
+Test what would happen without making changes:
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+sudo bash ops/rollback/switch-to-local-only-mode.sh --dry-run
+```
+
+This prints all actions that would be taken without executing them.
+
+### Options
+
+```bash
+# Dry-run mode (no changes)
+sudo bash ops/rollback/switch-to-local-only-mode.sh --dry-run
+
+# Skip kiosk restart (for testing)
+sudo bash ops/rollback/switch-to-local-only-mode.sh --no-kiosk-restart
+
+# Show help
+sudo bash ops/rollback/switch-to-local-only-mode.sh --help
+```
+
+### Verification After Rollback
+
+The rollback script automatically runs LAN verification. You can also run it manually:
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+bash ops/verify/kiosk-ui-verify.sh
+```
+
+### Logs
+
+Rollback logs are saved to:
+```
+/opt/jarvis/JARVIS-V5-OS/ops/rollback/_logs/rollback_YYYYMMDD_HHMMSS.log
+```
+
+These logs include:
+- Timestamps for every action
+- Commands executed
+- Output from Docker and systemctl
+- Verification results
+
 ## Related Documentation
 
 - [Tailscale Documentation](https://tailscale.com/kb/)
 - [Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve/)
 - [First Run Setup](../setup/first-run.md)
 - [LAN HTTPS Trust](./lan-tls-trust.md)
+- [Incident Response](../runbook/incident-first-5-min.md)
