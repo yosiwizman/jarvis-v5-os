@@ -97,6 +97,31 @@ AKIOR uses Caddy's internal Certificate Authority (CA) to provide HTTPS on your 
 - Used by the "3D Model" and "Capture" features
 - Get your key at: https://www.meshy.ai/api
 
+## Safe Degraded Mode
+
+AKIOR is designed to handle incomplete setup gracefully. When the system is not fully configured:
+
+**Expected Behavior:**
+- UI displays "Setup Required" banner on /menu
+- No 500 errors or exception spam in browser console
+- API endpoints that require configuration return HTTP 428 (Precondition Required) with a clear error message
+- Features that depend on setup are gated and won't attempt to make requests
+- Diagnostic endpoints (/api/health/status) remain accessible and report setup state
+
+**What Gets Gated:**
+- Voice Assistant (requires LLM provider configuration)
+- Image generation (requires OpenAI API key)
+- 3D model generation (requires Meshy API key)
+- Admin-only settings and configuration pages (require Owner PIN authentication)
+
+**What Remains Available:**
+- Setup wizard (/setup)
+- Diagnostics page (/diagnostics)
+- Menu page (shows available features and setup requirements)
+- Public health check endpoints
+
+This design ensures a clean first-run experience without error noise while clearly guiding users through configuration.
+
 ## Troubleshooting
 
 ### "Setup Required" still showing after configuring LLM

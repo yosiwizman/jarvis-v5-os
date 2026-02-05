@@ -725,6 +725,11 @@ export default function JarvisPage() {
       setStatus('listening');
       console.log(`🎤 Starting Jarvis... (connection: ${connectionIdRef.current})`);
       
+      // Check if media devices are available before requesting
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported in this browser');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,

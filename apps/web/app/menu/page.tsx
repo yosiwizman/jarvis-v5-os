@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildServerUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { useSetupStatus } from '@/hooks/useSetupStatus';
 import { BRAND, VOICE_ROUTE } from '@/lib/brand';
 
 type KeysMeta = {
@@ -38,9 +39,15 @@ const baseCards: MenuCard[] = [
 export default function MenuPage() {
   const router = useRouter();
   const { admin, pinConfigured, logout, loading: authLoading } = useAuth();
+  const { setupRequired, llmConfigured, loading: setupLoading } = useSetupStatus();
   const [keysMeta, setKeysMeta] = useState<KeysMeta | null>(null);
 
   useEffect(() => {
+    // Only fetch admin keys if setup is complete and user is admin
+    if (setupRequired || !admin) {
+      return;
+    }
+    
     let cancelled = false;
     fetch(buildServerUrl('/admin/keys/meta'), { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
@@ -53,12 +60,12 @@ export default function MenuPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [setupRequired, admin]);
 
   const setupIncomplete = useMemo(() => {
-    if (!keysMeta) return false;
-    return !keysMeta.openai?.present || !keysMeta.meshy?.present;
-  }, [keysMeta]);
+    // Use setup status from hook instead of keys meta
+    return setupRequired || !llmConfigured;
+  }, [setupRequired, llmConfigured]);
 
   // Determine if admin routes should show locked
   const showLocked = pinConfigured && !admin;
