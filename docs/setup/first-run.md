@@ -53,12 +53,22 @@ Alternatively, download from Settings or Diagnostics pages.
 ### Step 3: Configure LLM Provider
 
 1. Navigate to `https://akior.home.arpa/setup`
-2. In Step 3, select your LLM provider:
+2. In Step 4, select your LLM provider:
    - **OpenAI Cloud:** Enter your API key (starts with `sk-`)
-   - **Local/Compatible:** Enter your local server URL (e.g., `http://localhost:11434/v1` for Ollama)
+   - **Local/Compatible:** Enter your local server URL
+     - For Ollama: Use `http://host.docker.internal:11434/v1` (Docker) or `http://localhost:11434/v1` (native)
+     - For LM Studio or other OpenAI-compatible servers: use their base URL
 3. Click "Test Connection" to validate
 4. Click "Save Provider" to store the configuration
-5. Optionally add your Meshy API key for 3D features (Step 4)
+5. Optionally add your Meshy API key for 3D features (Step 5)
+
+**Docker Networking Note:**
+
+When AKIOR runs in Docker and you want to use Ollama running on the host machine:
+- The server container is configured with `host.docker.internal` pointing to the host
+- Default: `OLLAMA_BASE_URL=http://host.docker.internal:11434`
+- This is automatically set in `compose.jarvis.yml`
+- Works on Docker Desktop (Windows/Mac) and Docker on Linux with `extra_hosts` configuration
 
 ### Step 4: Verify Setup
 
@@ -89,8 +99,10 @@ AKIOR uses Caddy's internal Certificate Authority (CA) to provide HTTPS on your 
 
 **Local/OpenAI-Compatible:**
 - Use local models with Ollama, LM Studio, vLLM, etc.
+- Default for Ollama in Docker: `http://host.docker.internal:11434/v1`
 - Point to any OpenAI-compatible API endpoint
-- See [LLM Providers Guide](../ops/llm-providers.md) for setup examples
+- No API key required (unless your local server requires it)
+- See [LLM Providers Guide](../ops/llm-providers.md) for detailed Ollama setup
 
 **Meshy (Optional):**
 - Enables 3D model generation from images
@@ -104,7 +116,15 @@ AKIOR is designed to handle incomplete setup gracefully. When the system is not 
 **Expected Behavior:**
 - UI displays "Setup Required" banner on /menu
 - No 500 errors or exception spam in browser console
-- API endpoints that require configuration return HTTP 428 (Precondition Required) with a clear error message
+- API endpoints that require setup return **HTTP 428 (Precondition Required)** with structured error:
+  ```json
+  {
+    "ok": false,
+    "error": { "code": "SETUP_REQUIRED", "message": "..." },
+    "setup": { "ownerPin": false, "llm": false }
+  }
+  ```
+- Admin endpoints return **HTTP 401 (Unauthorized)** when setup is complete but user is not authenticated
 - Features that depend on setup are gated and won't attempt to make requests
 - Diagnostic endpoints (/api/health/status) remain accessible and report setup state
 

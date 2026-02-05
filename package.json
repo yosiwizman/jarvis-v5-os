@@ -15,6 +15,8 @@
     "typecheck": "npm run typecheck -ws --if-present",
     "test:settings": "tsx scripts/test-settings-normalization.ts",
     "test:contract": "tsx scripts/test-settings-contract.ts",
+    "test:setup-contract": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 tsx scripts/test-setup-contract.ts",
+    "test:setup-contract:ci": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 BACKEND_URL=https://localhost:1234 tsx scripts/test-setup-contract.ts",
     "test:notifications": "tsx scripts/test-notifications-sse.ts",
     "test:notifications:ci": "cross-env BACKEND_URL=http://localhost:1234 tsx scripts/test-notifications-sse.ts",
     "test:e2e": "playwright test",
