@@ -343,6 +343,74 @@ See [Remote Access Docs](../ops/remote-access.md#rollback-to-lan-only-mode) for 
 
 ---
 
+## Symptom: Deployment Drift Detected
+
+Diagnostics page shows "DEPLOYMENT DRIFT DETECTED" - web and server containers are running different git SHAs.
+
+### Diagnosis
+
+```bash
+# Verify drift with dedicated script
+bash /opt/jarvis/JARVIS-V5-OS/ops/verify/build-sync-check.sh
+
+# Or check manually
+curl -sk https://akior.local/web-build | jq '.git_sha'
+curl -sk https://akior.local/api/health/build | jq '.git_sha'
+```
+
+**Expected**: Both SHAs should match and should not be "unknown"
+
+### Common Causes
+
+| Cause | Symptoms | Why It Happens |
+|-------|----------|----------------|
+| **Manual container restart** | One SHA is newer | Only one container was rebuilt |
+| **Partial rebuild** | SHAs differ | Build args not set for both containers |
+| **Missing build metadata** | Both show "unknown" | GIT_SHA/BUILD_TIME not set during build |
+| **Cached layers** | Old SHA persists | Docker cache used old build |
+
+### Resolution
+
+```bash
+cd /opt/jarvis/JARVIS-V5-OS
+
+# Pull latest code (if needed)
+git pull origin main
+
+# Rebuild both containers with guaranteed sync
+bash ops/deploy/rebuild.sh
+```
+
+The rebuild script will:
+1. Extract current git SHA and timestamp
+2. Build both web and server with identical metadata
+3. Deploy with force-recreate (avoids cached containers)
+4. Automatically verify build sync
+
+### Verification
+
+After rebuild:
+
+```bash
+# Verify no drift
+bash ops/verify/build-sync-check.sh
+# Expected: "✓ No drift detected - web and server are in sync"
+
+# Check diagnostics page
+curl -sk https://akior.local/diagnostics | grep -o 'Web and Server are in sync'
+```
+
+### Force Rebuild (No Cache)
+
+If drift persists after standard rebuild:
+
+```bash
+# Rebuild without Docker cache (slower but guaranteed fresh)
+bash ops/deploy/rebuild.sh --no-cache
+```
+
+---
+
 ## Escalation
 
 If service is not restored within 15 minutes:
