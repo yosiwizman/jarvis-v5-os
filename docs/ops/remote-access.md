@@ -1,4 +1,4 @@
-# Remote Access via Tailscale Serve
+# Remote Access
 
 AKIOR supports optional secure remote access using [Tailscale](https://tailscale.com). This allows you to access your AKIOR instance from anywhere without opening ports on your router.
 
@@ -6,7 +6,157 @@ AKIOR supports optional secure remote access using [Tailscale](https://tailscale
 
 - **Security:** Uses Tailscale's WireGuard-based mesh VPN - no inbound WAN ports
 - **Default state:** Disabled (must be explicitly enabled)
-- **Requirement:** Tailscale must be installed on the AKIOR host machine
+- **Two approaches:**
+  - **Phase B.1 (Ubuntu host):** Tailscale container (profile-gated, zero-config)
+  - **Phase B.0 (Windows host):** Tailscale Serve on host machine
+
+---
+
+## Phase B.1 — Tailscale Container (Ubuntu)
+
+**For Ubuntu 22.04 deployments running `/opt/jarvis/JARVIS-V5-OS`**
+
+### Overview
+
+This approach runs Tailscale as an **optional Docker container** alongside JARVIS services. It's:
+- Profile-gated (disabled by default)
+- Zero-trust remote access (no inbound WAN ports)
+- Isolated from host system
+- Uses host networking to access localhost services (Caddy/web/server)
+
+### Prerequisites
+
+1. **Tailscale account**
+   - Sign up at https://tailscale.com (free for personal use)
+   
+2. **Auth key**
+   - Generate at: https://login.tailscale.com/admin/settings/keys
+   - Recommended: Reusable + Ephemeral for containerized deployments
+
+### Setup
+
+1. **Create local secrets file:**
+   ```bash
+   cd /opt/jarvis/JARVIS-V5-OS
+   cp deploy/secrets/tailscale.env.example deploy/secrets/tailscale.env
+   ```
+
+2. **Edit `deploy/secrets/tailscale.env` and add your auth key:**
+   ```bash
+   nano deploy/secrets/tailscale.env
+   # Replace YOUR_TAILSCALE_AUTH_KEY_HERE with your actual key
+   ```
+
+3. **Bring up the Tailscale profile:**
+   ```bash
+   bash ops/remote-access/tailscale-up.sh
+   ```
+
+4. **Verify it's running:**
+   ```bash
+   bash ops/verify/tailscale-check.sh
+   ```
+
+### Usage
+
+**Get your Tailscale hostname:**
+```bash
+# From the Ubuntu host
+cd /opt/jarvis/JARVIS-V5-OS/deploy
+docker compose exec tailscale tailscale status
+```
+
+Your hostname will look like: `jarvis-tailscale.tail12345.ts.net`
+
+**Access JARVIS from any device on your Tailscale network:**
+```
+https://<your-tailscale-hostname>/
+```
+
+### Management
+
+**Start Tailscale:**
+```bash
+bash ops/remote-access/tailscale-up.sh
+```
+
+**Stop Tailscale:**
+```bash
+bash ops/remote-access/tailscale-down.sh
+```
+
+**Check status:**
+```bash
+bash ops/verify/tailscale-check.sh
+```
+
+**View logs:**
+```bash
+docker logs jarvis-tailscale -f
+```
+
+### How It Works
+
+- Tailscale container runs with `network_mode: host`
+- This gives it direct access to localhost services (Caddy on port 3000)
+- No need for complex network bridges or port mapping
+- Container persists state in `tailscale-state` volume
+- Auth key is read from local `deploy/secrets/tailscale.env` (gitignored)
+
+### Security Notes
+
+1. **No WAN ports:** Tailscale uses NAT traversal - no router configuration needed
+2. **End-to-end encryption:** All traffic is encrypted via WireGuard
+3. **Tailscale ACLs:** Control which devices can access your JARVIS instance
+4. **Auth key safety:** 
+   - Never commit `deploy/secrets/tailscale.env` to git (it's gitignored)
+   - Use ephemeral keys for better security
+5. **Host networking:** Container shares host network stack for localhost access
+
+### Troubleshooting
+
+**Container not starting:**
+```bash
+# Check logs
+docker logs jarvis-tailscale
+
+# Verify secrets file exists
+ls -la /opt/jarvis/JARVIS-V5-OS/deploy/secrets/tailscale.env
+```
+
+**Not authenticated:**
+```bash
+# Check Tailscale status
+docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml \
+  exec tailscale tailscale status
+
+# If auth failed, regenerate your auth key and update secrets file
+```
+
+**Can't access JARVIS from Tailscale:**
+```bash
+# Verify Caddy is listening on localhost:3000
+ss -lntp | grep :3000
+
+# Check Tailscale can reach localhost services
+docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml \
+  exec tailscale curl -sk https://localhost:3000/
+```
+
+### Future: Phase B.2
+
+Phase B.2 will add:
+- Optional Cloudflare DNS sync
+- Public ACME certificates (Let's Encrypt)
+- Custom domain support
+
+These will remain **optional** and **profile-gated** - LAN-only operation will always be the default.
+
+---
+
+## Phase B.0 — Tailscale Serve (Windows)
+
+**For Windows deployments with Tailscale installed on the host**
 
 ## How It Works
 
