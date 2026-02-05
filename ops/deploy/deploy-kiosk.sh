@@ -33,6 +33,14 @@ log "Reset to origin/main"
 git reset --hard origin/main
 git clean -fd
 
+# Ensure Avahi mDNS is installed for LAN hostname resolution
+log "Deploying mDNS (Avahi)..."
+if [ -x ops/deploy/deploy-mdns.sh ]; then
+  bash ops/deploy/deploy-mdns.sh || log "Warning: mDNS deployment failed (non-fatal)"
+else
+  log "Warning: deploy-mdns.sh not found, skipping mDNS setup"
+fi
+
 log "Install unit + kiosk files"
 cp deploy/systemd/akior-kiosk.service /etc/systemd/system/akior-kiosk.service
 cp deploy/kiosk/xinitrc "$KIOSK_HOME/.xinitrc"
