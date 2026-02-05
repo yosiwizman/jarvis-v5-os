@@ -1,0 +1,17 @@
+[Unit]
+Description=Ensure Avahi-daemon (mDNS) is running for LAN hostnames
+Documentation=https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/networking/lan-mdns.md
+After=network-online.target avahi-daemon.service
+Wants=network-online.target
+Requires=avahi-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl start avahi-daemon.service
+ExecStart=/usr/bin/systemctl is-active avahi-daemon.service
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
