@@ -32,6 +32,15 @@ else
   log "[akior-kiosk] XDG_RUNTIME_DIR missing: $XDG_RUNTIME_DIR"
 fi
 
+# Find and set XAUTHORITY
+XAUTH_FILE=$(ls -t /tmp/serverauth.* 2>/dev/null | head -n 1 || echo "$HOME/.Xauthority")
+if [ -f "$XAUTH_FILE" ]; then
+  export XAUTHORITY="$XAUTH_FILE"
+  log "[akior-kiosk] XAUTHORITY=$XAUTHORITY"
+else
+  log "[akior-kiosk] XAUTHORITY not found"
+fi
+
 # Keep display awake
 xset -dpms || true
 xset s off || true
