@@ -65,6 +65,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy built artifacts
 COPY --from=builder /app/apps/server/dist ./dist
+RUN chmod -R 755 /app/dist
 COPY --from=builder /app/apps/server/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
