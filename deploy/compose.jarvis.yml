@@ -110,6 +110,31 @@ services:
       retries: 3
       start_period: 10s
 
+  # Tailscale zero-trust remote access (optional, profile-gated)
+  # Enable with: docker compose --profile remote-access up -d
+  # Requires: deploy/secrets/tailscale.env with TS_AUTHKEY set
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: jarvis-tailscale
+    hostname: jarvis-tailscale
+    restart: unless-stopped
+    profiles:
+      - remote-access
+    # Host networking: simplifies access to localhost services (Caddy/web/server)
+    # Tailscale will use the host's network stack directly
+    network_mode: "host"
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - secrets/tailscale.env
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+
 networks:
   jarvis-net:
     driver: bridge
@@ -118,4 +143,6 @@ volumes:
   jarvis-data:
     driver: local
   caddy_data:
+    driver: local
+  tailscale-state:
     driver: local

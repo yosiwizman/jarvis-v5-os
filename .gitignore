@@ -15,6 +15,7 @@ dist
 !.env.example
 !.env.*.example
 deploy/jarvis.env
+deploy/secrets/tailscale.env
 infra/certs/*.pem
 !infra/certs/localhost.pem
 !infra/certs/localhost-key.pem
