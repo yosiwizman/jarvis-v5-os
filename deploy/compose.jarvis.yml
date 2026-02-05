@@ -88,13 +88,18 @@ services:
         BUILD_TIME: ${BUILD_TIME:-unknown}
     container_name: jarvis-server
     restart: unless-stopped
+    # Allow server to reach host services (e.g., Ollama on host machine)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
       - PORT=1234
-      - HOST=0.0.0.0
+      - HOST=*******
       # Runtime SHA for /api/ops/drift endpoint
       - GIT_SHA=${GIT_SHA:-unknown}
       - APP_GIT_SHA=${GIT_SHA:-unknown}
+      # Default Ollama base URL for local LLM provider
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
     env_file:
       - jarvis.env
     expose:
