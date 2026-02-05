@@ -362,3 +362,30 @@ After restoring service:
 2. Monitor logs for 5 minutes
 3. Document root cause
 4. Update runbook if new failure mode discovered
+
+## ERR_CONNECTION_REFUSED (akior.local)
+
+**Symptom:** LAN clients cannot reach https://akior.local/menu (browser shows ERR_CONNECTION_REFUSED)
+
+**Root cause possibilities:**
+1. Avahi not advertising akior.local via mDNS
+2. Ports 80/443 not listening on LAN interfaces
+3. Caddy container not running
+4. Firewall blocking LAN access
+
+**Immediate checks (run on host):**
+- Run automated verification: bash ops/verify/lan-reachability-check.sh
+- Check Caddy status: docker compose -f deploy/compose.jarvis.yml ps caddy
+- Check port listeners: sudo ss -lntp | egrep ':(80|443)'
+- Check Avahi: systemctl status avahi-daemon | grep "running"
+- Check Caddy logs: docker compose -f deploy/compose.jarvis.yml logs --tail=50 caddy
+
+**Quick fixes:**
+- If Caddy is down: docker compose -f deploy/compose.jarvis.yml up -d --force-recreate caddy
+- If Avahi issue: bash ops/linux/lan-mdns/install.sh
+- Verify: bash ops/verify/lan-reachability-check.sh
+
+**Rollback (last resort):**
+bash ops/rollback/switch-to-local-only-mode.sh
+
+See docs/ops/remote-access.md for recovery procedures.
