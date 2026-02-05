@@ -4078,18 +4078,16 @@ const publicHostEnv = process.env.PUBLIC_HOST ?? process.env.SERVER_PUBLIC_HOST;
 const PUBLIC_HOST =
   publicHostEnv?.trim() || (HOST === '0.0.0.0' ? process.env.HOSTNAME || 'localhost' : HOST);
 
-fastify
-  .listen({ port: PORT, host: HOST })
-  .then(() => {
-    const protocol = hasCertificates ? 'https' : 'http';
-    const displayHost = PUBLIC_HOST || (HOST === '0.0.0.0' ? 'localhost' : HOST);
-    if (hasCertificates) {
-      logger.warn(`HTTPS & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
-    } else {
-      logger.warn(`HTTP & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
-    }
-  })
-  .catch((err) => {
-    logger.error(err, 'Failed to start server');
-    process.exit(1);
-  });
+try {
+  await fastify.listen({ port: PORT, host: HOST });
+  const protocol = hasCertificates ? 'https' : 'http';
+  const displayHost = PUBLIC_HOST || (HOST === '*******' ? 'localhost' : HOST);
+  if (hasCertificates) {
+    logger.warn(`HTTPS & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
+  } else {
+    logger.warn(`HTTP & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
+  }
+} catch (err) {
+  logger.error(err, 'Failed to start server');
+  process.exit(1);
+}
