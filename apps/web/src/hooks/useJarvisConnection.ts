@@ -98,6 +98,11 @@ export function useJarvisConnection(options: UseJarvisConnectionOptions = {}) {
       activeCallsRef.current.clear();
       hasActiveResponseRef.current = false;
 
+      // Check if media devices are available before requesting
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported in this browser');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,

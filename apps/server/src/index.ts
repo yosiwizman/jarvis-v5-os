@@ -258,6 +258,11 @@ fastify.get('/api/health/status', async (req, reply) => {
     level,
     reasons,
     details,
+    setup: {
+      ownerPin: pinConfigured,
+      llm: llmStatus.configured,
+      llmProvider: llmConfig.provider
+    },
     git_sha: process.env.GIT_SHA || 'unknown',
     time: new Date().toISOString()
   };
@@ -2262,7 +2267,17 @@ fastify.post('/api/openai/text-chat', async (req, reply) => {
     } catch (error) {
       if (!shouldTryLocal) {
         const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
-        return reply.status(500).send({ error: message });
+        return reply.status(428).send({ 
+          ok: false,
+          error: {
+            code: 'SETUP_REQUIRED',
+            message
+          },
+          setup: {
+            ownerPin: isPinConfigured(),
+            llm: isLLMConfigured().configured
+          }
+        });
       }
       // If local is available, we can continue without cloud key
     }
@@ -2515,7 +2530,17 @@ fastify.post('/api/openai/text-chat/tool-result', async (req, reply) => {
     apiKey = getOpenAiApiKey();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
-    return reply.status(500).send({ error: message });
+    return reply.status(428).send({ 
+      ok: false,
+      error: {
+        code: 'SETUP_REQUIRED',
+        message
+      },
+      setup: {
+        ownerPin: isPinConfigured(),
+        llm: isLLMConfigured().configured
+      }
+    });
   }
 
   // For the Responses API, submit tool results as a continuation with the previous response
@@ -2643,7 +2668,17 @@ fastify.post('/api/openai/realtime', async (req, reply) => {
     apiKey = getOpenAiApiKey();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
-    return reply.status(500).send({ error: message });
+    return reply.status(428).send({ 
+      ok: false,
+      error: {
+        code: 'SETUP_REQUIRED',
+        message
+      },
+      setup: {
+        ownerPin: isPinConfigured(),
+        llm: isLLMConfigured().configured
+      }
+    });
   }
 
   const url = new URL('https://api.openai.com/v1/realtime');
@@ -2820,7 +2855,17 @@ fastify.post('/api/openai/generate-image', async (req, reply) => {
     apiKey = getOpenAiApiKey();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
-    return reply.status(500).send({ error: message });
+    return reply.status(428).send({ 
+      ok: false,
+      error: {
+        code: 'SETUP_REQUIRED',
+        message
+      },
+      setup: {
+        ownerPin: isPinConfigured(),
+        llm: isLLMConfigured().configured
+      }
+    });
   }
 
   const model = settings?.model?.trim() || 'gpt-image-1';
@@ -3092,7 +3137,17 @@ fastify.post('/api/openai/vision', async (req, reply) => {
     apiKey = getOpenAiApiKey();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'OpenAI API key not configured';
-    return reply.status(500).send({ error: message });
+    return reply.status(428).send({ 
+      ok: false,
+      error: {
+        code: 'SETUP_REQUIRED',
+        message
+      },
+      setup: {
+        ownerPin: isPinConfigured(),
+        llm: isLLMConfigured().configured
+      }
+    });
   }
 
   try {
@@ -3659,7 +3714,17 @@ fastify.post('/api/models/create', async (req, reply) => {
     getMeshyApiKey();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Missing Meshy API key';
-    return reply.status(500).send({ error: message });
+    return reply.status(428).send({ 
+      ok: false,
+      error: {
+        code: 'SETUP_REQUIRED',
+        message
+      },
+      setup: {
+        ownerPin: isPinConfigured(),
+        llm: isLLMConfigured().configured
+      }
+    });
   }
 
   const id = Math.random().toString(36).slice(2);

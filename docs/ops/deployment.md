@@ -41,7 +41,7 @@
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key for AI features |
+| `OPENAI_API_KEY` | Conditional | OpenAI API key for AI features. Can also be configured via UI at /settings. If not set, endpoints return HTTP 428 (Precondition Required) instead of 500. |
 | `ELEVENLABS_API_KEY` | No | ElevenLabs TTS API key |
 | `OPENWEATHER_API_KEY` | No | OpenWeatherMap API key |
 | `SERPAPI_API_KEY` | No | SerpAPI key for web search |
@@ -49,6 +49,25 @@
 | `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
 | `SPOTIFY_CLIENT_ID` | No | Spotify client ID |
 | `SPOTIFY_CLIENT_SECRET` | No | Spotify client secret |
+
+**Note on API Key Configuration:**
+- API keys (OpenAI, Meshy) can be configured via environment variables OR through the web UI at /settings
+- When keys are missing, API endpoints return HTTP 428 (Precondition Required) with a structured error message:
+  ```json
+  {
+    "ok": false,
+    "error": {
+      "code": "SETUP_REQUIRED",
+      "message": "OpenAI API key not configured"
+    },
+    "setup": {
+      "ownerPin": true,
+      "llm": false
+    }
+  }
+  ```
+- This prevents 500 errors and error spam in the UI during first-run or incomplete setup
+- Check /api/health/status to verify configuration state
 
 ## Initial Deployment
 
