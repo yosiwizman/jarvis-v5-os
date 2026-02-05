@@ -1,0 +1,18 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<!-- Advertise AKIOR HTTPS/HTTP services via mDNS for LAN discovery -->
+<service-group>
+  <name replace-wildcards="yes">AKIOR Kiosk on %h</name>
+  
+  <!-- HTTPS service -->
+  <service>
+    <type>_https._tcp</type>
+    <port>443</port>
+  </service>
+  
+  <!-- HTTP service -->
+  <service>
+    <type>_http._tcp</type>
+    <port>80</port>
+  </service>
+</service-group>
