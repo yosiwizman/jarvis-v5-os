@@ -1,0 +1,15 @@
+[Unit]
+Description=JARVIS Auto-Deploy Service
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=yosi
+WorkingDirectory=/opt/jarvis/JARVIS-V5-OS
+ExecStart=/opt/jarvis/JARVIS-V5-OS/ops/deploy.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch JARVIS Repository for Changes
+After=network.target
+
+[Path]
+# Watch for changes to .git/refs/heads/main (indicates git pull happened)
+PathModified=/opt/jarvis/JARVIS-V5-OS/.git/refs/heads/main
+
+[Install]
+WantedBy=multi-user.target
