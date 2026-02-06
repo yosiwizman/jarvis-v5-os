@@ -35,6 +35,47 @@ function log_warn() {
     echo -e "${YELLOW}[WARN] $1${NC}"
 }
 
+# =============================================================================
+# Tool Verification
+# Ensures required tools are available before attempting deployment.
+# If execute bit is missing, user can run: bash ops/deploy.sh
+# =============================================================================
+function verify_tools() {
+    local missing=0
+    
+    if ! command -v git &> /dev/null; then
+        log_error "git is not installed or not in PATH"
+        echo "  Install: https://git-scm.com/downloads"
+        missing=1
+    fi
+    
+    if ! command -v docker &> /dev/null; then
+        log_error "docker is not installed or not in PATH"
+        echo "  Install: https://docs.docker.com/get-docker/"
+        missing=1
+    fi
+    
+    # Check for docker compose (v2 plugin or standalone)
+    if docker compose version &> /dev/null; then
+        : # docker compose v2 plugin available
+    elif command -v docker-compose &> /dev/null; then
+        : # standalone docker-compose available
+    else
+        log_error "docker compose is not available"
+        echo "  Docker Compose v2 is included with Docker Desktop."
+        echo "  For Linux: https://docs.docker.com/compose/install/"
+        missing=1
+    fi
+    
+    if [ $missing -eq 1 ]; then
+        echo ""
+        log_error "Please install missing tools and try again."
+        exit 1
+    fi
+    
+    log_success "All required tools verified (git, docker, docker compose)"
+}
+
 function get_git_sha() {
     git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown"
 }
@@ -125,4 +166,5 @@ function verify_deployment() {
 # Main execution
 log_info "AKIOR Deployment Script"
 log_info "Repository: $REPO_ROOT"
+verify_tools
 deploy
