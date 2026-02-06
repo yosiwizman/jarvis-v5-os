@@ -94,7 +94,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=1234
-      - HOST=*******
+      - HOST=0.0.0.0
       # Runtime SHA for /api/ops/drift endpoint
       - GIT_SHA=${GIT_SHA:-unknown}
       - APP_GIT_SHA=${GIT_SHA:-unknown}
