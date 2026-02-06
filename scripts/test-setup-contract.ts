@@ -318,6 +318,74 @@ async function runTests() {
     assert('meta' in data, 'Response should include meta object');
   });
   
+  // --- Regression: 428 vs 401 Behavior Tests ---
+  // These tests verify proper HTTP status codes for different setup states.
+  // Per RFC 6585, 428 (Precondition Required) indicates setup is needed.
+  await test('Gated endpoints return proper status codes based on setup state', async () => {
+    // First, check current setup status
+    const statusResponse = await testFetch(`${BACKEND_URL}/api/health/status`);
+    const statusData = await statusResponse.json();
+    
+    // Test a gated endpoint without authentication
+    const gatedResponse = await testFetch(`${BACKEND_URL}/api/openai/realtime`, {
+      method: 'POST',
+      body: JSON.stringify({ sdp: 'test', model: 'gpt-4' }),
+    });
+    
+    // If setup is incomplete (no LLM), should return 428
+    // If setup is complete but not authenticated, should return 401
+    if (!statusData.setup?.llm) {
+      assertEqual(
+        gatedResponse.status,
+        428,
+        'Gated endpoint should return 428 when LLM not configured'
+      );
+      
+      const gatedData = await gatedResponse.json();
+      assert(
+        gatedData.error?.code === 'SETUP_REQUIRED',
+        'Error code should be SETUP_REQUIRED'
+      );
+      assert(
+        'setup' in gatedData,
+        'Response should include setup status object'
+      );
+      console.log('  Note: Got expected 428 (setup required)');
+    } else {
+      // Setup complete, should require auth (401) or succeed
+      assert(
+        gatedResponse.status === 401 || gatedResponse.ok,
+        `Expected 401 or success when setup complete, got ${gatedResponse.status}`
+      );
+      console.log(`  Note: Setup complete, got ${gatedResponse.status}`);
+    }
+  });
+  
+  await test('Health status includes setup object for UI gating', async () => {
+    const response = await testFetch(`${BACKEND_URL}/api/health/status`);
+    assert(response.ok, 'Health status should return 200');
+    
+    const data = await response.json();
+    
+    // Verify setup object structure for UI consumption
+    assert('setup' in data, 'Response must include setup object');
+    assert('ownerPin' in data.setup, 'Setup must include ownerPin field');
+    assert('llm' in data.setup, 'Setup must include llm field');
+    assert('level' in data, 'Response must include level field');
+    
+    // Verify level reflects setup state
+    if (!data.setup.ownerPin || !data.setup.llm) {
+      assertEqual(
+        data.level,
+        'setup_required',
+        'Level should be setup_required when setup incomplete'
+      );
+    }
+    
+    console.log(`  Setup state: PIN=${data.setup.ownerPin}, LLM=${data.setup.llm}`);
+    console.log(`  Level: ${data.level}`);
+  });
+  
   // --- Cleanup Tests (if needed) ---
   // Note: We don't clean up PIN/config to avoid breaking subsequent runs
   
