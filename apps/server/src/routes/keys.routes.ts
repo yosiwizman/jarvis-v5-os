@@ -9,6 +9,7 @@ import {
   checkRateLimit,
   getClientIp,
   requireCsrf,
+  requireOrigin,
   audit,
 } from '../security/index.js';
 
@@ -42,7 +43,7 @@ export function registerKeyRoutes(fastify: FastifyInstance, io: SocketServer) {
    * - 428 if setup incomplete
    * - 401 if not authenticated
    * - 429 if rate limited
-   * - 403 if CSRF invalid
+   * - 403 if CSRF invalid or Origin not allowed
    */
   fastify.put('/api/admin/keys', async (req, reply) => {
     const ip = getClientIp(req);
@@ -79,6 +80,9 @@ export function registerKeyRoutes(fastify: FastifyInstance, io: SocketServer) {
     // CSRF protection
     if (!(await requireCsrf(req, reply))) return;
     
+    // Origin enforcement
+    if (!(await requireOrigin(req, reply))) return;
+    
     const body = PutSchema.parse(req.body ?? {});
     let updated = false;
     const updatedKeys: string[] = [];
@@ -114,7 +118,7 @@ export function registerKeyRoutes(fastify: FastifyInstance, io: SocketServer) {
    * - 428 if setup incomplete
    * - 401 if not authenticated
    * - 429 if rate limited
-   * - 403 if CSRF invalid
+   * - 403 if CSRF invalid or Origin not allowed
    */
   fastify.delete('/api/admin/keys/:name', async (req, reply) => {
     const ip = getClientIp(req);
@@ -151,6 +155,9 @@ export function registerKeyRoutes(fastify: FastifyInstance, io: SocketServer) {
     
     // CSRF protection
     if (!(await requireCsrf(req, reply))) return;
+    
+    // Origin enforcement
+    if (!(await requireOrigin(req, reply))) return;
     
     const params = req.params as { name: 'meshy' | 'openai' };
     deleteSecret(params.name);

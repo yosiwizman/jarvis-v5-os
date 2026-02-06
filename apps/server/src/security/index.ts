@@ -5,6 +5,8 @@
  * - Rate limiting
  * - CSRF protection
  * - Audit logging
+ * - Security headers
+ * - Origin enforcement
  */
 
 export {
@@ -44,3 +46,19 @@ export {
   closeAuditLog,
   audit,
 } from './auditLog.js';
+
+export {
+  // Security headers
+  SECURITY_HEADERS,
+  applySecurityHeaders,
+  securityHeadersHook,
+  registerSecurityHeaders,
+} from './headers.js';
+
+export {
+  // Origin enforcement
+  type OriginErrorResponse,
+  isOriginAllowed,
+  getOrigin,
+  requireOrigin,
+} from './origin.js';
