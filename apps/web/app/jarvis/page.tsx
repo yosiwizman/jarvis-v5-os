@@ -8,6 +8,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { handleCameraAnalysis } from '@/lib/camera-handler';
+import { useSetupStatus } from '@/hooks/useSetupStatus';
+import { SetupRequiredBanner } from '@/components/SetupRequiredBanner';
 
 // Dynamically import 3D viewer to avoid SSR issues
 const JarvisModelViewer = dynamic(
@@ -25,6 +27,10 @@ const FFT_BARS = 64;
  * No panels, no controls - just the pure Jarvis interface.
  */
 export default function JarvisPage() {
+  // Setup status - gate connection until setup is complete
+  const { setupRequired, llmConfigured, loading: setupLoading } = useSetupStatus();
+  const setupComplete = !setupRequired && llmConfigured;
+  
   const [status, setStatus] = useState<'idle' | 'listening' | 'active' | 'error'>('idle');
   const [audioLevel, setAudioLevel] = useState(0);
   const [fftData, setFftData] = useState<number[]>(new Array(FFT_BARS).fill(0));
@@ -133,7 +139,20 @@ export default function JarvisPage() {
   }, []);
 
   // Auto-start connection on mount with duplicate prevention
+  // GATED: Only starts when setup is complete (PIN + LLM configured)
   useEffect(() => {
+    // Wait for setup status to load
+    if (setupLoading) {
+      console.log('⏳ Waiting for setup status...');
+      return;
+    }
+    
+    // Don't start if setup is incomplete
+    if (!setupComplete) {
+      console.log('⚠️ Setup incomplete - connection gated. PIN or LLM not configured.');
+      return;
+    }
+    
     // Prevent duplicate connections (React StrictMode can cause double mounting)
     if (isConnectingRef.current || status !== 'idle') {
       console.log('⚠️ Connection already in progress or active, skipping duplicate mount');
@@ -160,7 +179,7 @@ export default function JarvisPage() {
         connectionIdRef.current = null;
       }
     };
-  }, []); // Empty deps - only run on mount/unmount
+  }, [setupLoading, setupComplete]); // Re-run when setup status changes
 
   // Audio level monitoring with FFT
   useEffect(() => {
@@ -981,6 +1000,15 @@ export default function JarvisPage() {
   // Logo is now static - no volume-based animation
   const logoScale = 1;
   const glowIntensity = 0;
+
+  // Show setup banner if setup is incomplete
+  if (!setupLoading && !setupComplete) {
+    return (
+      <div className="fixed inset-0 left-0 flex items-center justify-center bg-[#0a0a0f]">
+        <SetupRequiredBanner />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 left-0 flex items-center justify-center bg-[#0a0a0f]">
