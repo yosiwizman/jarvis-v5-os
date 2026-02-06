@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { buildServerUrl } from '@/lib/api';
+import { apiFetch, CsrfError } from '@/lib/apiFetch';
 import { useSystemStatus, getStatusColor, StatusLevel } from '@/hooks/useSystemStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { BRAND, PRIMARY_HOSTNAME } from '@/lib/brand';
@@ -258,10 +259,9 @@ export default function SetupPage() {
       if (remoteAuthKey.trim()) {
         body.authKey = remoteAuthKey.trim();
       }
-      const response = await fetch(buildServerUrl('/admin/remote-access/enable'), {
+      const response = await apiFetch(buildServerUrl('/admin/remote-access/enable'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(body),
       });
       const result = await response.json();
@@ -273,7 +273,8 @@ export default function SetupPage() {
         setRemoteFeedback({ type: 'error', message: result.message || 'Failed to enable remote access' });
       }
     } catch (error) {
-      setRemoteFeedback({ type: 'error', message: 'Failed to enable remote access' });
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
+      setRemoteFeedback({ type: 'error', message: csrfMsg || 'Failed to enable remote access' });
     } finally {
       setRemoteEnabling(false);
     }
@@ -283,9 +284,8 @@ export default function SetupPage() {
     setRemoteDisabling(true);
     setRemoteFeedback(null);
     try {
-      const response = await fetch(buildServerUrl('/admin/remote-access/disable'), {
+      const response = await apiFetch(buildServerUrl('/admin/remote-access/disable'), {
         method: 'POST',
-        credentials: 'include',
       });
       const result = await response.json();
       if (result.ok) {
@@ -295,7 +295,8 @@ export default function SetupPage() {
         setRemoteFeedback({ type: 'error', message: result.message || 'Failed to disable remote access' });
       }
     } catch (error) {
-      setRemoteFeedback({ type: 'error', message: 'Failed to disable remote access' });
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
+      setRemoteFeedback({ type: 'error', message: csrfMsg || 'Failed to disable remote access' });
     } finally {
       setRemoteDisabling(false);
     }
@@ -306,14 +307,14 @@ export default function SetupPage() {
     setLlmTestResult(null);
     
     try {
-      const response = await fetch(buildServerUrl('/admin/llm/test'), {
+      const response = await apiFetch(buildServerUrl('/admin/llm/test'), {
         method: 'POST',
-        credentials: 'include',
       });
       const result = await response.json();
       setLlmTestResult(result);
     } catch (error) {
-      setLlmTestResult({ ok: false, error: 'Failed to test connection' });
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
+      setLlmTestResult({ ok: false, error: csrfMsg || 'Failed to test connection' });
     } finally {
       setLlmTesting(false);
     }
@@ -332,10 +333,9 @@ export default function SetupPage() {
         body.apiKey = llmApiKey;
       }
       
-      const response = await fetch(buildServerUrl('/admin/llm/config'), {
+      const response = await apiFetch(buildServerUrl('/admin/llm/config'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(body),
       });
       
@@ -349,7 +349,8 @@ export default function SetupPage() {
         setLlmFeedback({ type: 'error', message: result.error || 'Failed to save configuration' });
       }
     } catch (error) {
-      setLlmFeedback({ type: 'error', message: 'Failed to save configuration' });
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
+      setLlmFeedback({ type: 'error', message: csrfMsg || 'Failed to save configuration' });
     } finally {
       setLlmSaving(false);
     }
@@ -362,7 +363,7 @@ export default function SetupPage() {
     setValidation(prev => ({ ...prev, [name]: { validating: true } }));
     
     try {
-      const response = await fetch(buildServerUrl('/admin/keys/validate'), {
+      const response = await apiFetch(buildServerUrl('/admin/keys/validate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, provider: name }),
@@ -370,9 +371,10 @@ export default function SetupPage() {
       const result = await response.json();
       setValidation(prev => ({ ...prev, [name]: { validating: false, result } }));
     } catch (error) {
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
       setValidation(prev => ({ 
         ...prev, 
-        [name]: { validating: false, result: { ok: false, error: 'Validation failed' } } 
+        [name]: { validating: false, result: { ok: false, error: csrfMsg || 'Validation failed' } } 
       }));
     }
   };
@@ -388,7 +390,7 @@ export default function SetupPage() {
     setFeedback(prev => ({ ...prev, [name]: undefined }));
 
     try {
-      const response = await fetch(buildServerUrl('/admin/keys'), {
+      const response = await apiFetch(buildServerUrl('/admin/keys'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [name]: value }),
@@ -406,9 +408,10 @@ export default function SetupPage() {
       setValidation(prev => ({ ...prev, [name]: { validating: false } }));
       setFeedback(prev => ({ ...prev, [name]: { type: 'success', message: 'Key saved successfully!' } }));
     } catch (error) {
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
       setFeedback(prev => ({
         ...prev,
-        [name]: { type: 'error', message: error instanceof Error ? error.message : 'Failed to save key' },
+        [name]: { type: 'error', message: csrfMsg || (error instanceof Error ? error.message : 'Failed to save key') },
       }));
     } finally {
       setSavingKeys(prev => ({ ...prev, [name]: false }));

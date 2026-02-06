@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '@/lib/apiFetch';
 
 export type AuthState = {
   admin: boolean;
@@ -66,10 +67,9 @@ export function useAuth() {
 
   const login = useCallback(async (pin: string): Promise<{ ok: boolean; error?: string }> => {
     try {
-      const response = await fetch('/api/auth/pin/login', {
+      const response = await apiFetch('/api/auth/pin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ pin }),
       });
       
@@ -89,9 +89,8 @@ export function useAuth() {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
-      await fetch('/api/auth/pin/logout', {
+      await apiFetch('/api/auth/pin/logout', {
         method: 'POST',
-        credentials: 'include',
       });
     } catch {
       // Ignore errors on logout
@@ -103,10 +102,9 @@ export function useAuth() {
 
   const setPin = useCallback(async (pin: string): Promise<{ ok: boolean; error?: string }> => {
     try {
-      const response = await fetch('/api/auth/pin/set', {
+      const response = await apiFetch('/api/auth/pin/set', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ pin }),
       });
       

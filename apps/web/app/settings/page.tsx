@@ -20,6 +20,7 @@ import {
   isIntegrationConnected
 } from '@shared/settings';
 import { buildServerUrl } from '@/lib/api';
+import { apiFetch, CsrfError } from '@/lib/apiFetch';
 import { getRootSocket } from '@/lib/socket';
 import { useTheme } from '@/context/ThemeContext';
 import { ConversationHistory } from '@/components/ConversationHistory';
@@ -183,7 +184,7 @@ export default function SettingsPage() {
     setFeedback((prev) => ({ ...prev, [name]: undefined }));
 
     try {
-      const response = await fetch(buildServerUrl('/admin/keys'), {
+      const response = await apiFetch(buildServerUrl('/admin/keys'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [name]: value })
@@ -208,11 +209,12 @@ export default function SettingsPage() {
       setPendingKeys((prev) => ({ ...prev, [name]: '' }));
       setFeedback((prev) => ({ ...prev, [name]: { type: 'success', message: 'Key saved.' } }));
     } catch (error) {
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
       setFeedback((prev) => ({
         ...prev,
         [name]: {
           type: 'error',
-          message: error instanceof Error ? error.message : 'Failed to save key'
+          message: csrfMsg || (error instanceof Error ? error.message : 'Failed to save key')
         }
       }));
     } finally {
@@ -224,7 +226,7 @@ export default function SettingsPage() {
     setSavingKeys((prev) => ({ ...prev, [name]: true }));
     setFeedback((prev) => ({ ...prev, [name]: undefined }));
     try {
-      const response = await fetch(buildServerUrl(`/admin/keys/${name}`), { method: 'DELETE' });
+      const response = await apiFetch(buildServerUrl(`/admin/keys/${name}`), { method: 'DELETE' });
       let payload: any = null;
       try {
         payload = await response.json();
@@ -245,11 +247,12 @@ export default function SettingsPage() {
       setPendingKeys((prev) => ({ ...prev, [name]: '' }));
       setFeedback((prev) => ({ ...prev, [name]: { type: 'success', message: 'Key removed.' } }));
     } catch (error) {
+      const csrfMsg = error instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
       setFeedback((prev) => ({
         ...prev,
         [name]: {
           type: 'error',
-          message: error instanceof Error ? error.message : 'Failed to delete key'
+          message: csrfMsg || (error instanceof Error ? error.message : 'Failed to delete key')
         }
       }));
     } finally {
@@ -266,7 +269,7 @@ export default function SettingsPage() {
     setShowVerifyForm(false);
 
     try {
-      const res = await fetch(buildServerUrl('/api/3dprint/login'), {
+      const res = await apiFetch(buildServerUrl('/api/3dprint/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -289,8 +292,9 @@ export default function SettingsPage() {
         setBambuAuthMessage(data.error || 'Login failed');
       }
     } catch (err) {
+      const csrfMsg = err instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
       setBambuAuthStatus('error');
-      setBambuAuthMessage(err instanceof Error ? err.message : 'Login error');
+      setBambuAuthMessage(csrfMsg || (err instanceof Error ? err.message : 'Login error'));
     }
     setIsLoggingIn(false);
   };
@@ -303,7 +307,7 @@ export default function SettingsPage() {
     setBambuAuthMessage('');
 
     try {
-      const res = await fetch(buildServerUrl('/api/3dprint/verify'), {
+      const res = await apiFetch(buildServerUrl('/api/3dprint/verify'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: bambuEmail, code: bambuCode })
@@ -321,8 +325,9 @@ export default function SettingsPage() {
         setBambuAuthMessage(data.error || 'Verification failed');
       }
     } catch (err) {
+      const csrfMsg = err instanceof CsrfError ? 'Your session has expired. Please refresh the page and try again.' : null;
       setBambuAuthStatus('error');
-      setBambuAuthMessage(err instanceof Error ? err.message : 'Verification error');
+      setBambuAuthMessage(csrfMsg || (err instanceof Error ? err.message : 'Verification error'));
     }
     setIsVerifyingCode(false);
   };

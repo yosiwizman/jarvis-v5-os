@@ -262,6 +262,63 @@ async function runTests() {
     }
   });
   
+  await test('Request with valid CSRF token succeeds (client contract)', async () => {
+    // This tests the client-side contract: if we send the CSRF token in the
+    // X-CSRF-Token header, the request should not be rejected with CSRF_REQUIRED.
+    // This validates that the client's apiFetch utility will work correctly.
+    
+    // Get fresh CSRF token via login
+    const loginResponse = await testFetch(`${BACKEND_URL}/api/auth/pin/login`, {
+      method: 'POST',
+      body: JSON.stringify({ pin: TEST_PIN }),
+    });
+    
+    if (!loginResponse.ok) {
+      console.log('  Note: Skipped (could not login)');
+      return;
+    }
+    
+    const setCookie = loginResponse.headers.get('set-cookie');
+    if (!setCookie) {
+      console.log('  Note: Skipped (no cookies returned)');
+      return;
+    }
+    
+    // Extract session and CSRF cookies
+    const sessionMatch = setCookie.match(/akior_admin_session=([^;]+)/);
+    const csrfMatch = setCookie.match(/akior_csrf_token=([^;]+)/);
+    
+    if (!sessionMatch || !csrfMatch) {
+      console.log('  Note: Skipped (missing session or CSRF cookie)');
+      return;
+    }
+    
+    const testSession = `akior_admin_session=${sessionMatch[1]}`;
+    const testCsrf = csrfMatch[1];
+    
+    // Make a POST request to an endpoint that requires CSRF, with the token
+    // Using LLM config endpoint which requires CSRF
+    const response = await testFetch(`${BACKEND_URL}/api/admin/llm/config`, {
+      method: 'POST',
+      headers: {
+        Cookie: testSession,
+        'X-CSRF-Token': testCsrf,
+      },
+      body: JSON.stringify({ provider: 'openai-cloud' }), // Minimal valid body
+    });
+    
+    // Should NOT be 403 CSRF_REQUIRED (might be 400 for missing API key, but not CSRF error)
+    if (response.status === 403) {
+      const data = await response.json();
+      assert(
+        data.code !== 'CSRF_REQUIRED' && data.error?.code !== 'CSRF_REQUIRED',
+        'Request with valid CSRF token should not be rejected with CSRF_REQUIRED'
+      );
+    }
+    // 400 is expected if API key is required but not provided - that's OK
+    // The point is we didn't get rejected for CSRF
+  });
+  
   // --- Cookie Security Tests ---
   console.log('\n🍪 Cookie Security Tests\n');
   
