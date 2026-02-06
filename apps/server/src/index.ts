@@ -4081,7 +4081,7 @@ const PUBLIC_HOST =
 
   await fastify.listen({ port: PORT, host: HOST });
   const protocol = hasCertificates ? 'https' : 'http';
-  const displayHost = PUBLIC_HOST || (HOST === '*******' ? 'localhost' : HOST);
+  const displayHost = PUBLIC_HOST || (HOST === '0.0.0.0' ? 'localhost' : HOST);
   if (hasCertificates) {
     logger.warn(`HTTPS & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
   } else {
