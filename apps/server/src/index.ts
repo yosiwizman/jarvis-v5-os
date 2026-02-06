@@ -2187,6 +2187,7 @@ async function persistModelOutputs(
 
   return next;
 }
+try {
 registerKeyRoutes(fastify, io);
 registerAuthRoutes(fastify);
 registerLLMRoutes(fastify);
@@ -4078,7 +4079,6 @@ const publicHostEnv = process.env.PUBLIC_HOST ?? process.env.SERVER_PUBLIC_HOST;
 const PUBLIC_HOST =
   publicHostEnv?.trim() || (HOST === '0.0.0.0' ? process.env.HOSTNAME || 'localhost' : HOST);
 
-try {
   await fastify.listen({ port: PORT, host: HOST });
   const protocol = hasCertificates ? 'https' : 'http';
   const displayHost = PUBLIC_HOST || (HOST === '*******' ? 'localhost' : HOST);
@@ -4088,6 +4088,7 @@ try {
     logger.warn(`HTTP & Socket.IO up on ${protocol}://${displayHost}:${PORT}`);
   }
 } catch (err) {
-  logger.error(err, 'Failed to start server');
+  logger.error({ err, stack: err instanceof Error ? err.stack : undefined }, 'Server initialization failed - see error details above');
+  console.error('FATAL: Server initialization error:', err);
   process.exit(1);
 }
