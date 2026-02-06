@@ -25,6 +25,13 @@ import {
   type LLMProvider,
 } from '../storage/llmConfigStore.js';
 import { logSystemEvent } from '../utils/logger.js';
+import {
+  RateLimitPresets,
+  checkRateLimit,
+  getClientIp,
+  requireCsrf,
+  audit,
+} from '../security/index.js';
 
 // Request body types
 interface UpdateConfigBody {
@@ -77,9 +84,29 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
   /**
    * POST /api/admin/llm/config
    * Update LLM provider configuration
+   * 
+   * SECURITY:
+   * - 401 if not authenticated
+   * - 429 if rate limited
+   * - 403 if CSRF invalid
    */
   fastify.post('/api/admin/llm/config', async (request, reply) => {
+    const ip = getClientIp(request);
+    
     if (!(await requireAdmin(request, reply))) return;
+    
+    // Rate limit
+    const rateCheck = checkRateLimit({ ...RateLimitPresets.ADMIN_MODERATE, routeKey: 'llm-config' }, ip);
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header('Retry-After', String(rateCheck.response.retryAfterSec))
+        .header('Cache-Control', 'no-store')
+        .send(rateCheck.response);
+    }
+    
+    // CSRF protection
+    if (!(await requireCsrf(request, reply))) return;
     
     const body = request.body as UpdateConfigBody;
     
@@ -137,6 +164,10 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
     
     // Return updated config (no secrets)
     const updatedConfig = getLLMConfigPublic();
+    
+    // Audit log
+    await audit.llmConfigSaved(ip, body.provider);
+    
     return {
       ok: true,
       config: updatedConfig,
@@ -146,9 +177,25 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
   /**
    * POST /api/admin/llm/test
    * Test LLM connectivity with current configuration
+   * 
+   * SECURITY:
+   * - 401 if not authenticated
+   * - 429 if rate limited (light limit for testing)
    */
   fastify.post('/api/admin/llm/test', async (request, reply) => {
+    const ip = getClientIp(request);
+    
     if (!(await requireAdmin(request, reply))) return;
+    
+    // Rate limit (light limit for test endpoints)
+    const rateCheck = checkRateLimit({ ...RateLimitPresets.ADMIN_LIGHT, routeKey: 'llm-test' }, ip);
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header('Retry-After', String(rateCheck.response.retryAfterSec))
+        .header('Cache-Control', 'no-store')
+        .send(rateCheck.response);
+    }
     
     const config = getLLMConfigPublic();
     const baseUrl = getLLMBaseUrl();
@@ -203,18 +250,23 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
           latencyMs 
         });
         
+        // Audit log
+        await audit.llmTestRun(ip, true, config.provider);
+        
         return {
           ok: true,
           latencyMs,
           message: 'Connection successful',
         };
       } else if (response.status === 401) {
+        await audit.llmTestRun(ip, false, config.provider);
         return {
           ok: false,
           latencyMs,
           error: 'Authentication failed - invalid API key',
         };
       } else {
+        await audit.llmTestRun(ip, false, config.provider);
         return {
           ok: false,
           latencyMs,
@@ -243,6 +295,9 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
         error: errorMessage,
         latencyMs 
       });
+      
+      // Audit log
+      await audit.llmTestRun(ip, false, config.provider);
       
       return {
         ok: false,

@@ -9,6 +9,7 @@ export { validatePinFormat, setOwnerPin, verifyOwnerPin } from './pinAuth.js';
 export { 
   createSessionToken, 
   verifySessionToken, 
+  rotateSessionToken,
   getTokenExpiration,
   SESSION_COOKIE_NAME,
   SESSION_COOKIE_OPTIONS 

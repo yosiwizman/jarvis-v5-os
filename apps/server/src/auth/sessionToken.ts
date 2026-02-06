@@ -19,11 +19,13 @@ import { getOrCreateSessionSecret } from './authStore.js';
 const SESSION_DURATION_MS = 60 * 60 * 1000;
 
 // Cookie configuration
+// SECURITY: HttpOnly prevents XSS access, Secure ensures HTTPS-only,
+// SameSite=strict prevents CSRF by blocking cross-site cookie sending
 export const SESSION_COOKIE_NAME = 'akior_admin_session';
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: true,
-  sameSite: 'lax' as const,
+  sameSite: 'strict' as const, // OWASP: Strict is preferred for session cookies
   path: '/',
   maxAge: SESSION_DURATION_MS,
 };
@@ -111,4 +113,18 @@ export function getTokenExpiration(token: string): Date | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Rotate session token (creates new token with fresh nonce and expiry)
+ * 
+ * SECURITY: Call this after successful login to prevent session fixation attacks.
+ * The old token becomes invalid as soon as the new one is issued (new nonce).
+ * 
+ * @returns New session token string
+ */
+export function rotateSessionToken(): string {
+  // Simply create a new token - the new nonce invalidates any old token
+  // that might have been captured before authentication
+  return createSessionToken();
 }
