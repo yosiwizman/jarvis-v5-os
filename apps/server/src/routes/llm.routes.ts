@@ -30,6 +30,7 @@ import {
   checkRateLimit,
   getClientIp,
   requireCsrf,
+  requireOrigin,
   audit,
 } from '../security/index.js';
 
@@ -88,7 +89,7 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
    * SECURITY:
    * - 401 if not authenticated
    * - 429 if rate limited
-   * - 403 if CSRF invalid
+   * - 403 if CSRF invalid or Origin not allowed
    */
   fastify.post('/api/admin/llm/config', async (request, reply) => {
     const ip = getClientIp(request);
@@ -107,6 +108,9 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
     
     // CSRF protection
     if (!(await requireCsrf(request, reply))) return;
+    
+    // Origin enforcement
+    if (!(await requireOrigin(request, reply))) return;
     
     const body = request.body as UpdateConfigBody;
     

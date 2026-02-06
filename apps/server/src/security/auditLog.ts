@@ -41,6 +41,7 @@ export const AuditEventType = {
   LLM_TEST_RUN: 'llm_test_run',
   RATE_LIMITED: 'rate_limited',
   CSRF_FAILED: 'csrf_failed',
+  ORIGIN_REJECTED: 'origin_rejected',
   SESSION_CREATED: 'session_created',
   SESSION_ROTATED: 'session_rotated',
   LOGOUT: 'logout',
@@ -348,5 +349,14 @@ export const audit = {
       event: AuditEventType.LOGOUT,
       ip,
       outcome: 'success',
+    }),
+    
+  originRejected: (ip: string, route: string, origin?: string) =>
+    auditLog({
+      event: AuditEventType.ORIGIN_REJECTED,
+      ip,
+      route,
+      outcome: 'blocked',
+      metadata: { origin: origin || 'missing' },
     }),
 };

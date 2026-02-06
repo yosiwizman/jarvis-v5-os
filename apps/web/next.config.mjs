@@ -76,22 +76,54 @@ const nextConfig = {
   },
 
   /**
-   * Cache-busting headers for deployment drift prevention.
+   * Security + cache-busting headers.
    * 
-   * Strategy:
+   * Security headers (applied to all routes):
+   * - X-Content-Type-Options: nosniff - Prevents MIME-sniffing attacks
+   * - X-Frame-Options: DENY - Prevents clickjacking
+   * - Referrer-Policy: no-referrer - Don't leak referrer info
+   * - Permissions-Policy: Restricts browser feature access
+   * - Strict-Transport-Security: Enforces HTTPS (1 week initial ramp)
+   * - Content-Security-Policy-Report-Only: CSP in report-only mode
+   * 
+   * Cache strategy:
    * - All pages: no-store (always fetch fresh to get latest JS bundle references)
    * - Static hashed assets (_next/static): immutable, long cache (content-addressed)
    * - API routes: no-store (always fresh)
-   * 
-   * This prevents browsers from serving stale HTML that references old JS bundles.
    */
   async headers() {
+    // Security headers applied to all routes
+    const securityHeaders = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=(), payment=(), usb=()' },
+      { key: 'Strict-Transport-Security', value: 'max-age=604800; includeSubDomains' },
+      // CSP in report-only mode - doesn't block, allows us to identify issues
+      { 
+        key: 'Content-Security-Policy-Report-Only', 
+        value: [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js needs unsafe-inline/eval
+          "style-src 'self' 'unsafe-inline'", // Next.js needs unsafe-inline for styles
+          "img-src 'self' data: blob:",
+          "font-src 'self'",
+          "connect-src 'self' wss: ws:", // WebSocket connections
+          "media-src 'self' blob:",
+          "base-uri 'self'",
+          "object-src 'none'",
+          "frame-ancestors 'none'",
+        ].join('; ')
+      },
+    ];
+
     return [
       // Hashed static assets - cache immutably (content-addressed) - MUST come first
       {
         source: '/_next/static/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          ...securityHeaders,
         ],
       },
       // Settings page specifically - never cache, disable ETags
@@ -101,6 +133,7 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, max-age=0' },
           { key: 'Pragma', value: 'no-cache' },
           { key: 'Expires', value: '0' },
+          ...securityHeaders,
         ],
       },
       // All other pages - never cache HTML documents
@@ -110,6 +143,7 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, max-age=0' },
           { key: 'Pragma', value: 'no-cache' },
           { key: 'Expires', value: '0' },
+          ...securityHeaders,
         ],
       },
     ];

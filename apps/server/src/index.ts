@@ -28,6 +28,7 @@ import { fileURLToPath } from 'url';
 import { notificationScheduler } from './notificationScheduler.js';
 import type { ScheduleNotificationRequest, ScheduleNotificationResponse } from '@shared/core';
 import { logger, logSystemEvent, logApiRequest, createRequestLogger } from './utils/logger.js';
+import { registerSecurityHeaders } from './security/index.js';
 import { 
   validateAndNormalizeSettings, 
   safeJsonParse, 
@@ -142,6 +143,10 @@ await fastify.register(fastifyCors, {
 });
 await fastify.register(fastifyCookie);
 await fastify.register(multipart);
+
+// Register security headers middleware (applies to all responses)
+registerSecurityHeaders(fastify);
+logger.info('Security headers middleware registered');
 
 const config = {
   openai: {
