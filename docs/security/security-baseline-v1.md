@@ -90,24 +90,50 @@ When CSRF validation fails, endpoints return HTTP 403:
 }
 ```
 
-### Web App Integration
+### Web App Integration (Client Side)
 
-To make authenticated requests from the web app:
+The web app provides built-in CSRF support via the `apiFetch` utility:
 
+**Location:** `apps/web/src/lib/apiFetch.ts`
+
+**Usage:**
+```typescript
+import { apiFetch, CsrfError } from '@/lib/apiFetch';
+
+// apiFetch automatically:
+// - Reads akior_csrf_token cookie
+// - Attaches X-CSRF-Token header for POST/PUT/PATCH/DELETE
+// - Includes credentials: 'include' for cookies
+// - Throws CsrfError on 403 CSRF_REQUIRED response
+
+try {
+  const response = await apiFetch('/api/admin/keys', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ openai: 'sk-...' })
+  });
+} catch (error) {
+  if (error instanceof CsrfError) {
+    // Session expired, show user-friendly message
+    showError('Your session has expired. Please refresh the page.');
+  }
+}
+```
+
+**Supporting utilities:**
+- `apps/web/src/lib/cookies.ts` - `getCookie(name)` for reading browser cookies
+- `apps/web/src/lib/csrf.ts` - `getCsrfToken()` and constants for CSRF cookie/header names
+
+**Manual integration (if not using apiFetch):**
 ```javascript
-// Read CSRF token from cookie
-const csrfToken = document.cookie
-  .split('; ')
-  .find(row => row.startsWith('akior_csrf_token='))
-  ?.split('=')[1];
+import { getCsrfToken, CSRF_HEADER_NAME } from '@/lib/csrf';
 
-// Include in request headers
 fetch('/api/admin/keys', {
   method: 'PUT',
   credentials: 'include',
   headers: {
     'Content-Type': 'application/json',
-    'X-CSRF-Token': csrfToken
+    [CSRF_HEADER_NAME]: getCsrfToken() || ''
   },
   body: JSON.stringify({ openai: 'sk-...' })
 });
