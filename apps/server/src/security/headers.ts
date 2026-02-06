@@ -61,14 +61,16 @@ export function applySecurityHeaders(reply: FastifyReply): void {
 
 /**
  * Fastify hook to apply security headers to all responses
+ * Note: onSend signature is (request, reply, payload, done)
  */
 export function securityHeadersHook(
   _request: FastifyRequest,
   reply: FastifyReply,
-  done: () => void
+  payload: unknown,
+  done: (err?: Error | null, value?: unknown) => void
 ): void {
   applySecurityHeaders(reply);
-  done();
+  done(null, payload);
 }
 
 /**
