@@ -1,37 +1,47 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { readSettings } from '@shared/settings';
-import { buildServerUrl } from '@/lib/api';
-import { getFunctionTools } from '@/lib/jarvis-functions';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { handleCameraAnalysis } from '@/lib/camera-handler';
-import { useSetupStatus } from '@/hooks/useSetupStatus';
-import { SetupRequiredBanner } from '@/components/SetupRequiredBanner';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { readSettings } from "@shared/settings";
+import { buildServerUrl } from "@/lib/api";
+import { getFunctionTools } from "@/lib/jarvis-functions";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { handleCameraAnalysis } from "@/lib/camera-handler";
+import { useSetupStatus } from "@/hooks/useSetupStatus";
+import { SetupRequiredBanner } from "@/components/SetupRequiredBanner";
+import { AkiorLogo } from "@/components/AkiorLogo";
 
 // Dynamically import 3D viewer to avoid SSR issues
 const JarvisModelViewer = dynamic(
-  () => import('@/components/JarvisModelViewer').then(mod => ({ default: mod.JarvisModelViewer })),
-  { ssr: false }
+  () =>
+    import("@/components/JarvisModelViewer").then((mod) => ({
+      default: mod.JarvisModelViewer,
+    })),
+  { ssr: false },
 );
 
 const FFT_BARS = 64;
 
 /**
  * Dedicated Full-Screen AKIOR Page
- * 
+ *
  * This page provides a full-screen, always-on AKIOR experience.
  * The visualizer auto-starts when the page loads and runs continuously.
  * No panels, no controls - just the pure AKIOR interface.
  */
 export default function JarvisPage() {
   // Setup status - gate connection until setup is complete
-  const { setupRequired, llmConfigured, loading: setupLoading } = useSetupStatus();
+  const {
+    setupRequired,
+    llmConfigured,
+    loading: setupLoading,
+  } = useSetupStatus();
   const setupComplete = !setupRequired && llmConfigured;
-  
-  const [status, setStatus] = useState<'idle' | 'listening' | 'active' | 'error'>('idle');
+
+  const [status, setStatus] = useState<
+    "idle" | "listening" | "active" | "error"
+  >("idle");
   const [audioLevel, setAudioLevel] = useState(0);
   const [fftData, setFftData] = useState<number[]>(new Array(FFT_BARS).fill(0));
   const statusRef = useRef(status);
@@ -42,20 +52,22 @@ export default function JarvisPage() {
   const animationFrameRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
-  const [ring1Rotation, setRing1Rotation] = useState(0);
-  const [ring2Rotation, setRing2Rotation] = useState(0);
-  const rotationFrameRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(Date.now());
+  // ring rotation refs removed — AkiorLogo handles its own animation
   const router = useRouter();
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const processedCallIdsRef = useRef<Set<string>>(new Set());
   const activeCallsRef = useRef<Map<string, RTCDataChannel>>(new Map());
   const [isProcessing, setIsProcessing] = useState(false);
-  const [displayContent, setDisplayContent] = useState<{ type: 'image' | '3d'; url: string } | null>(null);
+  const [displayContent, setDisplayContent] = useState<{
+    type: "image" | "3d";
+    url: string;
+  } | null>(null);
   const [modelProgress, setModelProgress] = useState<number | null>(null);
-  const [progressMessage, setProgressMessage] = useState<string>('Generating 3D Model');
+  const [progressMessage, setProgressMessage] = useState<string>(
+    "Generating 3D Model",
+  );
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
+
   // Connection guards to prevent duplicate connections
   const isConnectingRef = useRef(false);
   const connectionIdRef = useRef<string | null>(null);
@@ -69,11 +81,14 @@ export default function JarvisPage() {
   // Fullscreen toggle handler
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(err => {
-        console.error('Error attempting to enable fullscreen:', err);
-      });
+      document.documentElement
+        .requestFullscreen()
+        .then(() => {
+          setIsFullscreen(true);
+        })
+        .catch((err) => {
+          console.error("Error attempting to enable fullscreen:", err);
+        });
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen().then(() => {
@@ -89,86 +104,73 @@ export default function JarvisPage() {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
   // Animate wave pattern when processing (but not for 3D model generation)
   useEffect(() => {
     if (!isProcessing || modelProgress !== null) return;
-    
+
     const interval = setInterval(() => {
-      setFftData(prev => [...prev]); // Force re-render for wave animation
+      setFftData((prev) => [...prev]); // Force re-render for wave animation
     }, 50);
-    
+
     return () => clearInterval(interval);
   }, [isProcessing, modelProgress]);
-  
+
   // Animate FFT bars for 3D model progress
   useEffect(() => {
     if (modelProgress === null) return;
-    
+
     const interval = setInterval(() => {
-      setFftData(prev => [...prev]); // Force re-render for progress animation
+      setFftData((prev) => [...prev]); // Force re-render for progress animation
     }, 50);
-    
+
     return () => clearInterval(interval);
   }, [modelProgress]);
 
-  // Continuous rotation for rings
-  useEffect(() => {
-    const rotate = () => {
-      const now = Date.now();
-      const delta = (now - lastTimeRef.current) / 1000;
-      lastTimeRef.current = now;
-
-      setRing1Rotation((prev) => (prev + 40 * delta) % 360);
-      setRing2Rotation((prev) => (prev - 20 * delta) % 360);
-
-      rotationFrameRef.current = requestAnimationFrame(rotate);
-    };
-    rotate();
-
-    return () => {
-      if (rotationFrameRef.current) {
-        cancelAnimationFrame(rotationFrameRef.current);
-      }
-    };
-  }, []);
+  // Ring rotation effect removed — AkiorLogo handles its own animation
 
   // Auto-start connection on mount with duplicate prevention
   // GATED: Only starts when setup is complete (PIN + LLM configured)
   useEffect(() => {
     // Wait for setup status to load
     if (setupLoading) {
-      console.log('⏳ Waiting for setup status...');
+      console.log("⏳ Waiting for setup status...");
       return;
     }
-    
+
     // Don't start if setup is incomplete
     if (!setupComplete) {
-      console.log('⚠️ Setup incomplete - connection gated. PIN or LLM not configured.');
+      console.log(
+        "⚠️ Setup incomplete - connection gated. PIN or LLM not configured.",
+      );
       return;
     }
-    
+
     // Prevent duplicate connections (React StrictMode can cause double mounting)
-    if (isConnectingRef.current || status !== 'idle') {
-      console.log('⚠️ Connection already in progress or active, skipping duplicate mount');
+    if (isConnectingRef.current || status !== "idle") {
+      console.log(
+        "⚠️ Connection already in progress or active, skipping duplicate mount",
+      );
       return;
     }
-    
+
     isConnectingRef.current = true;
     const connectionId = `jarvis-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     connectionIdRef.current = connectionId;
-    
+
     console.log(`📡 Auto-starting AKIOR... (connection ID: ${connectionId})`);
     startRealtime();
-    
+
     // Cleanup on unmount
     return () => {
-      console.log(`🧹 Cleaning up AKIOR connection ${connectionId} on unmount...`);
+      console.log(
+        `🧹 Cleaning up AKIOR connection ${connectionId} on unmount...`,
+      );
       const cleanup = endRealtimeRef.current;
       if (cleanup) {
         cleanup();
@@ -183,7 +185,7 @@ export default function JarvisPage() {
 
   // Audio level monitoring with FFT
   useEffect(() => {
-    if (status !== 'active') {
+    if (status !== "active") {
       setAudioLevel(0);
       setFftData(new Array(FFT_BARS).fill(0));
       if (animationFrameRef.current) {
@@ -198,7 +200,7 @@ export default function JarvisPage() {
     }
 
     const checkStream = setInterval(() => {
-      if (remoteStreamRef.current && statusRef.current === 'active') {
+      if (remoteStreamRef.current && statusRef.current === "active") {
         clearInterval(checkStream);
         setupAudioAnalyzer();
       }
@@ -210,56 +212,58 @@ export default function JarvisPage() {
       try {
         const audioContext = new AudioContext();
         audioContextRef.current = audioContext;
-        
-        const source = audioContext.createMediaStreamSource(remoteStreamRef.current!);
+
+        const source = audioContext.createMediaStreamSource(
+          remoteStreamRef.current!,
+        );
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 512;
         analyser.smoothingTimeConstant = 0.5;
-        
+
         source.connect(analyser);
         analyserRef.current = analyser;
 
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
         const updateLevel = () => {
-          if (analyserRef.current && statusRef.current === 'active') {
+          if (analyserRef.current && statusRef.current === "active") {
             analyserRef.current.getByteFrequencyData(dataArray);
-            
+
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
               sum += dataArray[i];
             }
             const average = sum / dataArray.length;
-            
+
             let normalizedVolume = Math.min(average / 128, 1);
             normalizedVolume = Math.pow(normalizedVolume, 0.6) * 1.5;
             setAudioLevel(Math.min(normalizedVolume, 1));
-            
+
             const barData: number[] = [];
             const usefulBins = Math.floor(dataArray.length / 2);
             const samplesPerBar = usefulBins / FFT_BARS;
-            
+
             for (let i = 0; i < FFT_BARS; i++) {
               let barSum = 0;
               const startIdx = Math.floor(i * samplesPerBar);
               const endIdx = Math.floor((i + 1) * samplesPerBar);
-              
+
               for (let j = startIdx; j < endIdx; j++) {
                 barSum += dataArray[j];
               }
-              const normalized = (barSum / (endIdx - startIdx)) / 255;
+              const normalized = barSum / (endIdx - startIdx) / 255;
               const scaled = Math.pow(normalized, 0.5) * 1.8;
               barData.push(Math.min(scaled, 1));
             }
             setFftData(barData);
-            
+
             animationFrameRef.current = requestAnimationFrame(updateLevel);
           }
         };
 
         updateLevel();
       } catch (error) {
-        console.error('Failed to setup audio analyzer:', error);
+        console.error("Failed to setup audio analyzer:", error);
       }
     }
 
@@ -279,42 +283,42 @@ export default function JarvisPage() {
   // Function execution handlers
   async function executeFunction(name: string, args: any, callId: string) {
     console.log(`Executing function: ${name}`, args);
-    
+
     // Store which data channel this call belongs to
     const currentChannel = dataChannelRef.current;
     if (currentChannel) {
       activeCallsRef.current.set(callId, currentChannel);
     }
-    
+
     // Start loading animation (but not for 3D model generation - it has its own progress)
-    const isModelGeneration = name === 'create_3d_model';
+    const isModelGeneration = name === "create_3d_model";
     if (!isModelGeneration) {
       setIsProcessing(true);
     }
-    
+
     try {
-      let result: any = { success: false, message: 'Unknown function' };
+      let result: any = { success: false, message: "Unknown function" };
 
       switch (name) {
-        case 'create_image':
+        case "create_image":
           result = await handleCreateImage(args);
           break;
-        case 'create_3d_model':
+        case "create_3d_model":
           result = await handleCreate3DModel(args);
           break;
-        case 'navigate_to_page':
+        case "navigate_to_page":
           result = handleNavigate(args);
           break;
-        case 'search_files':
+        case "search_files":
           result = await handleSearchFiles(args);
           break;
-        case 'open_file':
+        case "open_file":
           result = await handleOpenFile(args);
           break;
-        case 'capture_images':
+        case "capture_images":
           result = await handleCaptureImages(args);
           break;
-        case 'analyze_camera_view':
+        case "analyze_camera_view":
           result = await handleAnalyzeCameraView(args);
           break;
         default:
@@ -326,7 +330,7 @@ export default function JarvisPage() {
       console.error(`Error executing ${name}:`, error);
       sendFunctionResult(callId, {
         success: false,
-        message: error.message || 'Function execution failed'
+        message: error.message || "Function execution failed",
       });
     } finally {
       if (!isModelGeneration) {
@@ -338,395 +342,455 @@ export default function JarvisPage() {
   }
 
   async function handleCreateImage(args: { prompt: string; size?: string }) {
-    const { prompt, size = '1024x1024' } = args;
-    
+    const { prompt, size = "1024x1024" } = args;
+
     try {
-      console.log('🎨 Starting image generation:', prompt);
-      
+      console.log("🎨 Starting image generation:", prompt);
+
       const imageSettings = settings.imageGeneration || {
-        model: 'dall-e-3',
-        size: '1024x1024',
-        quality: 'high',
-        partialImages: 0
+        model: "dall-e-3",
+        size: "1024x1024",
+        quality: "high",
+        partialImages: 0,
       };
-      
-      const response = await fetch(buildServerUrl('/openai/generate-image'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+
+      const response = await fetch(buildServerUrl("/openai/generate-image"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
           settings: {
             ...imageSettings,
-            size
-          }
-        })
+            size,
+          },
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Image generation error:', errorData);
-        throw new Error(errorData.error || `Failed to generate image: ${response.statusText}`);
+        console.error("Image generation error:", errorData);
+        throw new Error(
+          errorData.error || `Failed to generate image: ${response.statusText}`,
+        );
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
-        throw new Error('No response body');
+        throw new Error("No response body");
       }
 
-      let imageUrl = '';
-      let buffer = '';
-      
+      let imageUrl = "";
+      let buffer = "";
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data: ')) continue;
-          
+          if (!line.trim() || !line.startsWith("data: ")) continue;
+
           const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
+          if (data === "[DONE]") continue;
 
           try {
             const parsed = JSON.parse(data);
-            console.log('📨 Image generation event:', parsed.type);
-            
-            if (parsed.type === 'final_image' && parsed.image) {
+            console.log("📨 Image generation event:", parsed.type);
+
+            if (parsed.type === "final_image" && parsed.image) {
               imageUrl = `data:image/png;base64,${parsed.image}`;
-              console.log('✅ Final image received');
-            }
-            else if (parsed.type === 'error') {
-              const errorMsg = parsed.error || parsed.message || 'Image generation failed';
-              console.error('🚨 OpenAI API Error:', errorMsg);
+              console.log("✅ Final image received");
+            } else if (parsed.type === "error") {
+              const errorMsg =
+                parsed.error || parsed.message || "Image generation failed";
+              console.error("🚨 OpenAI API Error:", errorMsg);
               throw new Error(errorMsg);
             }
           } catch (e) {
             if (e instanceof Error) {
-              if (e.message.includes('generation failed') || 
-                  e.message.includes('Image generation failed') ||
-                  e.message.includes('OpenAI') ||
-                  e.message.includes('server had an error')) {
+              if (
+                e.message.includes("generation failed") ||
+                e.message.includes("Image generation failed") ||
+                e.message.includes("OpenAI") ||
+                e.message.includes("server had an error")
+              ) {
                 throw e;
               }
             }
             if (e instanceof SyntaxError) {
-              console.warn('⚠️ Incomplete SSE chunk (will complete in next chunk):', data.substring(0, 100));
+              console.warn(
+                "⚠️ Incomplete SSE chunk (will complete in next chunk):",
+                data.substring(0, 100),
+              );
             } else {
-              console.warn('Failed to parse SSE event:', data.substring(0, 100), e);
+              console.warn(
+                "Failed to parse SSE event:",
+                data.substring(0, 100),
+                e,
+              );
             }
           }
         }
       }
 
       if (imageUrl) {
-        console.log('✅ Image generation completed successfully');
-        setDisplayContent({ type: 'image', url: imageUrl });
-        return { success: true, message: 'Here is your image, Sir.' };
+        console.log("✅ Image generation completed successfully");
+        setDisplayContent({ type: "image", url: imageUrl });
+        return { success: true, message: "Here is your image, Sir." };
       } else {
-        console.error('❌ No image URL after stream completed');
-        throw new Error('No image generated. This may be due to an OpenAI API error. Please try again.');
+        console.error("❌ No image URL after stream completed");
+        throw new Error(
+          "No image generated. This may be due to an OpenAI API error. Please try again.",
+        );
       }
     } catch (error) {
-      console.error('❌ Error creating image:', error);
-      if (displayContent?.type === 'image') {
-        console.warn('⚠️ Error occurred but image was already displayed, ignoring');
-        return { success: true, message: 'Image created (with minor errors)' };
+      console.error("❌ Error creating image:", error);
+      if (displayContent?.type === "image") {
+        console.warn(
+          "⚠️ Error occurred but image was already displayed, ignoring",
+        );
+        return { success: true, message: "Image created (with minor errors)" };
       }
-      return { success: false, message: error instanceof Error ? error.message : 'Failed to create image' };
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to create image",
+      };
     }
   }
 
   async function handleCreate3DModel(args: { prompt: string }) {
     const { prompt } = args;
-    
+
     try {
-      console.log('🎲 Starting 3D model generation...');
-      console.log('🎲 Prompt:', prompt);
-      
-      setProgressMessage('Generating 3D Model');
+      console.log("🎲 Starting 3D model generation...");
+      console.log("🎲 Prompt:", prompt);
+
+      setProgressMessage("Generating 3D Model");
       setModelProgress(0);
-      
-      const createResponse = await fetch(buildServerUrl('/models/create'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+
+      const createResponse = await fetch(buildServerUrl("/models/create"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode: 'text',
+          mode: "text",
           prompt,
           settings: {
-            artStyle: 'realistic',
-            outputFormat: 'glb'
-          }
-        })
+            artStyle: "realistic",
+            outputFormat: "glb",
+          },
+        }),
       });
 
       if (!createResponse.ok) {
         const errorData = await createResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to create 3D model job: ${createResponse.statusText}`);
+        throw new Error(
+          errorData.error ||
+            `Failed to create 3D model job: ${createResponse.statusText}`,
+        );
       }
 
       const { id: jobId } = await createResponse.json();
-      console.log('🎲 Job created:', jobId);
-      
+      console.log("🎲 Job created:", jobId);
+
       let attempts = 0;
       const maxAttempts = 1800;
       let lastProgress = -1;
-      
+
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         const statusResponse = await fetch(buildServerUrl(`/models/${jobId}`));
         if (!statusResponse.ok) {
           console.error(`❌ Status check failed: ${statusResponse.status}`);
-          throw new Error('Failed to check model status');
+          throw new Error("Failed to check model status");
         }
-        
+
         const job = await statusResponse.json();
-        
+
         if (job.progress !== lastProgress) {
-          const progressPhase = job.progress < 80 ? 'Preview' : 'Texturing';
-          console.log(`🎲 ${progressPhase} | Status: ${job.status}, Progress: ${job.progress}%`);
+          const progressPhase = job.progress < 80 ? "Preview" : "Texturing";
+          console.log(
+            `🎲 ${progressPhase} | Status: ${job.status}, Progress: ${job.progress}%`,
+          );
           lastProgress = job.progress;
         }
-        
-        if (typeof job.progress === 'number') {
+
+        if (typeof job.progress === "number") {
           setModelProgress(job.progress);
         }
-        
-        if (job.status === 'done') {
-          console.log('🎲 Job completed! Outputs:', job.outputs);
-          
+
+        if (job.status === "done") {
+          console.log("🎲 Job completed! Outputs:", job.outputs);
+
           if (!job.outputs) {
-            console.error('❌ Job done but no outputs present');
-            throw new Error('Model completed but no outputs available');
+            console.error("❌ Job done but no outputs present");
+            throw new Error("Model completed but no outputs available");
           }
-          
-          const modelUrl = job.outputs.glbUrl || job.outputs.objUrl || job.outputs.usdzUrl;
-          
+
+          const modelUrl =
+            job.outputs.glbUrl || job.outputs.objUrl || job.outputs.usdzUrl;
+
           if (modelUrl) {
-            console.log('✅ 3D model URL found:', modelUrl);
+            console.log("✅ 3D model URL found:", modelUrl);
             setModelProgress(null);
-            setDisplayContent({ type: '3d', url: modelUrl });
-            return { success: true, message: '3D model created successfully, Sir. You can view it on the 3D Viewer page.' };
+            setDisplayContent({ type: "3d", url: modelUrl });
+            return {
+              success: true,
+              message:
+                "3D model created successfully, Sir. You can view it on the 3D Viewer page.",
+            };
           } else {
-            console.error('❌ Job outputs:', JSON.stringify(job.outputs, null, 2));
-            throw new Error('Model completed but no URL in outputs');
+            console.error(
+              "❌ Job outputs:",
+              JSON.stringify(job.outputs, null, 2),
+            );
+            throw new Error("Model completed but no URL in outputs");
           }
-        } else if (job.status === 'error') {
-          console.error('❌ Job failed with error:', job.error);
-          throw new Error(job.error || 'Model generation failed');
+        } else if (job.status === "error") {
+          console.error("❌ Job failed with error:", job.error);
+          throw new Error(job.error || "Model generation failed");
         }
-        
+
         attempts++;
       }
-      
-      throw new Error('Model generation timed out after 30 minutes');
+
+      throw new Error("Model generation timed out after 30 minutes");
     } catch (error) {
-      console.error('Error creating 3D model:', error);
+      console.error("Error creating 3D model:", error);
       setModelProgress(null);
-      return { success: false, message: error instanceof Error ? error.message : 'Failed to create 3D model' };
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to create 3D model",
+      };
     }
   }
 
   function handleNavigate(args: { page: string }) {
     const { page } = args;
     router.push(page as any);
-    
-    const pageName = page.split('/').pop() || 'page';
+
+    const pageName = page.split("/").pop() || "page";
     return {
       success: true,
-      message: `Opening ${pageName}...`
+      message: `Opening ${pageName}...`,
     };
   }
 
   async function handleSearchFiles(args: { query?: string }) {
     try {
-      const response = await fetch(buildServerUrl('/file-library'));
+      const response = await fetch(buildServerUrl("/file-library"));
       if (!response.ok) {
         throw new Error(`Failed to fetch files: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       const files = Array.isArray(data.files) ? data.files : [];
-      
+
       // Filter files based on query
-      const query = args.query?.toLowerCase() || '';
+      const query = args.query?.toLowerCase() || "";
       const matchingFiles = query
         ? files.filter((f: any) => f.name.toLowerCase().includes(query))
         : files;
-      
+
       console.log(`🔍 Found ${matchingFiles.length} files matching "${query}"`);
-      
+
       if (matchingFiles.length === 0) {
         return {
           success: false,
-          message: query 
+          message: query
             ? `No files found matching "${query}". Try a different search term.`
-            : 'No files available in the library.'
+            : "No files available in the library.",
         };
       }
-      
+
       // Format file list for AKIOR
       const fileList = matchingFiles.map((f: any) => ({
         name: f.name,
         type: f.category,
         size: f.size,
-        extension: f.extension
+        extension: f.extension,
       }));
-      
+
       return {
         success: true,
-        message: `Found ${matchingFiles.length} file${matchingFiles.length === 1 ? '' : 's'}: ${fileList.map((f: any) => f.name).join(', ')}`,
-        data: { files: fileList }
+        message: `Found ${matchingFiles.length} file${matchingFiles.length === 1 ? "" : "s"}: ${fileList.map((f: any) => f.name).join(", ")}`,
+        data: { files: fileList },
       };
     } catch (error: any) {
       return {
         success: false,
-        message: `Failed to search files: ${error.message}`
+        message: `Failed to search files: ${error.message}`,
       };
     }
   }
 
-  async function handleOpenFile(args: { filename: string; file_type: 'image' | 'model' | 'other' }) {
+  async function handleOpenFile(args: {
+    filename: string;
+    file_type: "image" | "model" | "other";
+  }) {
     const { filename, file_type } = args;
-    
+
     try {
       console.log(`📂 Opening file: ${filename} (type: ${file_type})`);
-      
+
       // Set appropriate loading message
-      if (file_type === 'model') {
-        setProgressMessage('Loading 3D Model');
-      } else if (file_type === 'image') {
-        setProgressMessage('Loading Image');
+      if (file_type === "model") {
+        setProgressMessage("Loading 3D Model");
+      } else if (file_type === "image") {
+        setProgressMessage("Loading Image");
       } else {
-        setProgressMessage('Loading File');
+        setProgressMessage("Loading File");
       }
-      
+
       // Simulate loading animation like 3D model generation
       setModelProgress(0);
-      
+
       // Simulate progress
       for (let i = 0; i <= 100; i += 20) {
         setModelProgress(i);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
-      
+
       setModelProgress(null);
-      
+
       // Construct the file URL
       const fileUrl = buildServerUrl(`/files/${filename}`);
-      
+
       // Display the file based on type
-      if (file_type === 'image') {
-        setDisplayContent({ type: 'image', url: fileUrl });
+      if (file_type === "image") {
+        setDisplayContent({ type: "image", url: fileUrl });
         return { success: true, message: `Opening ${filename}` };
-      } else if (file_type === 'model') {
-        setDisplayContent({ type: '3d', url: fileUrl });
+      } else if (file_type === "model") {
+        setDisplayContent({ type: "3d", url: fileUrl });
         return { success: true, message: `Rendering ${filename}` };
       } else {
         // For other file types, just provide a download link
-        window.open(fileUrl, '_blank');
+        window.open(fileUrl, "_blank");
         return { success: true, message: `Opening ${filename} in new tab` };
       }
     } catch (error: any) {
-      console.error('Error opening file:', error);
+      console.error("Error opening file:", error);
       setModelProgress(null);
       return {
         success: false,
-        message: `Failed to open ${filename}: ${error.message}`
+        message: `Failed to open ${filename}: ${error.message}`,
       };
     }
   }
 
   async function handleCaptureImages(args: { tag?: string | null }) {
     try {
-      await fetch(buildServerUrl('/tools/invoke'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch(buildServerUrl("/tools/invoke"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: 'cameras.captureAll',
-          args: { tag: args.tag || 'akior-capture' }
-        })
+          name: "cameras.captureAll",
+          args: { tag: args.tag || "akior-capture" },
+        }),
       });
-      
+
       return {
         success: true,
-        message: 'Capturing images from all cameras...'
+        message: "Capturing images from all cameras...",
       };
     } catch (error: any) {
       return {
         success: false,
-        message: `Failed to capture images: ${error.message}`
+        message: `Failed to capture images: ${error.message}`,
       };
     }
   }
 
-  async function handleAnalyzeCameraView(args: { camera_id?: string | null; question?: string | null }) {
+  async function handleAnalyzeCameraView(args: {
+    camera_id?: string | null;
+    question?: string | null;
+  }) {
     // Use the shared camera handler that works with live Socket.IO feed
     return await handleCameraAnalysis(
       args,
       dataChannelRef.current,
       (imageUrl, caption) => {
         // Display the captured image in the UI
-        setDisplayContent({ type: 'image', url: imageUrl });
-      }
+        setDisplayContent({ type: "image", url: imageUrl });
+      },
     );
   }
 
   function sendFunctionResult(callId: string, result: any) {
-    console.log(`📤 Attempting to send result for call ${callId}`, { success: result.success });
-    
+    console.log(`📤 Attempting to send result for call ${callId}`, {
+      success: result.success,
+    });
+
     const originalChannel = activeCallsRef.current.get(callId);
     const currentChannel = dataChannelRef.current;
-    
+
     // Validate this call belongs to the current connection
-    if (originalChannel && currentChannel && originalChannel !== currentChannel) {
-      console.warn(`⚠️ Data channel changed during function execution for call ${callId}, skipping result to prevent stale call error`);
+    if (
+      originalChannel &&
+      currentChannel &&
+      originalChannel !== currentChannel
+    ) {
+      console.warn(
+        `⚠️ Data channel changed during function execution for call ${callId}, skipping result to prevent stale call error`,
+      );
       activeCallsRef.current.delete(callId);
       return;
     }
-    
+
     // Check if channel is ready
-    if (!currentChannel || currentChannel.readyState !== 'open') {
-      console.warn(`⚠️ Data channel not ready (state: ${currentChannel?.readyState || 'null'}), cannot send function result for call ${callId}`);
+    if (!currentChannel || currentChannel.readyState !== "open") {
+      console.warn(
+        `⚠️ Data channel not ready (state: ${currentChannel?.readyState || "null"}), cannot send function result for call ${callId}`,
+      );
       activeCallsRef.current.delete(callId);
       return;
     }
 
     // Wait if there's already an active response (race condition prevention)
     if (hasActiveResponseRef.current) {
-      console.warn(`⚠️ Response already in progress, waiting 200ms before sending result for call ${callId}`);
+      console.warn(
+        `⚠️ Response already in progress, waiting 200ms before sending result for call ${callId}`,
+      );
       setTimeout(() => sendFunctionResult(callId, result), 200);
       return;
     }
 
     const functionResult = {
-      type: 'conversation.item.create',
+      type: "conversation.item.create",
       item: {
-        type: 'function_call_output',
+        type: "function_call_output",
         call_id: callId,
-        output: JSON.stringify(result)
-      }
+        output: JSON.stringify(result),
+      },
     };
 
-    console.log(`✅ Sending function result for call ${callId}:`, functionResult);
+    console.log(
+      `✅ Sending function result for call ${callId}:`,
+      functionResult,
+    );
     try {
       currentChannel.send(JSON.stringify(functionResult));
 
       // Trigger response from the model
       const responseCreate = {
-        type: 'response.create'
+        type: "response.create",
       };
       currentChannel.send(JSON.stringify(responseCreate));
       hasActiveResponseRef.current = true;
       console.log(`✅ Function result sent successfully for call ${callId}`);
     } catch (error) {
-      console.error(`❌ Error sending function result for call ${callId}:`, error);
+      console.error(
+        `❌ Error sending function result for call ${callId}:`,
+        error,
+      );
     } finally {
       activeCallsRef.current.delete(callId);
     }
@@ -736,17 +800,19 @@ export default function JarvisPage() {
     try {
       // Double-check we're not already connecting
       if (peerConnectionRef.current || dataChannelRef.current) {
-        console.warn('⚠️ Connection already exists, cleaning up first...');
+        console.warn("⚠️ Connection already exists, cleaning up first...");
         endRealtime();
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
-      
-      setStatus('listening');
-      console.log(`🎤 Starting AKIOR... (connection: ${connectionIdRef.current})`);
-      
+
+      setStatus("listening");
+      console.log(
+        `🎤 Starting AKIOR... (connection: ${connectionIdRef.current})`,
+      );
+
       // Check if media devices are available before requesting
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Media devices not supported in this browser');
+        throw new Error("Media devices not supported in this browser");
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -754,14 +820,14 @@ export default function JarvisPage() {
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: false
-        }
+          autoGainControl: false,
+        },
       });
 
       const pc = new RTCPeerConnection();
       peerConnectionRef.current = pc;
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-      const dc = pc.createDataChannel('oai-events');
+      const dc = pc.createDataChannel("oai-events");
       dataChannelRef.current = dc;
 
       pc.ontrack = (ev) => {
@@ -777,192 +843,231 @@ export default function JarvisPage() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const model = settings.jarvis.model || 'gpt-realtime-mini';
+      const model = settings.jarvis.model || "gpt-realtime-mini";
 
-      const response = await fetch(buildServerUrl('/openai/realtime'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sdp: offer.sdp, model })
+      const response = await fetch(buildServerUrl("/openai/realtime"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sdp: offer.sdp, model }),
       });
 
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload?.error || 'Failed to create realtime session');
+        throw new Error(payload?.error || "Failed to create realtime session");
       }
 
-      await pc.setRemoteDescription({ type: 'answer', sdp: payload.sdp });
+      await pc.setRemoteDescription({ type: "answer", sdp: payload.sdp });
 
       dc.onopen = () => {
-        console.log('WebRTC data channel open');
-        
+        console.log("WebRTC data channel open");
+
         // Get all function schemas
         const tools = getFunctionTools();
-        
+
         // Send session config - NO tool_choice!
         const sessionConfig = {
-          type: 'session.update',
+          type: "session.update",
           session: {
             tools: tools,
-            voice: settings.jarvis.voice || 'echo',
-            instructions: settings.jarvis.initialPrompt || ''
-          }
+            voice: settings.jarvis.voice || "echo",
+            instructions: settings.jarvis.initialPrompt || "",
+          },
         };
-        
-        console.log(`Sending session config with ${tools.length} functions:`, tools.map(t => t.name));
-        console.log('Session config payload:', sessionConfig);
+
+        console.log(
+          `Sending session config with ${tools.length} functions:`,
+          tools.map((t) => t.name),
+        );
+        console.log("Session config payload:", sessionConfig);
         dc.send(JSON.stringify(sessionConfig));
-        
-        setStatus('active');
+
+        setStatus("active");
       };
 
       dc.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
+
           // Log incoming events
-          console.log('Received event:', data);
-          
+          console.log("Received event:", data);
+
           // Log error events in full detail
-          if (data.type === 'error') {
-            console.error('❌ OpenAI Error Event:', data);
-            console.error('Error details:', JSON.stringify(data, null, 2));
-            
+          if (data.type === "error") {
+            console.error("❌ OpenAI Error Event:", data);
+            console.error("Error details:", JSON.stringify(data, null, 2));
+
             // Check for rate limiting
-            if (data.error?.code === 'rate_limit_exceeded' || data.error?.message?.includes('rate limit')) {
-              console.error('🚨 RATE LIMIT EXCEEDED - You need to wait before making more requests');
-              setStatus('error');
+            if (
+              data.error?.code === "rate_limit_exceeded" ||
+              data.error?.message?.includes("rate limit")
+            ) {
+              console.error(
+                "🚨 RATE LIMIT EXCEEDED - You need to wait before making more requests",
+              );
+              setStatus("error");
             }
           }
-          
-          if (data.type === 'session.created') {
-            console.log('🎉 Session created successfully');
-            console.log('Session details:', JSON.stringify(data.session, null, 2));
+
+          if (data.type === "session.created") {
+            console.log("🎉 Session created successfully");
+            console.log(
+              "Session details:",
+              JSON.stringify(data.session, null, 2),
+            );
           }
-          
-          if (data.type === 'session.updated') {
-            console.log('✅ Session updated successfully');
-            console.log('Updated session:', JSON.stringify(data.session, null, 2));
+
+          if (data.type === "session.updated") {
+            console.log("✅ Session updated successfully");
+            console.log(
+              "Updated session:",
+              JSON.stringify(data.session, null, 2),
+            );
           }
-          
+
           // Track response lifecycle
-          if (data.type === 'response.created') {
+          if (data.type === "response.created") {
             hasActiveResponseRef.current = true;
-            console.log('🎤 Response started:', {
+            console.log("🎤 Response started:", {
               response_id: data.response?.id,
-              status: data.response?.status
+              status: data.response?.status,
             });
           }
-          
-          if (data.type === 'response.done') {
+
+          if (data.type === "response.done") {
             hasActiveResponseRef.current = false;
-            console.log('✅ Response completed:', {
+            console.log("✅ Response completed:", {
               response_id: data.response?.id,
               status: data.response?.status,
               status_details: data.response?.status_details,
-              output: data.response?.output
+              output: data.response?.output,
             });
-            
+
             // Check for errors in the response
-            if (data.response?.status === 'failed') {
-              console.error('❌ Response failed:', data.response?.status_details);
-              if (data.response?.status_details?.error?.code === 'rate_limit_exceeded') {
-                console.error('🚨 RATE LIMIT EXCEEDED - You are making too many requests');
+            if (data.response?.status === "failed") {
+              console.error(
+                "❌ Response failed:",
+                data.response?.status_details,
+              );
+              if (
+                data.response?.status_details?.error?.code ===
+                "rate_limit_exceeded"
+              ) {
+                console.error(
+                  "🚨 RATE LIMIT EXCEEDED - You are making too many requests",
+                );
               }
             }
-            
+
             // Check if response was cancelled
-            if (data.response?.status === 'cancelled') {
-              console.warn('⚠️ Response was cancelled');
+            if (data.response?.status === "cancelled") {
+              console.warn("⚠️ Response was cancelled");
             }
-            
+
             // Log the full response for debugging
-            console.log('Full response.done event:', JSON.stringify(data, null, 2));
+            console.log(
+              "Full response.done event:",
+              JSON.stringify(data, null, 2),
+            );
           }
-          
+
           // Log audio deltas
-          if (data.type === 'response.audio.delta') {
-            console.log('🔊 Receiving audio chunk');
+          if (data.type === "response.audio.delta") {
+            console.log("🔊 Receiving audio chunk");
           }
-          
-          if (data.type === 'response.audio.done') {
-            console.log('🔊 Audio response completed');
+
+          if (data.type === "response.audio.done") {
+            console.log("🔊 Audio response completed");
           }
-          
+
           // Log text deltas
-          if (data.type === 'response.text.delta') {
-            console.log('📝 Receiving text:', data.delta);
+          if (data.type === "response.text.delta") {
+            console.log("📝 Receiving text:", data.delta);
           }
-          
-          if (data.type === 'response.text.done') {
-            console.log('📝 Text response completed:', data.text);
+
+          if (data.type === "response.text.done") {
+            console.log("📝 Text response completed:", data.text);
           }
 
           // Handle function calls
-          if (data.type === 'response.function_call_arguments.done') {
+          if (data.type === "response.function_call_arguments.done") {
             const callId = data.call_id;
             if (callId && !processedCallIdsRef.current.has(callId)) {
               processedCallIdsRef.current.add(callId);
-              console.log('Function call completed:', data);
+              console.log("Function call completed:", data);
               if (data.arguments && data.name) {
                 try {
                   const args = JSON.parse(data.arguments);
                   executeFunction(data.name, args, callId);
                 } catch (parseError) {
-                  console.error('Error parsing function call arguments:', parseError);
+                  console.error(
+                    "Error parsing function call arguments:",
+                    parseError,
+                  );
                 }
               }
             }
           }
           // Alternative function call format
-          else if (data.type === 'response.output_item.done' && data.item?.type === 'function_call') {
+          else if (
+            data.type === "response.output_item.done" &&
+            data.item?.type === "function_call"
+          ) {
             const item = data.item;
             const callId = item.call_id;
             if (callId && !processedCallIdsRef.current.has(callId)) {
               processedCallIdsRef.current.add(callId);
-              console.log('Function call item completed:', data);
+              console.log("Function call item completed:", data);
               if (item.arguments && item.name) {
                 try {
                   const args = JSON.parse(item.arguments);
                   executeFunction(item.name, args, callId);
                 } catch (parseError) {
-                  console.error('Error parsing function call arguments:', parseError);
+                  console.error(
+                    "Error parsing function call arguments:",
+                    parseError,
+                  );
                 }
               }
             }
           }
-          
+
           // Log rate limit info from response events
-          if (data.type === 'rate_limits.updated') {
-            console.warn('⚠️ Rate limits updated:', JSON.stringify(data.rate_limits, null, 2));
+          if (data.type === "rate_limits.updated") {
+            console.warn(
+              "⚠️ Rate limits updated:",
+              JSON.stringify(data.rate_limits, null, 2),
+            );
           }
         } catch (error) {
-          console.error('Error processing data channel message:', error);
+          console.error("Error processing data channel message:", error);
         }
       };
 
       dc.onerror = () => {
-        setStatus('error');
+        setStatus("error");
       };
 
       function cleanup() {
-        console.log(`🧹 Cleanup called for connection: ${connectionIdRef.current}`);
-        
+        console.log(
+          `🧹 Cleanup called for connection: ${connectionIdRef.current}`,
+        );
+
         // Close data channel
-        if (dc && dc.readyState === 'open') {
+        if (dc && dc.readyState === "open") {
           dc.close();
         }
-        
+
         // Close peer connection
-        if (pc && pc.connectionState !== 'closed') {
+        if (pc && pc.connectionState !== "closed") {
           pc.close();
         }
-        
+
         // Stop all media tracks
         stream.getTracks().forEach((track) => {
           track.stop();
           console.log(`🛑 Stopped media track: ${track.kind}`);
         });
-        
+
         // Clear all refs
         remoteStreamRef.current = null;
         dataChannelRef.current = null;
@@ -970,19 +1075,19 @@ export default function JarvisPage() {
         processedCallIdsRef.current.clear();
         activeCallsRef.current.clear();
         hasActiveResponseRef.current = false;
-        
+
         // Reset connection guards
         isConnectingRef.current = false;
-        
-        setStatus('idle');
-        console.log('✅ Cleanup completed');
+
+        setStatus("idle");
+        console.log("✅ Cleanup completed");
       }
 
       endRealtimeRef.current = cleanup;
     } catch (error) {
-      console.error('Error starting AKIOR:', error);
-      setStatus('error');
-      
+      console.error("Error starting AKIOR:", error);
+      setStatus("error");
+
       // Reset connection guards on error
       isConnectingRef.current = false;
       peerConnectionRef.current = null;
@@ -995,11 +1100,8 @@ export default function JarvisPage() {
     if (fn) fn();
   }
 
-  const ring1Scale = 1 + audioLevel * 0.08;
-  const ring2Scale = 1 + audioLevel * 0.05;
-  // Logo is now static - no volume-based animation
-  const logoScale = 1;
-  const glowIntensity = 0;
+  const logoScale = 1 + audioLevel * 0.08; // Subtle audio-reactive scale for logo wrapper
+  const glowIntensity = audioLevel * 30; // Audio-reactive glow
 
   // Show setup banner if setup is incomplete
   if (!setupLoading && !setupComplete) {
@@ -1020,113 +1122,54 @@ export default function JarvisPage() {
       >
         {isFullscreen ? (
           // Exit fullscreen icon
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6 text-cyan-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
+            />
           </svg>
         ) : (
           // Enter fullscreen icon
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6 text-cyan-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+            />
           </svg>
         )}
       </button>
-      
+
       {/* AKIOR Visualizer - Full Screen */}
       <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square overflow-hidden">
-        {/* Ring 2 - Outer */}
+        {/* Geometric Star Logo - replaces old spinning rings */}
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{
-            transform: `rotate(${ring2Rotation}deg) scale(${ring2Scale})`,
-            opacity: status === 'active' ? 1 : 0.3,
-            transition: 'opacity 300ms'
+            transform: `scale(${logoScale})`,
+            transition: "transform 200ms",
           }}
         >
-          <Image
-            src="/assets/ring2.png"
-            alt=""
-            width={700}
-            height={700}
-            className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(34,211,238,0.6)]"
-          />
-        </div>
-
-        {/* FFT Visualizer with Wave Loading and 3D Model Progress */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <svg className="w-2/3 h-2/3" viewBox="0 0 400 400" style={{ overflow: 'visible' }}>
-            {fftData.map((value, index) => {
-              const angle = (index / FFT_BARS) * Math.PI * 2;
-              const radius = 180;
-              const centerX = 200;
-              const centerY = 200;
-              const x = centerX + Math.cos(angle) * radius;
-              const y = centerY + Math.sin(angle) * radius;
-              const barWidth = 5;
-              const baseHeight = 6;
-              
-              let barHeight: number;
-              let opacity: number;
-              
-              // 3D Model generation animation
-              if (modelProgress !== null) {
-                // Circular progress animation - bars fill up based on progress
-                const progressAngle = (modelProgress / 100) * Math.PI * 2;
-                const barAngle = (index / FFT_BARS) * Math.PI * 2;
-                const isFilled = barAngle <= progressAngle;
-                
-                // Pulsing effect at the progress edge
-                const isEdge = Math.abs(barAngle - progressAngle) < (Math.PI * 2 / FFT_BARS * 2);
-                const pulse = isEdge ? Math.sin(Date.now() / 150) * 0.3 + 0.7 : 1;
-                
-                barHeight = isFilled ? baseHeight + 20 * pulse : baseHeight;
-                opacity = isFilled ? 0.9 * pulse : 0.2;
-              }
-              // Wave animation when processing (image generation)
-              else if (isProcessing) {
-                const waveOffset = Math.sin((Date.now() / 200) + (index * 0.3)) * 15;
-                barHeight = baseHeight + Math.abs(waveOffset);
-                opacity = 0.6 + (Math.abs(waveOffset) / 15) * 0.4;
-              }
-              // Normal audio visualization
-              else {
-                barHeight = baseHeight + value * 25;
-                opacity = status === 'active' ? 0.4 + value * 0.6 : 0.1;
-              }
-              
-              const rotation = (angle * 180) / Math.PI + 90;
-              
-              return (
-                <g key={index} transform={`translate(${x}, ${y}) rotate(${rotation})`}>
-                  <rect
-                    x={-barWidth / 2}
-                    y={-barHeight / 2}
-                    width={barWidth}
-                    height={barHeight}
-                    fill="#22d3ee"
-                    opacity={opacity}
-                    rx={2.5}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-
-        {/* Ring 1 - Middle */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            transform: `rotate(${ring1Rotation}deg) scale(${ring1Scale})`,
-            opacity: status === 'active' ? 1 : 0.5,
-            transition: 'opacity 200ms'
-          }}
-        >
-          <Image
-            src="/assets/ring1.png"
-            alt=""
-            width={600}
-            height={600}
-            className="w-4/5 h-4/5 object-contain drop-shadow-[0_0_25px_rgba(34,211,238,0.8)]"
+          <AkiorLogo
+            size={500}
+            className={status === "active" ? "voice-active" : ""}
+            showText={false}
+            showActivateLabel={false}
           />
         </div>
 
@@ -1138,22 +1181,24 @@ export default function JarvisPage() {
               onClick={() => setDisplayContent(null)}
               className="absolute top-2 right-2 w-10 h-10 rounded-full bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-500/50 flex items-center justify-center transition-all z-20"
             >
-              <span className="text-cyan-400 text-2xl font-bold leading-none">×</span>
+              <span className="text-cyan-400 text-2xl font-bold leading-none">
+                ×
+              </span>
             </button>
-            
+
             {/* Display Content */}
-            {displayContent.type === 'image' ? (
+            {displayContent.type === "image" ? (
               <img
                 src={displayContent.url}
                 alt="Displayed content"
                 className="max-w-full max-h-full object-contain rounded-lg p-4"
               />
-            ) : displayContent.type === '3d' ? (
+            ) : displayContent.type === "3d" ? (
               <div className="w-full h-full">
-                <JarvisModelViewer 
+                <JarvisModelViewer
                   modelUrl={displayContent.url}
                   onError={(error) => {
-                    console.error('3D model error:', error);
+                    console.error("3D model error:", error);
                     setDisplayContent(null);
                   }}
                 />
@@ -1175,22 +1220,23 @@ export default function JarvisPage() {
             className="relative z-10 flex flex-col items-center justify-center"
             style={{
               transform: `scale(${logoScale})`,
-              filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`
+              filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`,
             }}
             data-testid="brand-mark"
           >
-            <div 
+            <div
               className="text-7xl font-bold tracking-[0.3em] text-cyan-400"
-              style={{ 
-                textShadow: '0 0 40px rgba(34, 211, 238, 0.8), 0 0 80px rgba(34, 211, 238, 0.4)',
-                fontFamily: 'system-ui, -apple-system, sans-serif'
+              style={{
+                textShadow:
+                  "0 0 40px rgba(34, 211, 238, 0.8), 0 0 80px rgba(34, 211, 238, 0.4)",
+                fontFamily: "system-ui, -apple-system, sans-serif",
               }}
             >
               AKIOR
             </div>
-            <div 
+            <div
               className="text-lg tracking-[0.2em] text-cyan-400/70 uppercase text-center leading-relaxed mt-4"
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
             >
               Advanced Knowledge Intelligence
               <br />
@@ -1200,12 +1246,12 @@ export default function JarvisPage() {
         )}
 
         {/* Status Ring Glow */}
-        {status === 'active' && (
+        {status === "active" && (
           <div
             className="absolute inset-0 rounded-full transition-opacity duration-300"
             style={{
               background: `radial-gradient(circle, rgba(34,211,238,${audioLevel * 0.3}) 0%, transparent 70%)`,
-              transform: `scale(${1 + audioLevel * 0.5})`
+              transform: `scale(${1 + audioLevel * 0.5})`,
             }}
           />
         )}
@@ -1215,13 +1261,13 @@ export default function JarvisPage() {
           <div className="flex items-center justify-center gap-3">
             <div
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                status === 'idle'
-                  ? 'bg-gray-500'
-                  : status === 'listening'
-                  ? 'bg-yellow-400 animate-pulse'
-                  : status === 'active'
-                  ? 'bg-cyan-400 animate-pulse'
-                  : 'bg-red-500'
+                status === "idle"
+                  ? "bg-gray-500"
+                  : status === "listening"
+                    ? "bg-yellow-400 animate-pulse"
+                    : status === "active"
+                      ? "bg-cyan-400 animate-pulse"
+                      : "bg-red-500"
               }`}
             />
             <span className="text-xl font-semibold text-cyan-400 uppercase tracking-wider">
@@ -1230,16 +1276,16 @@ export default function JarvisPage() {
           </div>
 
           <p className="text-sm text-white/60 max-w-md px-4 mx-auto">
-            {status === 'listening' ? (
-              'Establishing secure connection...'
-            ) : status === 'active' ? (
-              'AKIOR is online and listening...'
-            ) : status === 'error' ? (
-              'Connection error. Refresh to try again.'
-            ) : null}
+            {status === "listening"
+              ? "Establishing secure connection..."
+              : status === "active"
+                ? "AKIOR is online and listening..."
+                : status === "error"
+                  ? "Connection error. Refresh to try again."
+                  : null}
           </p>
 
-          {status === 'active' && (
+          {status === "active" && (
             <button
               className="px-6 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 transition-all duration-200 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
               onClick={endRealtime}

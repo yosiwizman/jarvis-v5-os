@@ -57,6 +57,11 @@ const nextConfig = {
   // Note: In dev mode with dev-proxy.mjs, the proxy handles this instead
   async rewrites() {
     return [
+      // Socket.IO → backend (needed when running without dev-proxy)
+      {
+        source: '/socket.io/:path*',
+        destination: `${BACKEND_URL}/socket.io/:path*`,
+      },
       // Keep Next.js-specific API routes local
       {
         source: '/api/proxy-model/:path*',
