@@ -8,7 +8,7 @@ import { handleCameraAnalysis } from "@/lib/camera-handler";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { isFunctionEnabledSync } from "@/hooks/useFunctionSettings";
-import { AkiorLogo } from "./AkiorLogo";
+import AkiorCore from "./akior/AkiorCore";
 
 const FFT_BARS = 64;
 
@@ -1305,7 +1305,7 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
       data-testid="brand-float"
       style={{ pointerEvents: "auto" }}
     >
-      <AkiorLogo size={80} showText={false} showActivateLabel={false} />
+      <AkiorCore state="idle" size={80} />
     </button>
   );
 }

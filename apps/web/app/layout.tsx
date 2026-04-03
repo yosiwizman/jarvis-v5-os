@@ -1,6 +1,8 @@
 "use client";
 
 import "./globals.css";
+import "@/styles/akior.css";
+import "@/styles/phase5-akior-css-addon.css";
 import Link from "next/link";
 import { NavigationBridge } from "@/components/navigation-bridge";
 import { JarvisAssistant, JarvisIcon } from "@/components/JarvisAssistant";

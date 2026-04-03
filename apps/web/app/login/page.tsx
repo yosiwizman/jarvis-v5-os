@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/hooks/useAuth";
-import { AkiorLogo } from "@/components/AkiorLogo";
+import AkiorCore from "@/components/akior/AkiorCore";
 
 function LoginContent() {
   const router = useRouter();
@@ -66,11 +66,25 @@ function LoginContent() {
         <div className="card p-8 space-y-8 backdrop-blur-xl bg-black/40 border border-cyan-500/20 shadow-[0_0_60px_rgba(34,211,238,0.15)]">
           {/* Logo Section */}
           <div className="text-center" data-testid="brand-mark">
-            <AkiorLogo
-              size={200}
-              textClass="text-3xl"
-              subtitleClass="text-[9px]"
-            />
+            <div className="flex flex-col items-center gap-4">
+              <AkiorCore state="idle" size={200} />
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="text-3xl font-bold tracking-[0.3em] text-cyan-400"
+                  style={{
+                    textShadow:
+                      "0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 212, 255, 0.3)",
+                  }}
+                >
+                  AKIOR
+                </div>
+                <div className="text-[9px] tracking-[0.15em] text-cyan-400/70 uppercase text-center leading-tight">
+                  Advanced Knowledge Intelligence
+                  <br />
+                  Operating Resource
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Divider */}

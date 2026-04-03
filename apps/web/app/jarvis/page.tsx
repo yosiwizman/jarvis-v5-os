@@ -10,7 +10,8 @@ import dynamic from "next/dynamic";
 import { handleCameraAnalysis } from "@/lib/camera-handler";
 import { useSetupStatus } from "@/hooks/useSetupStatus";
 import { SetupRequiredBanner } from "@/components/SetupRequiredBanner";
-import { AkiorLogo } from "@/components/AkiorLogo";
+import AkiorCore from "@/components/akior/AkiorCore";
+import type { AkiorState } from "@/components/akior/AkiorCore";
 
 // Dynamically import 3D viewer to avoid SSR issues
 const JarvisModelViewer = dynamic(
@@ -1103,6 +1104,16 @@ export default function JarvisPage() {
   const logoScale = 1 + audioLevel * 0.08; // Subtle audio-reactive scale for logo wrapper
   const glowIntensity = audioLevel * 30; // Audio-reactive glow
 
+  // Map internal status to AkiorCore state
+  const akiorState: AkiorState =
+    status === "active"
+      ? isProcessing
+        ? "thinking"
+        : "speaking"
+      : status === "listening"
+        ? "listening"
+        : "idle";
+
   // Show setup banner if setup is incomplete
   if (!setupLoading && !setupComplete) {
     return (
@@ -1165,12 +1176,7 @@ export default function JarvisPage() {
             transition: "transform 200ms",
           }}
         >
-          <AkiorLogo
-            size={500}
-            className={status === "active" ? "voice-active" : ""}
-            showText={false}
-            showActivateLabel={false}
-          />
+          <AkiorCore state={akiorState} size={500} audioLevel={audioLevel} />
         </div>
 
         {/* Logo or Display Content or Progress - Center */}
