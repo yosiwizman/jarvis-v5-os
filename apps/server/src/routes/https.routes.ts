@@ -16,7 +16,7 @@ import { existsSync, readFileSync } from "fs";
 import { execSync } from "child_process";
 import * as crypto from "crypto";
 import path from "path";
-import { requireAdmin } from "./auth.routes.js";
+import { requireAdmin, requireAdminOrSetup } from "./auth.routes.js";
 import { logger } from "../utils/logger.js";
 
 // Common paths where Caddy stores its internal CA
@@ -206,12 +206,12 @@ export function registerHttpsRoutes(fastify: FastifyInstance) {
    * GET /api/admin/https/status
    *
    * Get HTTPS/CA status information.
-   * Admin authentication required.
+   * Allowed during initial setup (no PIN configured) or with admin session.
    */
   fastify.get(
     "/api/admin/https/status",
     async (req: FastifyRequest, reply: FastifyReply) => {
-      if (!requireAdmin(req, reply)) return;
+      if (!requireAdminOrSetup(req, reply)) return;
 
       const cert = readCaCert();
 

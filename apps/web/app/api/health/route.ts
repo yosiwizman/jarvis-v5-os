@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/health
@@ -7,26 +7,27 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   const startTime = Date.now();
-  
-  let serverHealth = { ok: false, error: 'Not checked' };
-  
+
+  let serverHealth = { ok: false, error: "Not checked" };
+
   // Try to reach the backend server health endpoint
   try {
-    const serverUrl = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:1234';
-    const response = await fetch(`${serverUrl}/health`, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(5000)
+    const serverUrl =
+      process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3002";
+    const response = await fetch(`${serverUrl}/api/health`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
     });
-    
+
     if (response.ok) {
       serverHealth = await response.json();
     } else {
       serverHealth = { ok: false, error: `Server returned ${response.status}` };
     }
   } catch (err) {
-    serverHealth = { 
-      ok: false, 
-      error: err instanceof Error ? err.message : 'Server unreachable' 
+    serverHealth = {
+      ok: false,
+      error: err instanceof Error ? err.message : "Server unreachable",
     };
   }
 
@@ -35,15 +36,17 @@ export async function GET() {
   return NextResponse.json({
     ok: serverHealth.ok,
     timestamp: new Date().toISOString(),
-    uptime: serverHealth.ok ? (serverHealth as { uptime?: number }).uptime : undefined,
+    uptime: serverHealth.ok
+      ? (serverHealth as { uptime?: number }).uptime
+      : undefined,
     build: {
-      gitSha: process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
-      buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || 'unknown',
+      gitSha: process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
+      buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "unknown",
     },
     web: {
       ok: true,
-      responseTimeMs: responseTime
+      responseTimeMs: responseTime,
     },
-    server: serverHealth
+    server: serverHealth,
   });
 }

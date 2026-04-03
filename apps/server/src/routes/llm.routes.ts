@@ -17,6 +17,7 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { verifySessionToken } from "../auth/sessionToken.js";
+import { isPinConfigured } from "../auth/index.js";
 import {
   getLLMConfigPublic,
   updateLLMConfig,
@@ -65,15 +66,30 @@ async function requireAdmin(
 }
 
 /**
+ * Allows access during initial setup (no PIN configured) or with admin session.
+ * Used for read-only config endpoints the setup wizard needs before auth.
+ */
+async function requireAdminOrSetup(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<boolean> {
+  if (!isPinConfigured()) {
+    return true;
+  }
+  return requireAdmin(request, reply);
+}
+
+/**
  * Register LLM configuration routes
  */
 export function registerLLMRoutes(fastify: FastifyInstance): void {
   /**
    * GET /api/admin/llm/config
-   * Returns current LLM configuration (no secrets)
+   * Returns current LLM configuration (no secrets).
+   * Allowed during initial setup (no PIN configured) or with admin session.
    */
   fastify.get("/api/admin/llm/config", async (request, reply) => {
-    if (!(await requireAdmin(request, reply))) return;
+    if (!(await requireAdminOrSetup(request, reply))) return;
 
     const config = getLLMConfigPublic();
     return {

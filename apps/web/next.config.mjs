@@ -17,8 +17,8 @@ if (gitSha === 'unknown') {
   }
 }
 
-// Backend server URL (Fastify runs on port 1234 with HTTPS)
-const BACKEND_URL = process.env.BACKEND_URL || 'https://localhost:1234';
+// Backend server URL (Fastify runs on port 3002 with HTTP locally)
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3002';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
