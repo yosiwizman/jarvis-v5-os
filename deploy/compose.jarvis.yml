@@ -12,7 +12,7 @@
 # See docs/networking/trusted-lan-https.md for details.
 #
 # Deployment (single-command):
-#   cd /opt/jarvis/JARVIS-V5-OS && git pull
+#   cd /opt/akior/AKIOR-OS && git pull
 #   GIT_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/compose.jarvis.yml up -d --build
 #
 # Verify deployment:
@@ -28,7 +28,7 @@ services:
   # Caddy reverse proxy - handles routing, WebSocket upgrades, and TLS
   caddy:
     image: caddy:2-alpine
-    container_name: jarvis-caddy
+    container_name: akior-caddy
     restart: unless-stopped
     ports:
       - "0.0.0.0:443:443"         # LAN HTTPS access (secure, camera works)
@@ -38,7 +38,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data               # Persists internal CA and certs
     networks:
-      - jarvis-net
+      - akior-net
     depends_on:
       - web
       - server
@@ -57,7 +57,7 @@ services:
       args:
         GIT_SHA: ${GIT_SHA:-unknown}
         BUILD_TIME: ${BUILD_TIME:-unknown}
-    container_name: jarvis-web
+    container_name: akior-web
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -68,7 +68,7 @@ services:
     expose:
       - "3001"
     networks:
-      - jarvis-net
+      - akior-net
     depends_on:
       - server
     healthcheck:
@@ -86,7 +86,7 @@ services:
       args:
         GIT_SHA: ${GIT_SHA:-unknown}
         BUILD_TIME: ${BUILD_TIME:-unknown}
-    container_name: jarvis-server
+    container_name: akior-server
     restart: unless-stopped
     # Allow server to reach host services (e.g., Ollama on host machine)
     extra_hosts:
@@ -101,13 +101,13 @@ services:
       # Default Ollama base URL for local LLM provider
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
     env_file:
-      - jarvis.env
+      - akior.env
     expose:
       - "1234"
     volumes:
-      - jarvis-data:/app/data
+      - akior-data:/app/data
     networks:
-      - jarvis-net
+      - akior-net
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:1234/api/health"]
       interval: 30s
@@ -120,8 +120,8 @@ services:
   # Requires: deploy/secrets/tailscale.env with TS_AUTHKEY set
   tailscale:
     image: tailscale/tailscale:stable
-    container_name: jarvis-tailscale
-    hostname: jarvis-tailscale
+    container_name: akior-tailscale
+    hostname: akior-tailscale
     restart: unless-stopped
     profiles:
       - remote-access
@@ -141,11 +141,11 @@ services:
       - TS_USERSPACE=false
 
 networks:
-  jarvis-net:
+  akior-net:
     driver: bridge
 
 volumes:
-  jarvis-data:
+  akior-data:
     driver: local
   caddy_data:
     driver: local

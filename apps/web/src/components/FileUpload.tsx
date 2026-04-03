@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useCallback, useState } from 'react';
-import { buildServerUrl } from '@/lib/api';
+import { useCallback, useState } from "react";
+import { buildServerUrl } from "@/lib/api";
 
 interface FileUploadProps {
   onUploadComplete?: () => void;
@@ -10,7 +10,9 @@ interface FileUploadProps {
 export function FileUpload({ onUploadComplete }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -28,17 +30,19 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      const response = await fetch(buildServerUrl('/file-library/upload'), {
-        method: 'POST',
-        body: formData
+      const response = await fetch(buildServerUrl("/file-library/upload"), {
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Upload failed: ${response.statusText}`,
+        );
       }
 
       return await response.json();
@@ -61,30 +65,32 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
     try {
       for (const file of fileArray) {
-        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+        setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }));
 
         try {
           await uploadFile(file);
-          setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+          setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }));
           successCount++;
         } catch (err) {
           console.error(`Failed to upload ${file.name}:`, err);
           failCount++;
-          setUploadProgress(prev => ({ ...prev, [file.name]: -1 }));
+          setUploadProgress((prev) => ({ ...prev, [file.name]: -1 }));
         }
       }
 
       if (successCount > 0) {
         setSuccess(
-          `✅ Successfully uploaded ${successCount} file${successCount === 1 ? '' : 's'}${
-            failCount > 0 ? ` (${failCount} failed)` : ''
-          }`
+          `✅ Successfully uploaded ${successCount} file${successCount === 1 ? "" : "s"}${
+            failCount > 0 ? ` (${failCount} failed)` : ""
+          }`,
         );
         onUploadComplete?.();
       }
 
       if (failCount > 0 && successCount === 0) {
-        setError(`❌ Failed to upload ${failCount} file${failCount === 1 ? '' : 's'}`);
+        setError(
+          `❌ Failed to upload ${failCount} file${failCount === 1 ? "" : "s"}`,
+        );
       }
 
       // Clear progress after 3 seconds
@@ -107,16 +113,16 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
       await handleFiles(e.dataTransfer.files);
     },
-    [onUploadComplete]
+    [onUploadComplete],
   );
 
   const handleFileInput = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       await handleFiles(e.target.files);
       // Reset input so the same file can be selected again
-      e.target.value = '';
+      e.target.value = "";
     },
-    [onUploadComplete]
+    [onUploadComplete],
   );
 
   return (
@@ -130,10 +136,10 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
           relative rounded-xl border-2 border-dashed transition-all
           ${
             isDragging
-              ? 'border-cyan-400 bg-cyan-500/10'
-              : 'border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10'
+              ? "border-cyan-400 bg-cyan-500/10"
+              : "border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10"
           }
-          ${uploading ? 'pointer-events-none opacity-60' : 'cursor-pointer'}
+          ${uploading ? "pointer-events-none opacity-60" : "cursor-pointer"}
         `}
       >
         <input
@@ -149,7 +155,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
           {/* Upload Icon */}
           <div className="mb-4 rounded-full bg-cyan-500/10 p-4">
             <svg
-              className="h-12 w-12 text-cyan-400"
+              className="h-10 w-10 text-cyan-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -166,12 +172,14 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
           {uploading ? (
             <div className="space-y-2">
               <p className="text-lg font-semibold text-white">Uploading...</p>
-              <p className="text-sm text-white/60">Please wait while files are being uploaded</p>
+              <p className="text-sm text-white/60">
+                Please wait while files are being uploaded
+              </p>
             </div>
           ) : (
             <>
               <p className="text-lg font-semibold text-white">
-                {isDragging ? 'Drop files here' : 'Drag & drop files here'}
+                {isDragging ? "Drop files here" : "Drag & drop files here"}
               </p>
               <p className="mt-2 text-sm text-white/60">
                 or <span className="text-cyan-400">click to browse</span>
@@ -187,20 +195,28 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       {/* Upload Progress */}
       {Object.keys(uploadProgress).length > 0 && (
         <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-4">
-          <div className="text-sm font-semibold text-white/80">Upload Progress</div>
+          <div className="text-sm font-semibold text-white/80">
+            Upload Progress
+          </div>
           {Object.entries(uploadProgress).map(([filename, progress]) => (
             <div key={filename} className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="truncate text-white/70">{filename}</span>
-                <span className={progress === -1 ? 'text-red-400' : 'text-white/50'}>
-                  {progress === -1 ? 'Failed' : progress === 100 ? 'Complete' : 'Uploading...'}
+                <span
+                  className={progress === -1 ? "text-red-400" : "text-white/50"}
+                >
+                  {progress === -1
+                    ? "Failed"
+                    : progress === 100
+                      ? "Complete"
+                      : "Uploading..."}
                 </span>
               </div>
               {progress >= 0 && (
                 <div className="h-1 overflow-hidden rounded-full bg-white/10">
                   <div
                     className={`h-full transition-all duration-300 ${
-                      progress === 100 ? 'bg-green-500' : 'bg-cyan-500'
+                      progress === 100 ? "bg-green-500" : "bg-cyan-500"
                     }`}
                     style={{ width: `${progress}%` }}
                   />
@@ -227,4 +243,3 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
     </div>
   );
 }
-

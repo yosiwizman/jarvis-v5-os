@@ -54,13 +54,13 @@ The `drift-check.sh` script runs on the host and compares the git repo HEAD with
 
 ```bash
 # Text output (human-readable)
-/opt/jarvis/JARVIS-V5-OS/deploy/scripts/drift-check.sh
+/opt/akior/AKIOR-V5-OS/deploy/scripts/drift-check.sh
 
 # JSON output (for scripting)
-/opt/jarvis/JARVIS-V5-OS/deploy/scripts/drift-check.sh --json
+/opt/akior/AKIOR-V5-OS/deploy/scripts/drift-check.sh --json
 
 # Quiet mode (exit code only)
-/opt/jarvis/JARVIS-V5-OS/deploy/scripts/drift-check.sh --quiet
+/opt/akior/AKIOR-V5-OS/deploy/scripts/drift-check.sh --quiet
 ```
 
 Exit codes:
@@ -70,7 +70,7 @@ Exit codes:
 
 Example usage in CI:
 ```bash
-if ! /opt/jarvis/JARVIS-V5-OS/deploy/scripts/drift-check.sh --quiet; then
+if ! /opt/akior/AKIOR-V5-OS/deploy/scripts/drift-check.sh --quiet; then
   echo "⚠️ Deployment drift detected! Containers need rebuild."
   exit 1
 fi
@@ -82,8 +82,8 @@ For periodic monitoring, install the systemd timer:
 
 ```bash
 # Copy unit files
-sudo cp /opt/jarvis/JARVIS-V5-OS/deploy/systemd/akior-drift-check.service /etc/systemd/system/
-sudo cp /opt/jarvis/JARVIS-V5-OS/deploy/systemd/akior-drift-check.timer /etc/systemd/system/
+sudo cp /opt/akior/AKIOR-V5-OS/deploy/systemd/akior-drift-check.service /etc/systemd/system/
+sudo cp /opt/akior/AKIOR-V5-OS/deploy/systemd/akior-drift-check.timer /etc/systemd/system/
 
 # Reload systemd
 sudo systemctl daemon-reload
@@ -129,7 +129,7 @@ When drift is detected, use the deterministic rebuild script to sync both contai
 The rebuild script ensures both containers are stamped with identical build metadata:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Pull latest code
 git pull origin main
@@ -153,17 +153,17 @@ Options:
 If you prefer manual control:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Pull latest code
 git pull origin main
 
 # Single-command deploy with SHA tracking
 GIT_SHA=$(git rev-parse --short HEAD) BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  docker compose -f deploy/compose.jarvis.yml up -d --build
+  docker compose -f deploy/compose.akior.yml up -d --build
 
 # Verify all containers are healthy
-docker compose -f deploy/compose.jarvis.yml ps
+docker compose -f deploy/compose.akior.yml ps
 
 # Verify drift is resolved
 bash ops/verify/build-sync-check.sh
@@ -217,7 +217,7 @@ curl -sk https://akior.local/menu | grep -o '<title>.*</title>'
 curl -sk https://akior.local/socket.io/ -w '%{http_code}'
 
 # 4. Caddy is running from compose (not manual)
-docker compose -f deploy/compose.jarvis.yml ps | grep caddy
+docker compose -f deploy/compose.akior.yml ps | grep caddy
 ```
 
 ## Monitoring Integration
@@ -252,7 +252,7 @@ The `GIT_SHA` wasn't set at build time. Rebuild with:
 
 ```bash
 GIT_SHA=$(git rev-parse HEAD) BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  docker compose -f deploy/compose.jarvis.yml up -d --build
+  docker compose -f deploy/compose.akior.yml up -d --build
 ```
 
 ### "Web container health endpoint unreachable"

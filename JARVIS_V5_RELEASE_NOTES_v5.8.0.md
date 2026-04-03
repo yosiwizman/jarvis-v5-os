@@ -1,4 +1,4 @@
-# Jarvis V5.8.0 – Gmail Integration Skeleton
+# AKIOR V5.8.0 – Gmail Integration Skeleton
 
 **Release Date:** December 6, 2025  
 **Version:** v5.8.0
@@ -7,11 +7,11 @@
 
 ## Summary
 
-Jarvis V5.8.0 introduces a **Gmail integration skeleton** using OAuth2 refresh token flow. This release establishes the backend wiring, configuration UI, and testing infrastructure needed for future email management features. The implementation includes a Gmail API client, test endpoint, full Settings card, and CI smoke test validation.
+AKIOR V5.8.0 introduces a **Gmail integration skeleton** using OAuth2 refresh token flow. This release establishes the backend wiring, configuration UI, and testing infrastructure needed for future email management features. The implementation includes a Gmail API client, test endpoint, full Settings card, and CI smoke test validation.
 
 This is a **backend + config + test** release. The Gmail integration provides connection testing and basic message fetching through the API, with full configuration options in Settings. User-facing inbox UI, email composition, and OAuth wizard will arrive in future releases (v5.8.x or v5.9.0).
 
-All previous features from v5.0.0–v5.7.0 remain intact: Spotify integration, dual TTS providers (ElevenLabs + Azure), Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Gmail is **purely additive**—Jarvis continues to work exactly like v5.7.0 when Gmail is not configured.
+All previous features from v5.0.0–v5.7.0 remain intact: Spotify integration, dual TTS providers (ElevenLabs + Azure), Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Gmail is **purely additive**—AKIOR continues to work exactly like v5.7.0 when Gmail is not configured.
 
 ---
 
@@ -19,7 +19,7 @@ All previous features from v5.0.0–v5.7.0 remain intact: Spotify integration, d
 
 ### 📧 Gmail Integration (Backend Skeleton)
 
-Gmail is now a fully supported integration in Jarvis, offering backend email connectivity via Google's Gmail API with OAuth2 refresh token authentication.
+Gmail is now a fully supported integration in AKIOR, offering backend email connectivity via Google's Gmail API with OAuth2 refresh token authentication.
 
 #### Gmail Configuration Card
 
@@ -159,7 +159,7 @@ curl -X POST https://localhost:3000/api/integrations/gmail/test \
       "id": "18c1a2b3d4e5f6g7",
       "threadId": "18c1a2b3d4e5f6g7",
       "snippet": "Hello! This is the email preview...",
-      "subject": "Welcome to Jarvis",
+      "subject": "Welcome to AKIOR",
       "from": "notifications@example.com",
       "date": "Fri, 6 Dec 2025 12:34:56 +0000"
     }
@@ -174,7 +174,7 @@ curl -X POST https://localhost:3000/api/integrations/gmail/test \
 ### v5.0.0 – Initial Local OS (June 2025)
 
 - Holomat radial app launcher with draggable windows
-- Jarvis voice assistant with real-time API
+- AKIOR voice assistant with real-time API
 - 3D model generation and viewer
 - Camera streaming and security dashboard
 - Local HTTPS setup with mkcert + dev TLS proxy
@@ -349,7 +349,7 @@ All quality gates passed for v5.8.0:
 ### No Breaking Changes
 
 - **Gmail disabled by default:** Integration is opt-in, enabled only when configured
-- **Existing behavior preserved:** If Gmail is never configured, Jarvis behaves exactly like v5.7.0
+- **Existing behavior preserved:** If Gmail is never configured, AKIOR behaves exactly like v5.7.0
 - **All v5.7.0 features intact:** Spotify, ElevenLabs, Azure TTS, Local LLM, Web Search, Weather all unchanged
 - **Settings migration:** All previous integration settings remain intact
 
@@ -439,7 +439,7 @@ Your existing integrations (Spotify, TTS, Local LLM, Web Search, etc.) will cont
 - **Batch Operations:** Select multiple emails, bulk delete/archive/label
 - **Keyboard Shortcuts:** Navigation shortcuts like Gmail web
 - **Notifications:** Real-time email notifications (when new mail arrives)
-- **Voice Commands:** "Jarvis, read my latest email" or "Jarvis, send email to..."
+- **Voice Commands:** "AKIOR, read my latest email" or "AKIOR, send email to..."
 
 ### Calendar Integration
 
@@ -473,7 +473,7 @@ Gmail is **disabled by default**. Your existing workflow with Spotify, TTS, Loca
 
 ## Support & Resources
 
-- **Repository:** [https://github.com/yosiwizman/jarvis-v5-os](https://github.com/yosiwizman/jarvis-v5-os)
+- **Repository:** [https://github.com/yosiwizman/akior-v5-os](https://github.com/yosiwizman/akior-v5-os)
 - **Documentation:** See repository root for detailed guides
 - **Issues:** Report bugs via GitHub Issues
 - **Discussions:** Use GitHub Discussions for questions and feature requests
@@ -482,4 +482,4 @@ Gmail is **disabled by default**. Your existing workflow with Spotify, TTS, Loca
 
 ---
 
-**Thank you for using Jarvis V5!** 🚀📧
+**Thank you for using AKIOR V5!** 🚀📧

@@ -7,7 +7,7 @@
 
 ## Overview
 
-Agent D voice-activated features have been fully implemented for the J.A.R.V.I.S. system. The system is **end-to-end functional** with all core features operational and optional enhancements completed.
+Agent D voice-activated features have been fully implemented for the AKIOR system. The system is **end-to-end functional** with all core features operational and optional enhancements completed.
 
 ---
 
@@ -122,7 +122,7 @@ Agent D voice-activated features have been fully implemented for the J.A.R.V.I.S
 
 ### Modified Files (3 files)
 
-1. **`apps/web/src/lib/jarvis-functions.ts`**
+1. **`apps/web/src/lib/akior-functions.ts`**
    - **Added**: 11 function definitions (+220 lines)
    - Lines: 195-414
 
@@ -132,7 +132,7 @@ Agent D voice-activated features have been fully implemented for the J.A.R.V.I.S
    - Lines: 3358-3418 (checkMotionAlarms function)
    - Lines: 3446-3448 (Motion alarm integration)
 
-3. **`apps/web/src/lib/jarvis-function-executor.ts`**
+3. **`apps/web/src/lib/akior-function-executor.ts`**
    - **Added**: 11 function handlers (+497 lines)
    - Lines: 72-104 (switch cases)
    - Lines: 575-1070 (implementations)
@@ -169,7 +169,7 @@ User Voice Command
     ↓
 OpenAI Realtime API (function calling)
     ↓
-jarvis-function-executor.ts (handler)
+akior-function-executor.ts (handler)
     ↓
 Backend API endpoint (index.ts)
     ↓

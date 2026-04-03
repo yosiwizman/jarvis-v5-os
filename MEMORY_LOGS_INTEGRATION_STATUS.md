@@ -64,8 +64,8 @@
   - Integration with backend APIs
 
 ### 5. Memory Recall Function (100%)
-- ✅ **recall_memory function** (`apps/web/src/lib/jarvis-functions.ts`)
-  - Function definition added to Jarvis functions
+- ✅ **recall_memory function** (`apps/web/src/lib/akior-functions.ts`)
+  - Function definition added to AKIOR functions
   - Search across conversations and actions
   - Time range filtering (today, yesterday, last week, last month, all time)
   - Content type filtering (all, conversations, actions, images, 3d_models)
@@ -114,7 +114,7 @@
   - Modified 3 files with ~180 replacements
 - ✅ Logging for critical events already in place (initialization, notifications, API requests)
 
-### 8. JarvisAssistant Integration (0%)
+### 8. AKIORAssistant Integration (0%)
 - ❌ Conversation storage not implemented for voice/realtime sessions
 - ❌ Action tracking not implemented for voice function executions
 - **Note:** This is lower priority as voice sessions are more transient
@@ -156,7 +156,7 @@
    - Test search and filtering in all components
 
 ### Medium Priority
-3. **JarvisAssistant Integration**
+3. **AKIORAssistant Integration**
    - Add conversation tracking to realtime voice sessions
    - Track function executions from voice commands
    - Save sessions when user disconnects
@@ -209,7 +209,7 @@ await fetch(buildServerUrl('/api/actions/record'), {
 ```
 
 **To recall memories:**
-Ask J.A.R.V.I.S. questions like:
+Ask AKIOR questions like:
 - "What did we discuss yesterday?"
 - "Show me images I generated last week"
 - "What 3D models have I created?"
@@ -232,7 +232,7 @@ Ask J.A.R.V.I.S. questions like:
    - Filter by action type or source
    - Click to view detailed metadata
 
-4. **Ask J.A.R.V.I.S. to recall:**
+4. **Ask AKIOR to recall:**
    - "What did we talk about yesterday?"
    - "Show me the images I generated last week"
    - "What was that 3D model I made?"
@@ -242,7 +242,7 @@ Ask J.A.R.V.I.S. questions like:
 ### Modified Files
 1. `apps/web/app/settings/page.tsx` - Added Memory & Logs section (88 lines)
 2. `apps/web/app/chat/page.tsx` - Added conversation storage and action tracking (115 lines)
-3. `apps/web/src/lib/jarvis-functions.ts` - Added recall_memory function (35 lines)
+3. `apps/web/src/lib/akior-functions.ts` - Added recall_memory function (35 lines)
 4. `DEV_WORKFLOW.md` - Added Section 6 (288 lines)
 
 ### Created Files
@@ -277,7 +277,7 @@ When continuing this work, prioritize in this order:
    - Try memory recall queries
    - Check Memory & Logs UI
 
-3. **JarvisAssistant Integration** (~2 hours)
+3. **AKIORAssistant Integration** (~2 hours)
    - Add conversation tracking to voice sessions
    - Track function executions from voice
    - Test with realtime sessions

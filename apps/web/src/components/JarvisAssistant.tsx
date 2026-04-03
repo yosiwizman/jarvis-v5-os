@@ -410,7 +410,7 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'cameras.captureAll',
-          args: { tag: args.tag || 'jarvis-capture' }
+          args: { tag: args.tag || 'akior-capture' }
         })
       });
       

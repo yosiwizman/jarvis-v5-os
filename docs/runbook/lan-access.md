@@ -8,7 +8,7 @@ After deployment, AKIOR is accessible at:
 
 ```
 HTTPS (recommended): https://akior.local/     (primary)
-                     https://jarvis.local/    (alias)
+                     https://akior.local/    (alias)
 HTTP (fallback):     http://<host-ip>/
 ```
 
@@ -31,7 +31,7 @@ Example: `http://192.168.1.100/`
 
 ## Setting Up a Hostname (Optional)
 
-Instead of using the IP address, you can set up a friendly hostname like `akior.local` (primary) or `jarvis.local` (alias).
+Instead of using the IP address, you can set up a friendly hostname like `akior.local` (primary) or `akior.local` (alias).
 
 ### Option 1: Windows Hosts File (Recommended for Single User)
 
@@ -39,11 +39,11 @@ Instead of using the IP address, you can set up a friendly hostname like `akior.
 2. Open file: `C:\Windows\System32\drivers\etc\hosts`
 3. Add this line (replace IP with your host IP):
    ```
-   192.168.1.204    akior.local jarvis.local aifactory-lan
+   192.168.1.204    akior.local akior.local aifactory-lan
    ```
 4. Save and close
 5. Flush DNS: `ipconfig /flushdns`
-6. Access via: `https://akior.local/` or `https://jarvis.local/`
+6. Access via: `https://akior.local/` or `https://akior.local/`
 
 ### Option 2: macOS/Linux Hosts File
 
@@ -52,7 +52,7 @@ Instead of using the IP address, you can set up a friendly hostname like `akior.
 sudo nano /etc/hosts
 
 # Add line (replace IP):
-192.168.1.100    jarvis.local aifactory-lan
+192.168.1.100    akior.local aifactory-lan
 
 # Save and exit (Ctrl+O, Ctrl+X)
 ```
@@ -99,7 +99,7 @@ curl -I http://127.0.0.1:3000/
 curl -I http://192.168.1.100/
 
 # Using hostname (if configured)
-curl -I http://jarvis.local/
+curl -I http://akior.local/
 ```
 
 Expected response:
@@ -121,7 +121,7 @@ You should see the AKIOR login page.
 
 1. **Check containers are running:**
    ```bash
-   docker compose -f deploy/compose.jarvis.yml ps
+   docker compose -f deploy/compose.akior.yml ps
    ```
    All should show `Up (healthy)`.
 
@@ -133,10 +133,10 @@ You should see the AKIOR login page.
 
 3. **Port 443 not listening?** The compose file may be outdated. Pull latest and restart:
    ```bash
-   cd /opt/jarvis/JARVIS-V5-OS  # or your install path
+   cd /opt/akior/AKIOR-V5-OS  # or your install path
    git pull origin main
-   docker compose -f deploy/compose.jarvis.yml down
-   docker compose -f deploy/compose.jarvis.yml up -d
+   docker compose -f deploy/compose.akior.yml down
+   docker compose -f deploy/compose.akior.yml up -d
    ```
 
 4. **Check firewall:**
@@ -158,8 +158,8 @@ You should see the AKIOR login page.
 
 Backend service is down. Check:
 ```bash
-docker logs jarvis-server --tail=50
-docker logs jarvis-web --tail=50
+docker logs akior-server --tail=50
+docker logs akior-web --tail=50
 ```
 
 ## UI Troubleshooting
@@ -194,13 +194,13 @@ Browsers require HTTPS for camera and microphone access. AKIOR uses Caddy's inte
 ### Step 1: Deploy/Update the Stack
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS  # or your install path
+cd /opt/akior/AKIOR-V5-OS  # or your install path
 git pull origin main
-docker compose -f deploy/compose.jarvis.yml down
-docker compose -f deploy/compose.jarvis.yml up -d
+docker compose -f deploy/compose.akior.yml down
+docker compose -f deploy/compose.akior.yml up -d
 ```
 
-Caddy automatically generates certificates for `akior.local`, `jarvis.local`, and `aifactory-lan`.
+Caddy automatically generates certificates for `akior.local`, `akior.local`, and `aifactory-lan`.
 
 ### Step 2: Verify HTTPS is Working
 
@@ -216,7 +216,7 @@ curl -k https://localhost/
 
 ```bash
 # On the host, extract the CA certificate:
-docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt
+docker cp akior-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt
 
 # Copy to your Windows machine (e.g., via SCP or shared folder)
 ```
@@ -226,7 +226,7 @@ docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-c
 **Option A: Using the import script (Recommended)**
 ```powershell
 # Run PowerShell as Administrator:
-cd C:\path\to\jarvis-v5-os
+cd C:\path\to\akior-v5-os
 .\ops\windows\import-lan-rootca.ps1 -CertPath "C:\path\to\caddy-root-ca.crt"
 ```
 
@@ -255,9 +255,9 @@ If HTTPS has issues, HTTP is still available on port 80:
 ## Branding
 
 - **Primary hostname:** `akior.local` - AKIOR is the official product name
-- **Alias:** `jarvis.local` - kept for backward compatibility only
-- **UI branding:** All user-facing text displays "AKIOR" (not "Jarvis")
-- **Internal code:** Some internal code/filenames may still use "jarvis" for compatibility
+- **Alias:** `akior.local` - kept for backward compatibility only
+- **UI branding:** All user-facing text displays "AKIOR" (not "AKIOR")
+- **Internal code:** Some internal code/filenames may still use "akior" for compatibility
 
 ## Deploy Verification
 
@@ -301,9 +301,9 @@ If the deployed SHA doesn't match expected:
 
 1. **Check if old container is cached:**
    ```bash
-   docker compose -f deploy/compose.jarvis.yml down
-   docker compose -f deploy/compose.jarvis.yml build --no-cache
-   docker compose -f deploy/compose.jarvis.yml up -d
+   docker compose -f deploy/compose.akior.yml down
+   docker compose -f deploy/compose.akior.yml build --no-cache
+   docker compose -f deploy/compose.akior.yml up -d
    ```
 
 2. **Verify git state:**
@@ -313,7 +313,7 @@ If the deployed SHA doesn't match expected:
 
 3. **Check container logs:**
    ```bash
-   docker logs jarvis-web 2>&1 | head -20
+   docker logs akior-web 2>&1 | head -20
    ```
 
 ## Security Notes

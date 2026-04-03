@@ -1,6 +1,6 @@
-# Jarvis V5 OS – Architecture Overview
+# AKIOR V5 OS – Architecture Overview
 
-Jarvis V5 OS is a local AI operating system. It provides a Jarvis assistant UI, the Holomat radial UI with an interactive apps deck, 3D tooling, camera and security dashboards, and chat. The system runs fully locally with a Fastify backend (TLS + Socket.IO) and a Next.js 14 frontend, with shared TypeScript packages for settings and types.
+AKIOR V5 OS is a local AI operating system. It provides a AKIOR assistant UI, the Holomat radial UI with an interactive apps deck, 3D tooling, camera and security dashboards, and chat. The system runs fully locally with a Fastify backend (TLS + Socket.IO) and a Next.js 14 frontend, with shared TypeScript packages for settings and types.
 
 ---
 
@@ -30,8 +30,8 @@ Jarvis V5 OS is a local AI operating system. It provides a Jarvis assistant UI, 
 - `apps/server`
   - Fastify HTTPS server entrypoint (`src/index.ts`), Socket.IO namespaces, and HTTP routes (e.g., `3dprint.routes.ts`, `keys.routes.ts`, `settings` endpoints). Secret/key storage and TLS config are handled here for local development.
 - `apps/web`
-  - Next.js 14 (App Router) UI: routes like `/menu`, `/jarvis`, `/holomat`, `/3dmodel`, `/3dViewer`, `/3dprinters`, `/chat`, `/camera`, `/files`, `/functions`, `/security`, `/settings`.
-  - Holomat UI and apps deck components (radial launcher, draggable app windows), Jarvis assistant components, and 3D model viewer.
+  - Next.js 14 (App Router) UI: routes like `/menu`, `/akior`, `/holomat`, `/3dmodel`, `/3dViewer`, `/3dprinters`, `/chat`, `/camera`, `/files`, `/functions`, `/security`, `/settings`.
+  - Holomat UI and apps deck components (radial launcher, draggable app windows), AKIOR assistant components, and 3D model viewer.
   - Dev scripts: `scripts/mkcert-dev.mjs` (mkcert helper) and `dev-proxy.mjs` (HTTPS proxy that fans out to Next and the API).
 - `packages/shared`
   - Shared types and settings model consumed by both server and web (e.g., `settings.ts`, common helpers).
@@ -76,7 +76,7 @@ npm start
 - Dev TLS proxy: https://localhost:3000 → forwards to Next (:3001) and API (:1234)
 - Open:
   - Main UI: https://localhost:3000
-  - Jarvis dashboard: https://localhost:3000/jarvis
+  - AKIOR dashboard: https://localhost:3000/akior
   - Holomat: https://localhost:3000/holomat
 
 Notes: On first run, mkcert may install a local CA; logs will show proxy/server startup and TLS usage.

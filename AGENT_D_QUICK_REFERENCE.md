@@ -1,5 +1,5 @@
 # Agent D: Quick Reference Card
-## Voice Features Implementation for J.A.R.V.I.S. V6.1.0
+## Voice Features Implementation for AKIOR V6.1.0
 
 ---
 
@@ -22,15 +22,15 @@
 - [ ] Create `apps/server/src/storage/alarmsStore.ts` (CRUD operations)
 
 ### Task 2: Voice-Activated Weather ⏱️ 3-4 hours
-- [ ] Add `get_weather` function to `apps/web/src/lib/jarvis-functions.ts`
+- [ ] Add `get_weather` function to `apps/web/src/lib/akior-functions.ts`
 - [ ] Add `POST /api/integrations/weather/query` endpoint to `apps/server/src/index.ts`
-- [ ] Implement handler in `apps/web/src/lib/jarvis-function-executor.ts`
+- [ ] Implement handler in `apps/web/src/lib/akior-function-executor.ts`
 - [ ] Test: "What's the weather?" → Returns weather data
 
 ### Task 3: Quick Note-Taking System ⏱️ 6-8 hours
 - [ ] Add 4 endpoints to `apps/server/src/index.ts`: GET/POST/PUT/DELETE `/api/notes`
-- [ ] Add 4 functions to `jarvis-functions.ts`: `create_note`, `list_notes`, `delete_note`, `edit_note`
-- [ ] Implement 4 handlers in `jarvis-function-executor.ts`
+- [ ] Add 4 functions to `akior-functions.ts`: `create_note`, `list_notes`, `delete_note`, `edit_note`
+- [ ] Implement 4 handlers in `akior-function-executor.ts`
 - [ ] Test: "Take a note: Buy milk" → Note created and stored
 
 ### Task 4: Natural Language Time Parser ⏱️ 4-5 hours
@@ -87,8 +87,8 @@ apps/
   web/
     src/
       lib/
-        jarvis-functions.ts         # MODIFY - add functions
-        jarvis-function-executor.ts # MODIFY - add handlers
+        akior-functions.ts         # MODIFY - add functions
+        akior-function-executor.ts # MODIFY - add handlers
         time-parser.ts              # NEW
         voice-feedback.ts           # NEW
     app/
@@ -140,7 +140,7 @@ export async function deleteNote(id): Promise<boolean> { /* ... */ }
 ### Voice Function Pattern
 
 ```typescript
-// In jarvis-functions.ts
+// In akior-functions.ts
 {
   name: 'function_name',
   description: 'When to use this function',
@@ -186,7 +186,7 @@ fastify.post('/api/resource', async (req, reply) => {
 ### Handler Implementation Pattern
 
 ```typescript
-// In jarvis-function-executor.ts
+// In akior-function-executor.ts
 case 'function_name': {
   const response = await fetch('/api/endpoint', {
     method: 'POST',
@@ -363,7 +363,7 @@ interface Alarm {
 1. **Create feature branch**: `git checkout -b feature/v6.1-voice-features`
 2. **Implement tasks 1-8** (follow checklist above)
 3. **Run tests**: `npm run typecheck && npm run build`
-4. **Test voice commands** via J.A.R.V.I.S. interface
+4. **Test voice commands** via AKIOR interface
 5. **Create PR** with description from implementation guide
 6. **Merge to main** after review
 7. **Tag release**: `git tag v6.1.0 && git push --tags`
@@ -397,7 +397,7 @@ interface Alarm {
 
 **Documentation**: See `AGENT_D_IMPLEMENTATION_GUIDE.md` for detailed implementation steps
 
-**Architecture**: J.A.R.V.I.S. uses:
+**Architecture**: AKIOR uses:
 - Fastify backend (port 1234)
 - Next.js frontend (port 3001 → proxied to 3000)
 - OpenAI Realtime API for voice
@@ -408,4 +408,4 @@ interface Alarm {
 - Notification system: `apps/server/src/notificationScheduler.ts`
 - Camera integration: Search for Socket.IO camera namespace
 - Weather API: Search for `OPENWEATHER_API_KEY`
-- Function calling: `apps/web/src/lib/jarvis-functions.ts`
+- Function calling: `apps/web/src/lib/akior-functions.ts`

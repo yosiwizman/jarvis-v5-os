@@ -1,4 +1,4 @@
-# Jarvis Backend - Fixes Applied & Testing Setup
+# AKIOR Backend - Fixes Applied & Testing Setup
 
 ## Date: December 6, 2025
 
@@ -200,14 +200,14 @@ Some features require external service configuration:
 
 ### Step 1: Start Server
 ```powershell
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 .\START-SERVER.ps1
 ```
 **Keep this window open!**
 
 ### Step 2: Run Tests (New Window)
 ```powershell
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 .\run-all-tests.ps1
 ```
 

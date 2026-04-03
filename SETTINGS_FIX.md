@@ -2,7 +2,7 @@
 
 ## The Bug
 
-The `/jarvis` page and mini assistant were **NOT loading settings** on tablets and remote devices. They would use default settings instead of the user's configured initial prompt and other settings.
+The `/akior` page and mini assistant were **NOT loading settings** on tablets and remote devices. They would use default settings instead of the user's configured initial prompt and other settings.
 
 ### Root Cause
 
@@ -37,10 +37,10 @@ const startRealtime = useCallback(async () => {
   // Read settings FRESH every time we connect!
   const settings = readSettings();
   console.log('📋 Using settings:', {
-    voice: settings.jarvis.voice,
-    model: settings.jarvis.model,
-    hasPrompt: !!settings.jarvis.initialPrompt,
-    promptLength: settings.jarvis.initialPrompt?.length || 0
+    voice: settings.akior.voice,
+    model: settings.akior.model,
+    hasPrompt: !!settings.akior.initialPrompt,
+    promptLength: settings.akior.initialPrompt?.length || 0
   });
   
   // ... rest of connection code uses 'settings' not 'settings.current' ...
@@ -51,22 +51,22 @@ const startRealtime = useCallback(async () => {
 
 1. **Removed `useRef(readSettings())`** from line 30
 2. **Read settings inside `startRealtime()`** - fresh every connection
-3. **Changed `settings.current.jarvis.X`** → **`settings.jarvis.X`**
+3. **Changed `settings.current.akior.X`** → **`settings.akior.X`**
 4. **Added debug logging** to verify settings are loaded
 
 ## Benefits
 
-✅ **Settings loaded fresh** every time Jarvis connects
+✅ **Settings loaded fresh** every time AKIOR connects
 ✅ **Works on tablets/mobile** - no timing issues
 ✅ **Settings changes** take effect immediately
 ✅ **Debug logs** show what settings are being used
 
 ## Debug Output
 
-When Jarvis connects, you'll now see:
+When AKIOR connects, you'll now see:
 
 ```
-🎤 Starting Jarvis Realtime connection (conn-1234567890)...
+🎤 Starting AKIOR Realtime connection (conn-1234567890)...
 📋 Using settings: {
   voice: "echo",
   model: "gpt-4o-mini-realtime-preview-2024-12-17",
@@ -76,7 +76,7 @@ When Jarvis connects, you'll now see:
 WebRTC data channel open
 Sending session config with 9 functions: [...]
 🎙️ Voice: echo
-📝 Instructions: You are J.A.R.V.I.S. (Just A Rather Very Intelligent System)...
+📝 Instructions: You are AKIOR (Just A Rather Very Intelligent System)...
 ```
 
 ## Testing
@@ -89,7 +89,7 @@ On your tablet, check the console and verify:
 
 ## Files Modified
 
-- **useJarvisConnection.ts** (Line 30 removed, Lines 73-82 added, Lines 146-147 updated, Lines 174-177 updated)
+- **useAKIORConnection.ts** (Line 30 removed, Lines 73-82 added, Lines 146-147 updated, Lines 174-177 updated)
 
 ## Impact
 

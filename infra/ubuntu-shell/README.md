@@ -1,19 +1,19 @@
-# Jarvis V6 Ubuntu Shell - Phase A Infrastructure
+# AKIOR V6 Ubuntu Shell - Phase A Infrastructure
 
 **Version:** v6.2.0  
 **Release:** December 2025
 
-This directory contains systemd service templates, desktop files, and setup scripts for running Jarvis as an Ubuntu shell/kiosk.
+This directory contains systemd service templates, desktop files, and setup scripts for running AKIOR as an Ubuntu shell/kiosk.
 
-**📖 Full Release Notes:** [docs/releases/JARVIS_V6_RELEASE_NOTES_v6.2.0.md](../../docs/releases/JARVIS_V6_RELEASE_NOTES_v6.2.0.md)
+**📖 Full Release Notes:** [docs/releases/AKIOR_V6_RELEASE_NOTES_v6.2.0.md](../../docs/releases/AKIOR_V6_RELEASE_NOTES_v6.2.0.md)
 
 ## Contents
 
 | File | Purpose |
 |------|---------|
-| `jarvis-server.service.example` | Systemd user service template for Jarvis backend server |
-| `jarvis-kiosk.service.example` | Systemd user service template for full-screen kiosk browser |
-| `jarvis-kiosk.desktop.example` | Desktop autostart file (alternative to systemd) |
+| `akior-server.service.example` | Systemd user service template for AKIOR backend server |
+| `akior-kiosk.service.example` | Systemd user service template for full-screen kiosk browser |
+| `akior-kiosk.desktop.example` | Desktop autostart file (alternative to systemd) |
 | `prepare-ubuntu-shell.sh` | Non-destructive setup helper script |
 | `README.md` | This file |
 
@@ -31,15 +31,15 @@ This directory contains systemd service templates, desktop files, and setup scri
 
 3. **Read full documentation:**
    - [Phase A Implementation Guide](../../docs/UBUNTU_SHELL_PHASE_A_IMPLEMENTATION.md)
-   - [Ubuntu Shell Plan](../../JARVIS_V5_UBUNTU_SHELL_PLAN.md)
+   - [Ubuntu Shell Plan](../../AKIOR_V5_UBUNTU_SHELL_PLAN.md)
 
 ## What is Phase A?
 
 Phase A delivers a **secure workstation mode** where:
 - Ubuntu remains the OS and login provider
-- After login, Jarvis server starts automatically (systemd)
+- After login, AKIOR server starts automatically (systemd)
 - A full-screen browser launches in kiosk mode
-- User lands in Jarvis dashboard at `https://localhost:3000`
+- User lands in AKIOR dashboard at `https://localhost:3000`
 
 **NOT included in Phase A:**
 - Custom GDM greeter
@@ -51,37 +51,37 @@ Phase A delivers a **secure workstation mode** where:
 - Ubuntu 22.04+ or 24.04+
 - Node.js 20+
 - Chromium or Google Chrome browser
-- Jarvis repository cloned locally
+- AKIOR repository cloned locally
 - GPU drivers installed (for hardware acceleration)
 
 ## Files Overview
 
-### jarvis-server.service.example
+### akior-server.service.example
 
-Systemd user service that runs the Jarvis backend server as a persistent background process.
+Systemd user service that runs the AKIOR backend server as a persistent background process.
 
 **Key features:**
 - Runs as user service (no root required)
 - Auto-starts after login
 - Restarts on failure (up to 5 times)
 - Logs to systemd journal
-- Environment: `JARVIS_UBUNTU_MODE=kiosk`
+- Environment: `AKIOR_UBUNTU_MODE=kiosk`
 
 **Installation:**
 ```bash
 mkdir -p ~/.config/systemd/user
-cp jarvis-server.service.example ~/.config/systemd/user/jarvis-server.service
-nano ~/.config/systemd/user/jarvis-server.service  # Edit paths
+cp akior-server.service.example ~/.config/systemd/user/akior-server.service
+nano ~/.config/systemd/user/akior-server.service  # Edit paths
 systemctl --user daemon-reload
-systemctl --user enable --now jarvis-server.service
+systemctl --user enable --now akior-server.service
 ```
 
-### jarvis-kiosk.service.example
+### akior-kiosk.service.example
 
 Systemd user service that launches a full-screen browser in kiosk/app mode.
 
 **Key features:**
-- Depends on `jarvis-server.service`
+- Depends on `akior-server.service`
 - Chromium/Chrome in full-screen kiosk mode
 - No browser chrome (tabs, URL bar, etc.)
 - Auto-restarts on failure
@@ -89,13 +89,13 @@ Systemd user service that launches a full-screen browser in kiosk/app mode.
 
 **Installation:**
 ```bash
-cp jarvis-kiosk.service.example ~/.config/systemd/user/jarvis-kiosk.service
-nano ~/.config/systemd/user/jarvis-kiosk.service  # Edit if needed
+cp akior-kiosk.service.example ~/.config/systemd/user/akior-kiosk.service
+nano ~/.config/systemd/user/akior-kiosk.service  # Edit if needed
 systemctl --user daemon-reload
-systemctl --user enable --now jarvis-kiosk.service
+systemctl --user enable --now akior-kiosk.service
 ```
 
-### jarvis-kiosk.desktop.example
+### akior-kiosk.desktop.example
 
 Alternative to systemd services using traditional .desktop autostart.
 
@@ -111,8 +111,8 @@ Alternative to systemd services using traditional .desktop autostart.
 **Installation:**
 ```bash
 mkdir -p ~/.config/autostart
-cp jarvis-kiosk.desktop.example ~/.config/autostart/jarvis-kiosk.desktop
-chmod +x ~/.config/autostart/jarvis-kiosk.desktop
+cp akior-kiosk.desktop.example ~/.config/autostart/akior-kiosk.desktop
+chmod +x ~/.config/autostart/akior-kiosk.desktop
 # Log out and back in to test
 ```
 
@@ -136,24 +136,24 @@ bash prepare-ubuntu-shell.sh
 
 ```bash
 # Check status
-systemctl --user status jarvis-server.service
-systemctl --user status jarvis-kiosk.service
+systemctl --user status akior-server.service
+systemctl --user status akior-kiosk.service
 
 # View logs
-journalctl --user -u jarvis-server.service -f
-journalctl --user -u jarvis-kiosk.service -f
+journalctl --user -u akior-server.service -f
+journalctl --user -u akior-kiosk.service -f
 
 # Start/stop services
-systemctl --user start jarvis-server.service
-systemctl --user stop jarvis-kiosk.service
+systemctl --user start akior-server.service
+systemctl --user stop akior-kiosk.service
 
 # Restart services
-systemctl --user restart jarvis-server.service
-systemctl --user restart jarvis-kiosk.service
+systemctl --user restart akior-server.service
+systemctl --user restart akior-kiosk.service
 
 # Enable/disable autostart
-systemctl --user enable jarvis-server.service
-systemctl --user disable jarvis-kiosk.service
+systemctl --user enable akior-server.service
+systemctl --user disable akior-kiosk.service
 
 # Reload service files after editing
 systemctl --user daemon-reload
@@ -162,9 +162,9 @@ systemctl --user daemon-reload
 ### Service Dependencies
 
 ```
-jarvis-kiosk.service
+akior-kiosk.service
   ↓ (Requires)
-jarvis-server.service
+akior-server.service
   ↓ (After)
 network-online.target
 ```
@@ -189,9 +189,9 @@ The kiosk browser will not start until the server is running.
 
 To use Google Chrome instead of Chromium:
 
-1. Edit `jarvis-kiosk.service`:
+1. Edit `akior-kiosk.service`:
    ```bash
-   nano ~/.config/systemd/user/jarvis-kiosk.service
+   nano ~/.config/systemd/user/akior-kiosk.service
    ```
 
 2. Replace `ExecStart` line:
@@ -207,7 +207,7 @@ To use Google Chrome instead of Chromium:
 3. Reload and restart:
    ```bash
    systemctl --user daemon-reload
-   systemctl --user restart jarvis-kiosk.service
+   systemctl --user restart akior-kiosk.service
    ```
 
 ## Troubleshooting
@@ -226,7 +226,7 @@ To use Google Chrome instead of Chromium:
 
 3. **Check service logs:**
    ```bash
-   journalctl --user -u jarvis-kiosk.service -n 50
+   journalctl --user -u akior-kiosk.service -n 50
    ```
 
 4. **Verify X authority:**
@@ -244,17 +244,17 @@ To use Google Chrome instead of Chromium:
 
 2. **Check repo path:**
    ```bash
-   cat ~/.config/systemd/user/jarvis-server.service | grep WorkingDirectory
+   cat ~/.config/systemd/user/akior-server.service | grep WorkingDirectory
    ```
 
 3. **View server logs:**
    ```bash
-   journalctl --user -u jarvis-server.service -n 100
+   journalctl --user -u akior-server.service -n 100
    ```
 
 4. **Test manually:**
    ```bash
-   cd ~/jarvis-v5-os
+   cd ~/akior-v5-os
    npm run build
    npm run start:ci
    ```
@@ -263,7 +263,7 @@ To use Google Chrome instead of Chromium:
 
 1. **Regenerate certificates:**
    ```bash
-   cd ~/jarvis-v5-os
+   cd ~/akior-v5-os
    npm start  # Will regenerate certs on first run
    ```
 
@@ -295,8 +295,8 @@ Uses systemd services:
 npm run build
 
 # Services auto-start on login
-systemctl --user status jarvis-server.service
-systemctl --user status jarvis-kiosk.service
+systemctl --user status akior-server.service
+systemctl --user status akior-kiosk.service
 ```
 
 ## Security Considerations
@@ -319,26 +319,26 @@ systemctl --user status jarvis-kiosk.service
 ## Next Steps (Future Phases)
 
 ### Phase B (v6.3+)
-- Custom GDM greeter with Jarvis branding
+- Custom GDM greeter with AKIOR branding
 - Ubuntu native notifications bridge
 - Wake-on-motion integration
 
 ### Phase C (v7.0+)
-- True OS replacement (Jarvis as login manager)
+- True OS replacement (AKIOR as login manager)
 - System-level notification integration
 - Advanced hardware integration
 
 ## Additional Resources
 
 - **Full documentation:** [UBUNTU_SHELL_PHASE_A_IMPLEMENTATION.md](../../docs/UBUNTU_SHELL_PHASE_A_IMPLEMENTATION.md)
-- **Ubuntu Shell Plan:** [JARVIS_V5_UBUNTU_SHELL_PLAN.md](../../JARVIS_V5_UBUNTU_SHELL_PLAN.md)
-- **Test Plan:** [JARVIS_V6_TEST_PLAN.md](../../JARVIS_V6_TEST_PLAN.md)
-- **Repository Overview:** [JARVIS_V6_REPO_OVERVIEW.md](../../JARVIS_V6_REPO_OVERVIEW.md)
+- **Ubuntu Shell Plan:** [AKIOR_V5_UBUNTU_SHELL_PLAN.md](../../AKIOR_V5_UBUNTU_SHELL_PLAN.md)
+- **Test Plan:** [AKIOR_V6_TEST_PLAN.md](../../AKIOR_V6_TEST_PLAN.md)
+- **Repository Overview:** [AKIOR_V6_REPO_OVERVIEW.md](../../AKIOR_V6_REPO_OVERVIEW.md)
 
 ## Support
 
 For issues or questions:
-1. Check service logs: `journalctl --user -u jarvis-server.service -f`
+1. Check service logs: `journalctl --user -u akior-server.service -f`
 2. Review troubleshooting section above
 3. Consult full documentation
 4. Test with `prepare-ubuntu-shell.sh` script

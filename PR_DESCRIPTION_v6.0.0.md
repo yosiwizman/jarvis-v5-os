@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-This PR introduces a **production-ready notification and event scheduling system** for Jarvis V5 OS, enabling real-time alerts for calendar reminders, 3D printer jobs, camera activities, and system updates.
+This PR introduces a **production-ready notification and event scheduling system** for AKIOR V5 OS, enabling real-time alerts for calendar reminders, 3D printer jobs, camera activities, and system updates.
 
 ## 🚀 Summary of Changes
 
@@ -47,7 +47,7 @@ This PR introduces a **production-ready notification and event scheduling system
 - `apps/web/components/CameraSettings.tsx` - Camera settings (100 lines)
 
 **Documentation:**
-- `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` - Complete release notes
+- `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` - Complete release notes
 - `PR_DESCRIPTION_v6.0.0.md` - This PR description
 
 ### **Modified Files (9)**
@@ -205,7 +205,7 @@ This PR introduces a **production-ready notification and event scheduling system
 ## 📚 Documentation
 
 - **Developer Workflow:** `DEV_WORKFLOW.md` Section 5
-- **Release Notes:** `JARVIS_V5_RELEASE_NOTES_v6.0.0.md`
+- **Release Notes:** `AKIOR_V5_RELEASE_NOTES_v6.0.0.md`
 - **API Examples:** See release notes Usage Examples section
 - **Troubleshooting:** See release notes Deployment Notes section
 

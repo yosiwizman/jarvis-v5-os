@@ -1,43 +1,43 @@
-# JARVIS Deployment Operations Runbook
+# AKIOR Deployment Operations Runbook
 
-This runbook covers day-to-day operations for the JARVIS deployment on a LAN host.
+This runbook covers day-to-day operations for the AKIOR deployment on a LAN host.
 
 ## Quick Reference
 
 | Action | Command |
 |--------|---------|
-| Status | `docker compose -f deploy/compose.jarvis.yml ps` |
-| Start | `docker compose -f deploy/compose.jarvis.yml up -d` |
-| Stop | `docker compose -f deploy/compose.jarvis.yml down` |
-| Restart | `docker compose -f deploy/compose.jarvis.yml restart` |
-| Logs | `docker compose -f deploy/compose.jarvis.yml logs -f` |
+| Status | `docker compose -f deploy/compose.akior.yml ps` |
+| Start | `docker compose -f deploy/compose.akior.yml up -d` |
+| Stop | `docker compose -f deploy/compose.akior.yml down` |
+| Restart | `docker compose -f deploy/compose.akior.yml restart` |
+| Logs | `docker compose -f deploy/compose.akior.yml logs -f` |
 | Health | `curl http://127.0.0.1:3000/api/health` |
 
 ## Prerequisites
 
 - SSH access to the host (e.g., `ssh aifactory-lan`)
 - Docker and Docker Compose v2 installed
-- Repository cloned to `/opt/jarvis/JARVIS-V5-OS`
-- Environment file at `deploy/jarvis.env`
+- Repository cloned to `/opt/akior/AKIOR-V5-OS`
+- Environment file at `deploy/akior.env`
 
 ## Service Overview
 
 | Service | Container | Port | Purpose |
 |---------|-----------|------|---------|
-| caddy | jarvis-caddy | 3000 (exposed) | Reverse proxy, TLS termination |
-| web | jarvis-web | 3001 (internal) | Next.js frontend |
-| server | jarvis-server | 1234 (internal) | Fastify API + Socket.IO |
+| caddy | akior-caddy | 3000 (exposed) | Reverse proxy, TLS termination |
+| web | akior-web | 3001 (internal) | Next.js frontend |
+| server | akior-server | 1234 (internal) | Fastify API + Socket.IO |
 
 ## Starting the Stack
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Build and start all services
-docker compose -f deploy/compose.jarvis.yml up -d --build
+docker compose -f deploy/compose.akior.yml up -d --build
 
 # Or start without rebuilding
-docker compose -f deploy/compose.jarvis.yml up -d
+docker compose -f deploy/compose.akior.yml up -d
 ```
 
 Wait ~30-60 seconds for health checks to pass.
@@ -45,25 +45,25 @@ Wait ~30-60 seconds for health checks to pass.
 ## Stopping the Stack
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Stop all services (containers removed)
-docker compose -f deploy/compose.jarvis.yml down
+docker compose -f deploy/compose.akior.yml down
 
 # Stop but keep containers (faster restart)
-docker compose -f deploy/compose.jarvis.yml stop
+docker compose -f deploy/compose.akior.yml stop
 ```
 
 ## Restarting Services
 
 ```bash
 # Restart all services
-docker compose -f deploy/compose.jarvis.yml restart
+docker compose -f deploy/compose.akior.yml restart
 
 # Restart a specific service
-docker compose -f deploy/compose.jarvis.yml restart server
-docker compose -f deploy/compose.jarvis.yml restart web
-docker compose -f deploy/compose.jarvis.yml restart caddy
+docker compose -f deploy/compose.akior.yml restart server
+docker compose -f deploy/compose.akior.yml restart web
+docker compose -f deploy/compose.akior.yml restart caddy
 ```
 
 ## Checking Health
@@ -72,13 +72,13 @@ docker compose -f deploy/compose.jarvis.yml restart caddy
 
 ```bash
 # Quick status
-docker compose -f deploy/compose.jarvis.yml ps
+docker compose -f deploy/compose.akior.yml ps
 
 # Expected output (all healthy):
 # NAME            STATUS
-# jarvis-caddy    Up (healthy)
-# jarvis-server   Up (healthy)
-# jarvis-web      Up (healthy)
+# akior-caddy    Up (healthy)
+# akior-server   Up (healthy)
+# akior-web      Up (healthy)
 ```
 
 ### Health Endpoints
@@ -109,15 +109,15 @@ Recovery time after restart: ~30-60 seconds for all services to become healthy.
 
 ```bash
 # All services (follow mode)
-docker compose -f deploy/compose.jarvis.yml logs -f
+docker compose -f deploy/compose.akior.yml logs -f
 
 # Specific service
-docker logs -f jarvis-server
-docker logs -f jarvis-web
-docker logs -f jarvis-caddy
+docker logs -f akior-server
+docker logs -f akior-web
+docker logs -f akior-caddy
 
 # Last 100 lines
-docker logs --tail=100 jarvis-server
+docker logs --tail=100 akior-server
 ```
 
 ### Log Locations
@@ -129,7 +129,7 @@ Logs are written to Docker's log driver. To persist logs, configure Docker's log
 ### Standard Upgrade (from git)
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # 1. Pull latest code
 git fetch origin main
@@ -137,10 +137,10 @@ git checkout main
 git pull origin main
 
 # 2. Rebuild and restart
-docker compose -f deploy/compose.jarvis.yml up -d --build
+docker compose -f deploy/compose.akior.yml up -d --build
 
 # 3. Verify health
-docker compose -f deploy/compose.jarvis.yml ps
+docker compose -f deploy/compose.akior.yml ps
 
 # 4. Run smoke test
 ./ops/verify/deploy-smoke.sh
@@ -155,7 +155,7 @@ Not currently supported. The standard upgrade has ~30-60s downtime during contai
 ### Option 1: Git Revert
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Find the previous working commit
 git log --oneline -10
@@ -164,18 +164,18 @@ git log --oneline -10
 git checkout <previous-commit-sha>
 
 # Rebuild
-docker compose -f deploy/compose.jarvis.yml up -d --build
+docker compose -f deploy/compose.akior.yml up -d --build
 ```
 
 ### Option 2: Docker Image Rollback
 
 ```bash
 # List available images
-docker images | grep jarvis
+docker images | grep akior
 
 # If previous images exist, edit compose to use specific tags
 # Then restart
-docker compose -f deploy/compose.jarvis.yml up -d
+docker compose -f deploy/compose.akior.yml up -d
 ```
 
 ### Option 3: Keep Previous Images
@@ -190,21 +190,21 @@ docker tag deploy-web:latest deploy-web:backup-$(date +%Y%m%d)
 # To rollback
 docker tag deploy-server:backup-20260129 deploy-server:latest
 docker tag deploy-web:backup-20260129 deploy-web:latest
-docker compose -f deploy/compose.jarvis.yml up -d
+docker compose -f deploy/compose.akior.yml up -d
 ```
 
 ## Data Persistence
 
-- **Settings**: Stored in `jarvis-data` Docker volume at `/app/data`
-- **Backup**: `docker cp jarvis-server:/app/data ./backup-data`
-- **Restore**: `docker cp ./backup-data/. jarvis-server:/app/data/`
+- **Settings**: Stored in `akior-data` Docker volume at `/app/data`
+- **Backup**: `docker cp akior-server:/app/data ./backup-data`
+- **Restore**: `docker cp ./backup-data/. akior-server:/app/data/`
 
 ## Resource Usage
 
 Check container resources:
 
 ```bash
-docker stats --no-stream jarvis-caddy jarvis-server jarvis-web
+docker stats --no-stream akior-caddy akior-server akior-web
 ```
 
 Typical usage:

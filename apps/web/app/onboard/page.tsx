@@ -12,7 +12,7 @@ type EndpointCheck = {
 };
 
 const DOCS_LAN_TLS_URL =
-  'https://github.com/yosiwizman/jarvis-v5-os/blob/main/docs/ops/lan-tls-trust.md';
+  'https://github.com/yosiwizman/akior-v5-os/blob/main/docs/ops/lan-tls-trust.md';
 
 function StatusBadge({ status }: { status: CheckStatus }) {
   if (status === 'ok') {

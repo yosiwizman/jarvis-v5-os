@@ -12,7 +12,7 @@ Before you begin testing, ensure:
 ## ✅ Test 1: Memory Recall Function
 
 ### Objective
-Verify that J.A.R.V.I.S. can recall past conversations using the `recall_memory` function.
+Verify that AKIOR can recall past conversations using the `recall_memory` function.
 
 ### Steps
 1. **Open Chat Interface**
@@ -21,7 +21,7 @@ Verify that J.A.R.V.I.S. can recall past conversations using the `recall_memory`
 
 2. **Have a Simple Conversation**
    ```
-   You: "Hello J.A.R.V.I.S., how are you today?"
+   You: "Hello AKIOR, how are you today?"
    [Wait for response]
    
    You: "Can you create an image of a sunset over mountains?"
@@ -37,7 +37,7 @@ Verify that J.A.R.V.I.S. can recall past conversations using the `recall_memory`
    ```
    
    **Expected Result:**
-   - J.A.R.V.I.S. should use the `recall_memory` function
+   - AKIOR should use the `recall_memory` function
    - Should summarize the conversation about AI and mention the image creation
    - Response should include conversation snippets and action history
 
@@ -51,7 +51,7 @@ Verify that J.A.R.V.I.S. can recall past conversations using the `recall_memory`
    - Should show timestamp and metadata
 
 ### ✅ Pass Criteria
-- [ ] J.A.R.V.I.S. successfully recalls the conversation
+- [ ] AKIOR successfully recalls the conversation
 - [ ] Response includes specific details from the chat
 - [ ] Time-range filtering works correctly
 - [ ] No errors in console
@@ -86,7 +86,7 @@ Verify that the Memory & Logs section in Settings works correctly.
 3. **Test Conversation Details**
    - [ ] Click on a conversation
    - [ ] Full message history appears on the right
-   - [ ] Messages show role (You/Jarvis)
+   - [ ] Messages show role (You/AKIOR)
    - [ ] All messages are present and readable
 
 4. **Test Search**
@@ -201,7 +201,7 @@ Verify that server logs are being written correctly.
 2. **Check Log Directory**
    ```powershell
    # Navigate to logs directory
-   cd C:\Users\yosiw\Desktop\Jarvis-main\data\logs
+   cd C:\Users\yosiw\Desktop\AKIOR-main\data\logs
    
    # List log files
    dir
@@ -269,7 +269,7 @@ Verify conversations are being saved to disk.
 2. **Check Conversation Files**
    ```powershell
    # Navigate to conversations directory
-   cd C:\Users\yosiw\Desktop\Jarvis-main\data\conversations
+   cd C:\Users\yosiw\Desktop\AKIOR-main\data\conversations
    
    # List files
    dir
@@ -320,7 +320,7 @@ Verify actions are being recorded correctly.
 2. **Check Action Files**
    ```powershell
    # Navigate to actions directory
-   cd C:\Users\yosiw\Desktop\Jarvis-main\data\actions
+   cd C:\Users\yosiw\Desktop\AKIOR-main\data\actions
    
    # List files
    dir

@@ -1,7 +1,7 @@
 /**
  * Notification Scheduler
  * 
- * Core notification & event loop subsystem for Jarvis V5 OS.
+ * Core notification & event loop subsystem for AKIOR V5 OS.
  * Handles scheduling, storage, and firing of internal notifications.
  * 
  * Features:

@@ -4,7 +4,7 @@ This guide walks you through setting up AKIOR for the first time after deploymen
 
 ## Prerequisites
 
-- AKIOR containers are running (`docker compose -f deploy/compose.jarvis.yml up -d`)
+- AKIOR containers are running (`docker compose -f deploy/compose.akior.yml up -d`)
 - You can access `https://akior.home.arpa` (or `https://akior.local`)
 - You have an LLM provider: OpenAI API key OR local OpenAI-compatible server (e.g., Ollama)
 - Optionally: Meshy API key for 3D model generation
@@ -67,7 +67,7 @@ Alternatively, download from Settings or Diagnostics pages.
 When AKIOR runs in Docker and you want to use Ollama running on the host machine:
 - The server container is configured with `host.docker.internal` pointing to the host
 - Default: `OLLAMA_BASE_URL=http://host.docker.internal:11434`
-- This is automatically set in `compose.jarvis.yml`
+- This is automatically set in `compose.akior.yml`
 - Works on Docker Desktop (Windows/Mac) and Docker on Linux with `extra_hosts` configuration
 
 ### Step 4: Verify Setup
@@ -159,7 +159,7 @@ This design ensures a clean first-run experience without error noise while clear
 
 ### Can't reach AKIOR at all
 
-1. Check containers are running: `docker compose -f deploy/compose.jarvis.yml ps`
+1. Check containers are running: `docker compose -f deploy/compose.akior.yml ps`
 2. Check DNS resolution: `nslookup akior.home.arpa`
 3. Try the fallback hostname: `https://akior.local`
 4. Run DNS doctor: `.\ops\dns-doctor.ps1 -Apply -UseLoopback`
@@ -188,7 +188,7 @@ See [Remote Access Guide](../ops/remote-access.md) for details.
 
 Once setup is complete:
 
-1. **Voice Assistant:** `/jarvis` - Full-screen voice interface
+1. **Voice Assistant:** `/akior` - Full-screen voice interface
 2. **Menu:** `/menu` - All available features
 3. **Settings:** `/settings` - Advanced configuration
 4. **Diagnostics:** `/diagnostics` - System health

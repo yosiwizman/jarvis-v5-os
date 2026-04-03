@@ -1,4 +1,4 @@
-# Jarvis V5/V6 Deployment Runbook
+# AKIOR V5/V6 Deployment Runbook
 
 ## Architecture Overview
 
@@ -33,9 +33,9 @@
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Yes | Fly.io server URL (e.g., `https://jarvis-server.fly.dev`) |
+| `NEXT_PUBLIC_API_URL` | Yes | Fly.io server URL (e.g., `https://akior-server.fly.dev`) |
 | `NEXT_PUBLIC_SOCKET_URL` | Yes | Same as API URL for WebSocket connections |
-| `NEXT_PUBLIC_JARVIS_UBUNTU_MODE` | No | Set to `kiosk` for Ubuntu shell mode |
+| `NEXT_PUBLIC_AKIOR_UBUNTU_MODE` | No | Set to `kiosk` for Ubuntu shell mode |
 
 ### Server (apps/server) — Set via `flyctl secrets set`
 
@@ -82,7 +82,7 @@ flyctl auth login
 
 # Create the app (first time only)
 cd apps/server
-flyctl apps create jarvis-server  # or your preferred name
+flyctl apps create akior-server  # or your preferred name
 
 # Set secrets
 flyctl secrets set OPENAI_API_KEY=sk-...
@@ -91,7 +91,7 @@ flyctl secrets set OPENAI_API_KEY=sk-...
 flyctl deploy --config fly.toml --dockerfile Dockerfile
 
 # Verify health
-curl https://jarvis-server.fly.dev/health
+curl https://akior-server.fly.dev/health
 ```
 
 ### 2. Deploy Web to Vercel
@@ -112,8 +112,8 @@ vercel --prod
 
 In Vercel Dashboard, set `NEXT_PUBLIC_API_URL` to your Fly.io URL:
 ```
-NEXT_PUBLIC_API_URL=https://jarvis-server.fly.dev
-NEXT_PUBLIC_SOCKET_URL=https://jarvis-server.fly.dev
+NEXT_PUBLIC_API_URL=https://akior-server.fly.dev
+NEXT_PUBLIC_SOCKET_URL=https://akior-server.fly.dev
 ```
 
 ## Health Check Endpoints
@@ -148,13 +148,13 @@ vercel --prod
 
 ```bash
 # List releases
-flyctl releases list -a jarvis-server
+flyctl releases list -a akior-server
 
 # Rollback to previous version
-flyctl releases rollback -a jarvis-server
+flyctl releases rollback -a akior-server
 
 # Or rollback to specific version
-flyctl releases rollback v42 -a jarvis-server
+flyctl releases rollback v42 -a akior-server
 ```
 
 ### Web (Vercel)
@@ -174,13 +174,13 @@ vercel rollback
 
 ```bash
 # Check app status
-flyctl status -a jarvis-server
+flyctl status -a akior-server
 
 # View logs
-flyctl logs -a jarvis-server
+flyctl logs -a akior-server
 
 # SSH into machine (for debugging)
-flyctl ssh console -a jarvis-server
+flyctl ssh console -a akior-server
 ```
 
 ### Web Health
@@ -192,15 +192,15 @@ flyctl ssh console -a jarvis-server
 
 ### Server not starting
 
-1. Check logs: `flyctl logs -a jarvis-server`
-2. Verify secrets are set: `flyctl secrets list -a jarvis-server`
-3. Check health endpoint: `curl https://jarvis-server.fly.dev/health`
+1. Check logs: `flyctl logs -a akior-server`
+2. Verify secrets are set: `flyctl secrets list -a akior-server`
+3. Check health endpoint: `curl https://akior-server.fly.dev/health`
 
 ### WebSocket connection failing
 
 1. Verify `NEXT_PUBLIC_SOCKET_URL` points to Fly.io URL
 2. Check CORS is configured (server allows Vercel domain)
-3. Verify Fly.io machine is running: `flyctl status -a jarvis-server`
+3. Verify Fly.io machine is running: `flyctl status -a akior-server`
 
 ### Build failures
 

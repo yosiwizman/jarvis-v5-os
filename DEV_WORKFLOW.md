@@ -1,6 +1,6 @@
-# Jarvis V5 Development Workflow
+# AKIOR V5 Development Workflow
 
-This document explains how we manage code changes, CI, and releases for the Jarvis V5 OS repository.
+This document explains how we manage code changes, CI, and releases for the AKIOR V5 OS repository.
 
 ---
 
@@ -8,17 +8,17 @@ This document explains how we manage code changes, CI, and releases for the Jarv
 
 ### How It Works
 
-Jarvis V5 currently uses a **direct-to-main workflow** optimized for a single primary developer:
+AKIOR V5 currently uses a **direct-to-main workflow** optimized for a single primary developer:
 
 - **Local feature branches** are used during development (e.g., `feature/v5-theme-backgrounds`, `feature/v5-web-search-integration`)
 - **Local merges** happen on the developer's machine (not on GitHub)
 - **Only `main` is pushed** to GitHub, along with version tags like `v5.2.0`, `v5.3.0`, `v5.4.0`
-- **GitHub Actions CI** runs automatically on every push to `main` via the `Jarvis V5 CI` workflow
+- **GitHub Actions CI** runs automatically on every push to `main` via the `AKIOR V5 CI` workflow
 - **No pull requests** are created on GitHub — all merge decisions happen locally
 
 ### CI Pipeline
 
-Every push to `main` triggers `.github/workflows/jarvis-ci.yml`, which runs:
+Every push to `main` triggers `.github/workflows/akior-ci.yml`, which runs:
 
 1. `npm install` — Install dependencies
 2. `npm run typecheck` — TypeScript compilation (0 errors expected)
@@ -61,7 +61,7 @@ git merge --no-ff feature/v5-local-llm
 git push origin main
 
 # Tag release after CI passes
-git tag -a v5.4.0 -m "Jarvis V5.4.0 – Local LLM & Web Search"
+git tag -a v5.4.0 -m "AKIOR V5.4.0 – Local LLM & Web Search"
 git push origin v5.4.0
 ```
 
@@ -89,7 +89,7 @@ On GitHub, configure `main` branch protection:
 3. Enable:
    - ☑️ **Require a pull request before merging**
    - ☑️ **Require status checks to pass before merging**
-     - Add: `Jarvis V5 CI` (from `.github/workflows/jarvis-ci.yml`)
+     - Add: `AKIOR V5 CI` (from `.github/workflows/akior-ci.yml`)
    - ☑️ **(Optional) Require approvals** — Set to 1 for small teams, 2+ for larger teams
    - ☑️ **Require linear history** — Prevents messy merge commits
 4. Save changes
@@ -201,11 +201,11 @@ git push origin feature/v5-gmail-integration
 
 ### Current Tagging Strategy
 
-Jarvis V5 uses **semantic versioning** with tags for each release:
+AKIOR V5 uses **semantic versioning** with tags for each release:
 
 - **Format:** `vMAJOR.MINOR.PATCH` (e.g., `v5.0.0`, `v5.2.0`, `v5.4.0`)
 - **When to tag:** After a successful release commit on `main` with CI passing
-- **Where to document:** Create a release notes file like `JARVIS_V5_RELEASE_NOTES_v5.4.0.md`
+- **Where to document:** Create a release notes file like `AKIOR_V5_RELEASE_NOTES_v5.4.0.md`
 
 ### Versioning Guidelines
 
@@ -223,7 +223,7 @@ git checkout main
 npm run typecheck && npm run build && npm run ci:smoke
 
 # Create release notes
-# (e.g., JARVIS_V5_RELEASE_NOTES_v5.5.0.md)
+# (e.g., AKIOR_V5_RELEASE_NOTES_v5.5.0.md)
 
 # Commit release notes
 git add .
@@ -233,7 +233,7 @@ git push origin main
 # Wait for CI to pass on GitHub
 
 # Create annotated tag
-git tag -a v5.5.0 -m "Jarvis V5.5.0 – Brief description"
+git tag -a v5.5.0 -m "AKIOR V5.5.0 – Brief description"
 
 # Push tag to GitHub
 git push origin v5.5.0
@@ -252,7 +252,7 @@ git push origin v5.5.0
 git checkout -b release/v5.5.0
 
 # Bump version numbers, update docs
-# (e.g., JARVIS_V5_RELEASE_NOTES_v5.5.0.md)
+# (e.g., AKIOR_V5_RELEASE_NOTES_v5.5.0.md)
 
 # Commit changes
 git add .
@@ -271,7 +271,7 @@ git checkout main
 git pull origin main
 
 # Create annotated tag
-git tag -a v5.5.0 -m "Jarvis V5.5.0 – Brief description"
+git tag -a v5.5.0 -m "AKIOR V5.5.0 – Brief description"
 
 # Push tag to GitHub
 git push origin v5.5.0
@@ -283,7 +283,7 @@ git push origin v5.5.0
 
 Every release should have a corresponding release notes file:
 
-- **Filename:** `JARVIS_V5_RELEASE_NOTES_vX.Y.Z.md`
+- **Filename:** `AKIOR_V5_RELEASE_NOTES_vX.Y.Z.md`
 - **Location:** Repository root
 - **Contents:**
   - Summary of changes
@@ -292,7 +292,7 @@ Every release should have a corresponding release notes file:
   - Known limitations
   - Migration notes (if applicable)
 
-**Example:** See `JARVIS_V5_RELEASE_NOTES_v5.4.0.md` for reference.
+**Example:** See `AKIOR_V5_RELEASE_NOTES_v5.4.0.md` for reference.
 
 ---
 
@@ -318,10 +318,10 @@ Every change (code or docs) must pass three quality gates:
 
 ### CI Configuration
 
-The CI pipeline is defined in `.github/workflows/jarvis-ci.yml`:
+The CI pipeline is defined in `.github/workflows/akior-ci.yml`:
 
 ```yaml
-name: Jarvis V5 CI
+name: AKIOR V5 CI
 
 on:
   push:
@@ -405,9 +405,9 @@ npm run ci:smoke    # Start system, run smoke tests, stop system
 ### Both Workflows
 
 ✅ **Tagging:** Semantic versioning (`v5.x.x`) after successful releases  
-✅ **Release Notes:** Document every version in `JARVIS_V5_RELEASE_NOTES_vX.Y.Z.md`  
+✅ **Release Notes:** Document every version in `AKIOR_V5_RELEASE_NOTES_vX.Y.Z.md`  
 ✅ **Quality Gates:** TypeScript, build, smoke tests must pass  
-✅ **CI Config:** `.github/workflows/jarvis-ci.yml` (unchanged between workflows)
+✅ **CI Config:** `.github/workflows/akior-ci.yml` (unchanged between workflows)
 
 ---
 
@@ -415,7 +415,7 @@ npm run ci:smoke    # Start system, run smoke tests, stop system
 
 ### Overview
 
-As of **feature/v6-notification-foundation**, Jarvis V5 OS includes the foundational infrastructure for an internal notification and event scheduling system. This subsystem is designed to support future features like calendar reminders, printer alerts, security camera notifications, and system updates.
+As of **feature/v6-notification-foundation**, AKIOR V5 OS includes the foundational infrastructure for an internal notification and event scheduling system. This subsystem is designed to support future features like calendar reminders, printer alerts, security camera notifications, and system updates.
 
 ### Current Status: Foundation Only
 
@@ -642,7 +642,7 @@ The notification system is now **fully complete** with history and preferences. 
 
 ### Overview
 
-Jarvis includes a comprehensive local memory and logging infrastructure designed to:
+AKIOR includes a comprehensive local memory and logging infrastructure designed to:
 - Store conversation history for context-aware interactions
 - Track all user and system actions for auditing and debugging
 - Provide structured logging with rotation and retention policies
@@ -808,7 +808,7 @@ POST /api/actions/cleanup
 ### Usage Examples
 
 **Accessing Memory & Logs:**
-1. Open J.A.R.V.I.S. settings page
+1. Open AKIOR settings page
 2. Scroll to "Memory & Logs" section
 3. Click on desired tab (Conversations, Actions, or System Logs)
 4. Use filters and search to find specific information
@@ -835,16 +835,16 @@ POST /api/actions/cleanup
 
 **Chat Integration** (Pending):
 - Update `apps/web/app/chat/page.tsx` to save conversations
-- Update `apps/web/src/components/JarvisAssistant.tsx` for realtime conversations
+- Update `apps/web/src/components/AKIORAssistant.tsx` for realtime conversations
 - Add "New Conversation" button to start fresh sessions
 - Load previous conversation on mount (optional continuation)
 - Track function executions as actions
 
 **Context Recall** (Pending):
-- Create `recall_memory` function in `apps/web/lib/jarvis-functions.ts`
+- Create `recall_memory` function in `apps/web/lib/akior-functions.ts`
 - Implement search across conversations and actions
 - Add time range filtering support
-- Enable J.A.R.V.I.S. to answer questions about past interactions
+- Enable AKIOR to answer questions about past interactions
 - Examples: "What did we discuss yesterday?", "Show images I generated last week"
 
 **Logging Integration** (Pending):
@@ -871,7 +871,7 @@ POST /api/actions/cleanup
 
 ### Future Enhancements
 
-**Context-Aware J.A.R.V.I.S.:**
+**Context-Aware AKIOR:**
 - Automatic context injection based on conversation history
 - Smart suggestions based on past interactions
 - Personalized responses based on user preferences
@@ -929,10 +929,10 @@ POST /api/actions/cleanup
 
 ## References
 
-- **CI Workflow:** `.github/workflows/jarvis-ci.yml`
-- **Release Notes:** `JARVIS_V5_RELEASE_NOTES_v5.4.0.md` (example)
-- **Test Plan:** `JARVIS_V5_TEST_PLAN.md`
-- **Repository Overview:** `JARVIS_V5_REPO_OVERVIEW.md`
+- **CI Workflow:** `.github/workflows/akior-ci.yml`
+- **Release Notes:** `AKIOR_V5_RELEASE_NOTES_v5.4.0.md` (example)
+- **Test Plan:** `AKIOR_V5_TEST_PLAN.md`
+- **Repository Overview:** `AKIOR_V5_REPO_OVERVIEW.md`
 - **Notification Foundation:** `packages/shared/src/notifications.ts`, `apps/server/src/notificationScheduler.ts`
 
 For questions or workflow improvements, open an issue or discussion on GitHub.

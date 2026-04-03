@@ -1,6 +1,6 @@
 # Repository Governance
 
-This document describes the development workflow and policies for the Jarvis V5 repository.
+This document describes the development workflow and policies for the AKIOR V5 repository.
 
 ## Branching Model
 

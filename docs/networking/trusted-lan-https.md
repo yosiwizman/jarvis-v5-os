@@ -45,12 +45,12 @@ After running, **restart your browser completely** (close all windows).
 
 1. Start the AKIOR stack if not running:
    ```powershell
-   docker compose -f deploy/compose.jarvis.yml up -d
+   docker compose -f deploy/compose.akior.yml up -d
    ```
 
 2. Extract the certificate:
    ```powershell
-   docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt $env:TEMP\caddy-root.crt
+   docker cp akior-caddy:/data/caddy/pki/authorities/local/root.crt $env:TEMP\caddy-root.crt
    ```
 
 3. Open the certificate and install it:
@@ -89,7 +89,7 @@ To remove the certificate (e.g., when uninstalling AKIOR):
 
 ```bash
 # Extract certificate
-docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt /tmp/caddy-root.crt
+docker cp akior-caddy:/data/caddy/pki/authorities/local/root.crt /tmp/caddy-root.crt
 
 # Add to keychain
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /tmp/caddy-root.crt
@@ -109,7 +109,7 @@ The process varies by distribution. For Debian/Ubuntu:
 
 ```bash
 # Extract certificate
-docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt /tmp/caddy-root.crt
+docker cp akior-caddy:/data/caddy/pki/authorities/local/root.crt /tmp/caddy-root.crt
 
 # Copy to trust store
 sudo cp /tmp/caddy-root.crt /usr/local/share/ca-certificates/caddy-root.crt
@@ -132,11 +132,11 @@ sudo update-ca-certificates
    - Windows: Open `certmgr.msc` → Trusted Root Certification Authorities → Certificates
    - Look for "Caddy Local Authority"
 
-### "jarvis-caddy container is not running"
+### "akior-caddy container is not running"
 
 Start the stack first:
 ```powershell
-docker compose -f deploy/compose.jarvis.yml up -d
+docker compose -f deploy/compose.akior.yml up -d
 ```
 
 ### Certificate not found in container

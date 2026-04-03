@@ -1,4 +1,4 @@
-# Jarvis V5.4.0 – Local LLM & Web Search
+# AKIOR V5.4.0 – Local LLM & Web Search
 
 **Release Date:** December 6, 2025  
 **Version:** v5.4.0
@@ -7,7 +7,7 @@
 
 ## Summary
 
-Jarvis V5.4.0 is a significant milestone that transforms Jarvis into a **fully offline-capable AI operating system**. This release introduces **Local LLM integration**, enabling users to run AI models locally (via Ollama or custom HTTP APIs) with intelligent fallback to cloud services. Combined with the previously released Web Search and Weather integrations, comprehensive theming system, HUD with real-time metrics, and robust CI/CD pipeline, Jarvis V5 now offers a complete local-first AI experience with enterprise-grade reliability.
+AKIOR V5.4.0 is a significant milestone that transforms AKIOR into a **fully offline-capable AI operating system**. This release introduces **Local LLM integration**, enabling users to run AI models locally (via Ollama or custom HTTP APIs) with intelligent fallback to cloud services. Combined with the previously released Web Search and Weather integrations, comprehensive theming system, HUD with real-time metrics, and robust CI/CD pipeline, AKIOR V5 now offers a complete local-first AI experience with enterprise-grade reliability.
 
 This release maintains 100% backward compatibility with cloud-only workflows while adding flexible routing options for cost optimization, offline operation, and privacy-conscious deployments.
 
@@ -17,7 +17,7 @@ This release maintains 100% backward compatibility with cloud-only workflows whi
 
 ### 🤖 Local LLM Integration
 
-The headline feature of v5.4.0 is the **Local LLM integration**, which enables Jarvis to use locally-hosted language models instead of (or alongside) cloud APIs.
+The headline feature of v5.4.0 is the **Local LLM integration**, which enables AKIOR to use locally-hosted language models instead of (or alongside) cloud APIs.
 
 #### Key Features
 
@@ -83,8 +83,8 @@ The headline feature of v5.4.0 is the **Local LLM integration**, which enables J
   - Security notes (localhost, API keys, public exposure warnings)
   - Example configurations (offline-first, cost-optimized)
 
-- **Updated:** `JARVIS_V5_TEST_PLAN.md` – Added comprehensive Local LLM test section
-- **Updated:** `JARVIS_V5_REPO_OVERVIEW.md` – Updated version references
+- **Updated:** `AKIOR_V5_TEST_PLAN.md` – Added comprehensive Local LLM test section
+- **Updated:** `AKIOR_V5_REPO_OVERVIEW.md` – Updated version references
 
 ---
 
@@ -93,7 +93,7 @@ The headline feature of v5.4.0 is the **Local LLM integration**, which enables J
 ### v5.0.0 – Initial Local OS (June 2025)
 
 - Holomat radial app launcher with draggable windows
-- Jarvis voice assistant with real-time API
+- AKIOR voice assistant with real-time API
 - 3D model generation and viewer
 - Camera streaming and security dashboard
 - Local HTTPS setup with mkcert + dev TLS proxy
@@ -126,7 +126,7 @@ The headline feature of v5.4.0 is the **Local LLM integration**, which enables J
 
 ---
 
-## How to Run Jarvis V5.4.0 Locally
+## How to Run AKIOR V5.4.0 Locally
 
 ### Prerequisites
 
@@ -140,8 +140,8 @@ The headline feature of v5.4.0 is the **Local LLM integration**, which enables J
 
 ```bash
 # Clone the repository (if not already done)
-git clone https://github.com/yosiwizman/jarvis-v5-os.git
-cd jarvis-v5-os
+git clone https://github.com/yosiwizman/akior-v5-os.git
+cd akior-v5-os
 
 # Checkout v5.4.0
 git checkout v5.4.0
@@ -209,7 +209,7 @@ For detailed setup instructions, see **`LOCAL_LLM_INTEGRATION.md`** in the repos
    ```
    You should see a list of installed models.
 
-4. **Configure in Jarvis:**
+4. **Configure in AKIOR:**
    - Open `https://localhost:3000/settings`
    - Navigate to **Integrations → Local LLM**
    - Check **Enable**
@@ -340,7 +340,7 @@ Local LLM is **disabled by default**, so your existing cloud-only workflow conti
 
 ### GitHub Actions CI
 
-- Workflow: `.github/workflows/jarvis-ci.yml`
+- Workflow: `.github/workflows/akior-ci.yml`
 - Triggers: Push to `main` or `feature/*` branches, pull requests to `main`
 - Steps: Install, typecheck, build, smoke tests
 - Node.js: 20 LTS on `ubuntu-latest`
@@ -362,7 +362,7 @@ Local LLM is **disabled by default**, so your existing cloud-only workflow conti
 
 1. **Test Local LLM:** Install Ollama, configure in Settings, verify end-to-end functionality
 2. **Review Documentation:** Read `LOCAL_LLM_INTEGRATION.md` for advanced configuration
-3. **Run Test Plan:** Follow `JARVIS_V5_TEST_PLAN.md` for comprehensive QA
+3. **Run Test Plan:** Follow `AKIOR_V5_TEST_PLAN.md` for comprehensive QA
 4. **Deploy v5.4.0:** Tag and push to production (if applicable)
 
 ### Future Enhancements (v5.5.0+)
@@ -377,11 +377,11 @@ Local LLM is **disabled by default**, so your existing cloud-only workflow conti
 
 ## Support & Resources
 
-- **Repository:** [https://github.com/yosiwizman/jarvis-v5-os](https://github.com/yosiwizman/jarvis-v5-os)
+- **Repository:** [https://github.com/yosiwizman/akior-v5-os](https://github.com/yosiwizman/akior-v5-os)
 - **Documentation:** See repository root for detailed guides
 - **Issues:** Report bugs via GitHub Issues
 - **Discussions:** Use GitHub Discussions for questions and feature requests
 
 ---
 
-**Thank you for using Jarvis V5!** 🚀
+**Thank you for using AKIOR V5!** 🚀

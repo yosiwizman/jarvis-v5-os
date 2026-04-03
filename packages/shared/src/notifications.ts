@@ -1,7 +1,7 @@
 /**
  * Notification & Event Loop Types
  * 
- * Shared types for the internal notification system used across Jarvis V5 OS.
+ * Shared types for the internal notification system used across AKIOR V5 OS.
  * Supports scheduled events, real-time delivery, and notification history.
  */
 

@@ -1,7 +1,7 @@
 # Weather Integration Documentation
 
 ## Overview
-Successfully implemented a complete weather integration for Jarvis V5 using the OpenWeather Current Weather API. The integration provides real-time weather data in the OS HUD with proper security, error handling, and theme integration.
+Successfully implemented a complete weather integration for AKIOR V5 using the OpenWeather Current Weather API. The integration provides real-time weather data in the OS HUD with proper security, error handling, and theme integration.
 
 ## Provider Implementation
 
@@ -79,7 +79,7 @@ Get your free API key from: https://openweathermap.org/api
 
 ### User Settings
 
-Navigate to **Settings → Weather** in the Jarvis V5 UI:
+Navigate to **Settings → Weather** in the AKIOR V5 UI:
 
 1. **Enable Integration**: Check the box to activate weather fetching
 2. **Provider**: Select OpenWeather (only option currently)

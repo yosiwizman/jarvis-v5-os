@@ -1,4 +1,4 @@
-# README Update for J.A.R.V.I.S. V6.1.0 - Agent D Voice Features
+# README Update for AKIOR V6.1.0 - Agent D Voice Features
 
 **Insert this section into README.md after implementing Agent D features**
 
@@ -10,7 +10,7 @@
 
 ### 🌤️ Voice-Activated Weather Updates
 
-- **Access:** Say "Hey Jarvis, what's the weather?"
+- **Access:** Say "Hey AKIOR, what's the weather?"
 - **Features:**
   - Query current weather conditions by voice
   - Location-based queries ("How hot is it in Miami?")
@@ -40,7 +40,7 @@
 
 **Example commands:**
 - "Take a note: Buy groceries tomorrow"
-- "J.A.R.V.I.S., remember to call dentist at 2 PM"
+- "AKIOR, remember to call dentist at 2 PM"
 - "Show my notes"
 - "Delete my last note"
 - "Read my notes"
@@ -196,7 +196,7 @@ All data stored locally in `apps/server/data/`:
 
 ## Voice Functions (v6.1.0)
 
-New voice functions available to J.A.R.V.I.S.:
+New voice functions available to AKIOR:
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
@@ -313,8 +313,8 @@ apps/web/
 **Modified Files:**
 ```
 apps/server/src/index.ts          # Added 11 new endpoints
-apps/web/src/lib/jarvis-functions.ts         # Added 11 new functions
-apps/web/src/lib/jarvis-function-executor.ts # Added 11 new handlers
+apps/web/src/lib/akior-functions.ts         # Added 11 new functions
+apps/web/src/lib/akior-function-executor.ts # Added 11 new handlers
 packages/shared/src/settings.ts   # Added voiceFeedbackProvider
 apps/web/app/settings/page.tsx    # Added voice feedback UI
 ```
@@ -358,7 +358,7 @@ npm test  # (add tests as needed)
 - OpenAI Realtime API (voice processing)
 - OpenWeather API (weather data)
 - ElevenLabs & Azure TTS (optional voice feedback)
-- Existing J.A.R.V.I.S. notification system
+- Existing AKIOR notification system
 
 **Architecture:**
 - Fastify backend with Socket.IO

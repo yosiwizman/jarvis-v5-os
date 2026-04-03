@@ -83,7 +83,7 @@ The order matters to avoid network downtime:
 On the canonical server (192.168.1.64):
 
 ```bash
-cd /path/to/jarvis-v5-os
+cd /path/to/akior-v5-os
 cd deploy/adguard-home
 
 # Start AdGuard Home

@@ -1,4 +1,4 @@
-# JARVIS Incident Response: First 5 Minutes
+# AKIOR Incident Response: First 5 Minutes
 
 When something goes wrong, use this checklist to quickly assess and restore service.
 
@@ -14,7 +14,7 @@ If this fails, see [SSH LAN Troubleshooting](./ssh-lan-troubleshooting.md).
 ## Step 1: Check Container Status (30 seconds)
 
 ```bash
-ssh aifactory-lan "docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml ps"
+ssh aifactory-lan "docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml ps"
 ```
 
 **Expected**: All three services show `Up (healthy)`
@@ -48,21 +48,21 @@ ssh aifactory-lan "curl -s http://127.0.0.1:3000/api/health && echo"
 
 ```bash
 # Check which container crashed
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml ps
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml ps
 
 # Get exit code and last logs
-docker inspect jarvis-server --format='{{.State.ExitCode}}'
-docker logs --tail=50 jarvis-server
+docker inspect akior-server --format='{{.State.ExitCode}}'
+docker logs --tail=50 akior-server
 ```
 
 ### Resolution
 
 ```bash
 # Restart the crashed service
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d server
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml up -d server
 
 # Or restart all
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml up -d
 ```
 
 ### Common Exit Codes
@@ -82,23 +82,23 @@ docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d
 
 ```bash
 # Check health status
-docker inspect jarvis-server --format='{{.State.Health.Status}}'
+docker inspect akior-server --format='{{.State.Health.Status}}'
 
 # Check recent health check results
-docker inspect jarvis-server --format='{{range .State.Health.Log}}{{.Output}}{{end}}'
+docker inspect akior-server --format='{{range .State.Health.Log}}{{.Output}}{{end}}'
 
 # Check if endpoint responds
-docker exec jarvis-server wget -q -O - http://127.0.0.1:1234/health
+docker exec akior-server wget -q -O - http://127.0.0.1:1234/health
 ```
 
 ### Resolution
 
 ```bash
 # Restart the unhealthy service
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml restart server
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml restart server
 
 # If still unhealthy, check logs
-docker logs --tail=100 jarvis-server
+docker logs --tail=100 akior-server
 ```
 
 ---
@@ -109,15 +109,15 @@ docker logs --tail=100 jarvis-server
 
 ```bash
 # Check restart count
-docker inspect jarvis-server --format='{{.RestartCount}}'
+docker inspect akior-server --format='{{.RestartCount}}'
 
 # Check startup logs
-docker logs --tail=100 jarvis-server
+docker logs --tail=100 akior-server
 ```
 
 ### Common Causes
 
-1. **Missing environment variables**: Check `jarvis.env` exists
+1. **Missing environment variables**: Check `akior.env` exists
 2. **Port conflict**: Another process using the port
 3. **Permission denied**: File system access issues
 4. **Module not found**: Build/dependency issue
@@ -126,12 +126,12 @@ docker logs --tail=100 jarvis-server
 
 ```bash
 # Check env file exists
-ls -la /opt/jarvis/JARVIS-V5-OS/deploy/jarvis.env
+ls -la /opt/akior/AKIOR-V5-OS/deploy/akior.env
 
 # Rebuild from scratch
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml down
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml build --no-cache
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml down
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml build --no-cache
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml up -d
 ```
 
 ---
@@ -145,7 +145,7 @@ docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d
 systemctl status docker
 
 # Check if containers exist
-docker ps -a | grep jarvis
+docker ps -a | grep akior
 ```
 
 ### Resolution
@@ -155,8 +155,8 @@ docker ps -a | grep jarvis
 sudo systemctl start docker
 
 # Start the stack
-cd /opt/jarvis/JARVIS-V5-OS
-docker compose -f deploy/compose.jarvis.yml up -d
+cd /opt/akior/AKIOR-V5-OS
+docker compose -f deploy/compose.akior.yml up -d
 ```
 
 ---
@@ -167,7 +167,7 @@ docker compose -f deploy/compose.jarvis.yml up -d
 
 ```bash
 # Check Caddy status
-docker logs --tail=50 jarvis-caddy
+docker logs --tail=50 akior-caddy
 
 # Check if port 3000 is bound
 ss -tlnp | grep 3000
@@ -177,7 +177,7 @@ ss -tlnp | grep 3000
 
 ```bash
 # Restart Caddy
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml restart caddy
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml restart caddy
 
 # If port conflict, find and kill process
 sudo lsof -i :3000
@@ -193,24 +193,24 @@ Caddy is running but can't reach backend services.
 
 ```bash
 # Check if server is running
-docker exec jarvis-server wget -q -O - http://127.0.0.1:1234/health
+docker exec akior-server wget -q -O - http://127.0.0.1:1234/health
 
 # Check if web is running
-docker exec jarvis-web wget -q -O - http://127.0.0.1:3001/
+docker exec akior-web wget -q -O - http://127.0.0.1:3001/
 
 # Check Docker network
-docker network inspect deploy_jarvis-net
+docker network inspect deploy_akior-net
 ```
 
 ### Resolution
 
 ```bash
 # Restart affected backend
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml restart server web
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml restart server web
 
 # If network issue, recreate network
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml down
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml down
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml up -d
 ```
 
 ---
@@ -227,16 +227,16 @@ ip addr
 docker network ls
 
 # Check container IPs
-docker inspect jarvis-server --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+docker inspect akior-server --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
 ```
 
 ### Resolution
 
 ```bash
 # Recreate Docker network
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml down
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml down
 docker network prune -f
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml up -d
 ```
 
 ---
@@ -248,7 +248,7 @@ Next.js container fails to start due to build errors.
 ### Diagnosis
 
 ```bash
-docker logs jarvis-web
+docker logs akior-web
 ```
 
 ### Common Errors
@@ -263,8 +263,8 @@ docker logs jarvis-web
 
 ```bash
 # Rebuild from scratch
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml build --no-cache web
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml up -d web
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml build --no-cache web
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml up -d web
 ```
 
 ---
@@ -277,10 +277,10 @@ UI is unreachable on LAN via https://akior.local/ or https://akior.home.arpa/
 
 ```bash
 # Check if Caddy is running
-docker ps | grep jarvis-caddy
+docker ps | grep akior-caddy
 
 # Check Caddy logs for TLS errors
-docker logs --tail=50 jarvis-caddy | grep -i tls
+docker logs --tail=50 akior-caddy | grep -i tls
 
 # Check if port 443 is listening
 ss -tlnp | grep 443
@@ -293,9 +293,9 @@ curl -vkI https://akior.local/ 2>&1 | grep -E "(Connected|SSL|certificate)"
 
 | Issue | Symptoms | Solution |
 |-------|----------|----------|
-| **Caddy not running** | Port 443 not listening | Restart: `docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml restart caddy` |
+| **Caddy not running** | Port 443 not listening | Restart: `docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml restart caddy` |
 | **Internal CA expired** | "certificate has expired" error | Recreate Caddy data volume (see below) |
-| **Config syntax error** | Caddy restart loop | Check: `docker logs jarvis-caddy` for parse errors |
+| **Config syntax error** | Caddy restart loop | Check: `docker logs akior-caddy` for parse errors |
 | **Port conflict** | "bind: address already in use" | Find process: `sudo lsof -i :443` |
 | **mDNS not working** | "could not resolve akior.local" | Restart Avahi: `sudo systemctl restart avahi-daemon` |
 
@@ -304,16 +304,16 @@ curl -vkI https://akior.local/ 2>&1 | grep -E "(Connected|SSL|certificate)"
 If Caddy's internal CA is corrupted or expired:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Stop Caddy
-docker compose -f deploy/compose.jarvis.yml stop caddy
+docker compose -f deploy/compose.akior.yml stop caddy
 
 # Remove Caddy data volume (includes internal CA)
 docker volume rm deploy_caddy_data
 
 # Restart Caddy (will regenerate internal CA)
-docker compose -f deploy/compose.jarvis.yml up -d caddy
+docker compose -f deploy/compose.akior.yml up -d caddy
 
 # Verify TLS
 curl -vkI https://akior.local/
@@ -329,7 +329,7 @@ curl -vkI https://akior.local/
 If TLS issues persist after troubleshooting:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 sudo bash ops/rollback/switch-to-local-only-mode.sh
 ```
 
@@ -351,7 +351,7 @@ Diagnostics page shows "DEPLOYMENT DRIFT DETECTED" - web and server containers a
 
 ```bash
 # Verify drift with dedicated script
-bash /opt/jarvis/JARVIS-V5-OS/ops/verify/build-sync-check.sh
+bash /opt/akior/AKIOR-V5-OS/ops/verify/build-sync-check.sh
 
 # Or check manually
 curl -sk https://akior.local/web-build | jq '.git_sha'
@@ -372,7 +372,7 @@ curl -sk https://akior.local/api/health/build | jq '.git_sha'
 ### Resolution
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 
 # Pull latest code (if needed)
 git pull origin main
@@ -416,7 +416,7 @@ bash ops/deploy/rebuild.sh --no-cache
 If service is not restored within 15 minutes:
 
 1. Document what you've tried
-2. Capture full logs: `docker logs jarvis-server > server.log 2>&1`
+2. Capture full logs: `docker logs akior-server > server.log 2>&1`
 3. Check recent commits: `git log --oneline -10`
 4. Consider rollback (see [Deploy Ops](./deploy-ops.md#rollback-procedure) or [LAN Rollback](../ops/remote-access.md#rollback-to-lan-only-mode))
 
@@ -443,13 +443,13 @@ After restoring service:
 
 **Immediate checks (run on host):**
 - Run automated verification: bash ops/verify/lan-reachability-check.sh
-- Check Caddy status: docker compose -f deploy/compose.jarvis.yml ps caddy
+- Check Caddy status: docker compose -f deploy/compose.akior.yml ps caddy
 - Check port listeners: sudo ss -lntp | egrep ':(80|443)'
 - Check Avahi: systemctl status avahi-daemon | grep "running"
-- Check Caddy logs: docker compose -f deploy/compose.jarvis.yml logs --tail=50 caddy
+- Check Caddy logs: docker compose -f deploy/compose.akior.yml logs --tail=50 caddy
 
 **Quick fixes:**
-- If Caddy is down: docker compose -f deploy/compose.jarvis.yml up -d --force-recreate caddy
+- If Caddy is down: docker compose -f deploy/compose.akior.yml up -d --force-recreate caddy
 - If Avahi issue: bash ops/linux/lan-mdns/install.sh
 - Verify: bash ops/verify/lan-reachability-check.sh
 

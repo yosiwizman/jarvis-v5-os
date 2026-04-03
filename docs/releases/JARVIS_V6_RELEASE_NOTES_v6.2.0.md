@@ -1,4 +1,4 @@
-# JARVIS V6.2.0 – Ubuntu Shell Phase A + HUD Notifications
+# AKIOR V6.2.0 – Ubuntu Shell Phase A + HUD Notifications
 
 **Release Date:** 2025-12-07
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-JARVIS V6.2.0 introduces two major enhancements: **Ubuntu Shell Phase A** (secure workstation mode) and **HUD-integrated notifications**. This release provides the foundation for running JARVIS as a kiosk-style desktop environment on Ubuntu while improving the notification user experience across all platforms.
+AKIOR V6.2.0 introduces two major enhancements: **Ubuntu Shell Phase A** (secure workstation mode) and **HUD-integrated notifications**. This release provides the foundation for running AKIOR as a kiosk-style desktop environment on Ubuntu while improving the notification user experience across all platforms.
 
 ---
 
@@ -14,14 +14,14 @@ JARVIS V6.2.0 introduces two major enhancements: **Ubuntu Shell Phase A** (secur
 
 ### 🖥️ Ubuntu Shell Phase A – Secure Workstation Mode
 
-JARVIS can now run as a full-screen kiosk application on Ubuntu, auto-launching after user login. This phase establishes the infrastructure for JARVIS to function as an OS shell while maintaining Ubuntu as the underlying operating system and login provider.
+AKIOR can now run as a full-screen kiosk application on Ubuntu, auto-launching after user login. This phase establishes the infrastructure for AKIOR to function as an OS shell while maintaining Ubuntu as the underlying operating system and login provider.
 
 **Key Features:**
 
 - **User-Level Systemd Services:**
-  - `jarvis-server.service` – Background service for the JARVIS Fastify backend
-  - `jarvis-kiosk.service` – Auto-launch Chromium/Chrome in full-screen kiosk mode
-  - `jarvis-kiosk.desktop` – Alternative desktop autostart file for simpler setups
+  - `akior-server.service` – Background service for the AKIOR Fastify backend
+  - `akior-kiosk.service` – Auto-launch Chromium/Chrome in full-screen kiosk mode
+  - `akior-kiosk.desktop` – Alternative desktop autostart file for simpler setups
 
 - **Non-Destructive Setup:**
   - All configuration files provided as `.example` templates in `infra/ubuntu-shell/`
@@ -29,15 +29,15 @@ JARVIS can now run as a full-screen kiosk application on Ubuntu, auto-launching 
   - No automatic system modifications – user retains full control
 
 - **Kiosk Mode Detection:**
-  - Environment variable: `NEXT_PUBLIC_JARVIS_UBUNTU_MODE=kiosk`
-  - Server-side detection via `JARVIS_UBUNTU_MODE=kiosk`
+  - Environment variable: `NEXT_PUBLIC_AKIOR_UBUNTU_MODE=kiosk`
+  - Server-side detection via `AKIOR_UBUNTU_MODE=kiosk`
   - Logging for debugging kiosk mode status
 
 **Infrastructure Files:**
 
-- `infra/ubuntu-shell/jarvis-server.service.example` (71 lines)
-- `infra/ubuntu-shell/jarvis-kiosk.service.example` (113 lines)
-- `infra/ubuntu-shell/jarvis-kiosk.desktop.example` (56 lines)
+- `infra/ubuntu-shell/akior-server.service.example` (71 lines)
+- `infra/ubuntu-shell/akior-kiosk.service.example` (113 lines)
+- `infra/ubuntu-shell/akior-kiosk.desktop.example` (56 lines)
 - `infra/ubuntu-shell/prepare-ubuntu-shell.sh` (231 lines)
 - `infra/ubuntu-shell/README.md` (343 lines)
 
@@ -62,7 +62,7 @@ JARVIS can now run as a full-screen kiosk application on Ubuntu, auto-launching 
 
 ### 🔔 HUD-Integrated Notifications
 
-Notifications have been fully integrated into the top-right HUD system widget, replacing the separate floating bell icon and full-height drawer. This creates a unified, futuristic interface consistent with JARVIS's visual design.
+Notifications have been fully integrated into the top-right HUD system widget, replacing the separate floating bell icon and full-height drawer. This creates a unified, futuristic interface consistent with AKIOR's visual design.
 
 **Key Features:**
 
@@ -79,7 +79,7 @@ Notifications have been fully integrated into the top-right HUD system widget, r
   - "Mark all as read" and "Clear all" actions at bottom
 
 - **Visual Consistency:**
-  - Reuses HUD CSS variables: `--jarvis-panel-surface`, `--jarvis-accent`, `--jarvis-glow`
+  - Reuses HUD CSS variables: `--akior-panel-surface`, `--akior-accent`, `--akior-glow`
   - Matches HUD typography, spacing, and border styling
   - Red badge with glow effect when notifications are unread
 
@@ -108,8 +108,8 @@ These components have been replaced by the HUD-integrated notification system.
 
 ### Version Bumps
 
-- `@jarvis/server`: 6.1.0 → 6.2.0
-- `@jarvis/web`: 6.1.0 → 6.2.0
+- `@akior/server`: 6.1.0 → 6.2.0
+- `@akior/web`: 6.1.0 → 6.2.0
 - `@shared/core`: 6.1.0 → 6.2.0
 
 ---
@@ -159,7 +159,7 @@ All quality gates passed:
 
 ### For Ubuntu Kiosk Deployment
 
-If you want to run JARVIS as a kiosk on Ubuntu:
+If you want to run AKIOR as a kiosk on Ubuntu:
 
 1. **Read the Implementation Guide:**
    - `docs/UBUNTU_SHELL_PHASE_A_IMPLEMENTATION.md`
@@ -182,14 +182,14 @@ If you want to run JARVIS as a kiosk on Ubuntu:
 
 ### Phase B (v6.3+)
 
-- Custom GDM greeter with JARVIS branding
+- Custom GDM greeter with AKIOR branding
 - Ubuntu native notification integration
 - Wake-on-motion hardware integration
 - Enhanced kiosk UI optimizations
 
 ### Phase C (v7.0+)
 
-- True OS replacement (JARVIS as login manager)
+- True OS replacement (AKIOR as login manager)
 - System-level notification bridge
 - Multi-user support
 - Advanced hardware control
@@ -202,7 +202,7 @@ If you want to run JARVIS as a kiosk on Ubuntu:
 
 1. **Standard Ubuntu Login:** Uses default GDM greeter (no custom branding yet)
 2. **Manual Setup:** Requires following documented installation steps
-3. **Single User:** One JARVIS instance per user account
+3. **Single User:** One AKIOR instance per user account
 4. **Browser Notifications Only:** Native Ubuntu notifications not yet integrated
 
 ### HUD Notifications

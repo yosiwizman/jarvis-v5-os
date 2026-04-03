@@ -1,4 +1,4 @@
-# Fly.io configuration for Jarvis Server
+# Fly.io configuration for AKIOR Server
 # https://fly.io/docs/reference/configuration/
 #
 # Deploy: flyctl deploy --config apps/server/fly.toml --dockerfile apps/server/Dockerfile

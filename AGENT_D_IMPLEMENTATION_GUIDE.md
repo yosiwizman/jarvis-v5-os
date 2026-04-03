@@ -1,11 +1,11 @@
 # Agent D: Weather Updates, Quick Notes, Reminders, and Smart Alarms
-## Implementation Guide for J.A.R.V.I.S. V6.1.0
+## Implementation Guide for AKIOR V6.1.0
 
 ---
 
 ## Overview
 
-This guide provides a comprehensive implementation plan for adding voice-activated weather updates, quick note-taking, contextual reminders, and smart alarms to the J.A.R.V.I.S. system. All features integrate seamlessly with the existing OpenAI Realtime API function calling architecture.
+This guide provides a comprehensive implementation plan for adding voice-activated weather updates, quick note-taking, contextual reminders, and smart alarms to the AKIOR system. All features integrate seamlessly with the existing OpenAI Realtime API function calling architecture.
 
 **Version**: 6.1.0  
 **Branch**: `feature/v6.1-voice-features`  
@@ -34,7 +34,7 @@ This guide provides a comprehensive implementation plan for adding voice-activat
 ```
 ┌─────────────────────────────────────────────────────┐
 │              User Voice Command                      │
-│         "J.A.R.V.I.S., take a note..."              │
+│         "AKIOR, take a note..."              │
 └───────────────────┬─────────────────────────────────┘
                     │
                     ▼
@@ -48,7 +48,7 @@ This guide provides a comprehensive implementation plan for adding voice-activat
                     ▼
 ┌─────────────────────────────────────────────────────┐
 │       Frontend Function Executor (Next.js)           │
-│  apps/web/src/lib/jarvis-function-executor.ts       │
+│  apps/web/src/lib/akior-function-executor.ts       │
 │  - Routes function calls to backend                  │
 │  - Handles responses                                 │
 └───────────────────┬─────────────────────────────────┘
@@ -108,7 +108,7 @@ This guide provides a comprehensive implementation plan for adding voice-activat
 ### 2. Quick Note-Taking
 
 **User Stories:**
-- "J.A.R.V.I.S., take a note: Buy milk tomorrow"
+- "AKIOR, take a note: Buy milk tomorrow"
 - "Show my notes"
 - "Delete my last note"
 - "Edit note 3 to say: Call dentist at 2 PM"
@@ -406,13 +406,13 @@ interface Alarm {
 ### Task 2: Implement Voice-Activated Weather Updates
 
 **Files to Modify:**
-- `apps/web/src/lib/jarvis-functions.ts`
-- `apps/web/src/lib/jarvis-function-executor.ts`
+- `apps/web/src/lib/akior-functions.ts`
+- `apps/web/src/lib/akior-function-executor.ts`
 - `apps/server/src/index.ts`
 
 **Implementation Steps:**
 
-1. **Add Function Definition** (`jarvis-functions.ts`)
+1. **Add Function Definition** (`akior-functions.ts`)
    ```typescript
    {
      name: 'get_weather',
@@ -494,7 +494,7 @@ interface Alarm {
    });
    ```
 
-3. **Implement Handler** (`jarvis-function-executor.ts`)
+3. **Implement Handler** (`akior-function-executor.ts`)
    ```typescript
    case 'get_weather': {
      const response = await fetch('/api/integrations/weather/query', {
@@ -530,8 +530,8 @@ interface Alarm {
 **Files to Create/Modify:**
 - `apps/server/src/storage/notesStore.ts` (create)
 - `apps/server/src/index.ts` (modify - add endpoints)
-- `apps/web/src/lib/jarvis-functions.ts` (modify - add functions)
-- `apps/web/src/lib/jarvis-function-executor.ts` (modify - add handlers)
+- `apps/web/src/lib/akior-functions.ts` (modify - add functions)
+- `apps/web/src/lib/akior-function-executor.ts` (modify - add handlers)
 
 **Backend Endpoints:**
 
@@ -898,8 +898,8 @@ describe('Time Parser', () => {
 **Files to Create/Modify:**
 - `apps/server/src/storage/remindersStore.ts` (create)
 - `apps/server/src/index.ts` (modify - add endpoints)
-- `apps/web/src/lib/jarvis-functions.ts` (modify)
-- `apps/web/src/lib/jarvis-function-executor.ts` (modify)
+- `apps/web/src/lib/akior-functions.ts` (modify)
+- `apps/web/src/lib/akior-function-executor.ts` (modify)
 
 **Integration with Notification Scheduler:**
 
@@ -1060,8 +1060,8 @@ case 'set_reminder': {
 **Files to Create/Modify:**
 - `apps/server/src/storage/alarmsStore.ts` (create)
 - `apps/server/src/index.ts` (modify - add endpoints and camera integration)
-- `apps/web/src/lib/jarvis-functions.ts` (modify)
-- `apps/web/src/lib/jarvis-function-executor.ts` (modify)
+- `apps/web/src/lib/akior-functions.ts` (modify)
+- `apps/web/src/lib/akior-function-executor.ts` (modify)
 
 **Alarm Types:**
 
@@ -1281,7 +1281,7 @@ export async function speakResponse(options: VoiceFeedbackOptions): Promise<bool
  */
 async function speakWithRealtime(text: string): Promise<boolean> {
   // If we're in an active Realtime API session, send the text
-  // This would integrate with the existing Jarvis assistant
+  // This would integrate with the existing AKIOR assistant
   // For now, return false to indicate not implemented
   console.log('[VoiceFeedback] Realtime API TTS not yet implemented');
   return false;
@@ -1371,7 +1371,7 @@ export async function speakFunctionResult(functionName: string, result: { succes
 export type VoiceFeedbackProvider = 'realtime' | 'elevenlabs' | 'azure' | 'none';
 
 export type AppSettings = {
-  jarvis: JarvisSettings;
+  akior: AKIORSettings;
   models: ModelSettings;
   textChat: TextChatSettings;
   imageGeneration: ImageGenerationSettings;
@@ -1420,7 +1420,7 @@ const defaultSettings: AppSettings = {
       <option value="azure">Azure TTS</option>
     </select>
     <p className="text-sm text-gray-500 mt-1">
-      Select how J.A.R.V.I.S. should speak responses
+      Select how AKIOR should speak responses
     </p>
   </div>
 </div>
@@ -1602,7 +1602,7 @@ const NoteSchema = z.object({
 
 ## Summary
 
-This implementation adds four major voice-controlled features to J.A.R.V.I.S.:
+This implementation adds four major voice-controlled features to AKIOR:
 
 1. ✅ **Voice-Activated Weather**: Query weather by voice
 2. ✅ **Quick Notes**: Create, list, edit, delete notes

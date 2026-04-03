@@ -44,7 +44,7 @@ export default function RootLayout({
     }
   }, [isUbuntuShellMode]);
 
-  // Don't show floating icon on the dedicated Jarvis page
+  // Don't show floating icon on the dedicated AKIOR voice page
   const showFloatingJarvis = pathname !== "/jarvis";
 
   // Hide sidebar on login page
@@ -106,70 +106,70 @@ export default function RootLayout({
                   </div>
                   <nav className="space-y-2 flex-1">
                     <Link
-                      className={`block btn truncate ${pathname === "/menu" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/menu" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/menu"
                       title="Dashboard"
                     >
                       {isCollapsed ? "D" : "Dashboard"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/jarvis" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/jarvis" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/jarvis"
                       title="Voice Assistant"
                     >
                       {isCollapsed ? "V" : "Voice Assistant"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/3dmodel" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/3dmodel" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/3dmodel"
                       title="3D Model"
                     >
                       {isCollapsed ? "3D" : "3D Model"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/3dViewer" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/3dViewer" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/3dViewer"
                       title="3D Viewer"
                     >
                       {isCollapsed ? "3V" : "3D Viewer"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/createimage" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/createimage" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/createimage"
                       title="Create Image"
                     >
                       {isCollapsed ? "I" : "Create Image"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/3dprinters" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/3dprinters" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/3dprinters"
                       title="3D Printers"
                     >
                       {isCollapsed ? "3P" : "3D Printers"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/files" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/files" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/files"
                       title="Files"
                     >
                       {isCollapsed ? "F" : "Files"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/chat" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/chat" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/chat"
                       title="Chat"
                     >
                       {isCollapsed ? "C" : "Chat"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/security" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/security" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/security"
                       title="Security"
                     >
                       {isCollapsed ? "S" : "Security"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/camera" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/camera" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/camera"
                       title="Camera"
                     >
@@ -177,28 +177,28 @@ export default function RootLayout({
                     </Link>
                     {/* Expose Holomat apps deck explicitly in the sidebar (adds UI route without changing existing links) */}
                     <Link
-                      className={`block btn truncate ${pathname === "/holomat" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/holomat" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/holomat"
                       title="Holomat"
                     >
                       {isCollapsed ? "Ho" : "Holomat"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/functions" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/functions" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/functions"
                       title="Functions"
                     >
                       {isCollapsed ? "Fn" : "Functions"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/tasks" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/tasks" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/tasks"
                       title="Scheduled Tasks"
                     >
                       {isCollapsed ? "Ts" : "Scheduled Tasks"}
                     </Link>
                     <Link
-                      className={`block btn truncate ${pathname === "/settings" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      className={`block btn truncate ${pathname === "/settings" ? "bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text" : ""}`}
                       href="/settings"
                       title="Settings"
                     >

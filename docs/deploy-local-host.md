@@ -1,6 +1,6 @@
-# JARVIS Local Host Deployment Guide
+# AKIOR Local Host Deployment Guide
 
-Deploy JARVIS on a local Ubuntu server with Docker Compose and Tailscale Serve for secure, tailnet-only HTTPS access.
+Deploy AKIOR on a local Ubuntu server with Docker Compose and Tailscale Serve for secure, tailnet-only HTTPS access.
 
 ## Architecture
 
@@ -11,18 +11,18 @@ Deploy JARVIS on a local Ubuntu server with Docker Compose and Tailscale Serve f
 └──────────────────────┬───────────────────────────────────────────┘
                        │ :3000
 ┌──────────────────────▼───────────────────────────────────────────┐
-│  Caddy Reverse Proxy (jarvis-caddy)                              │
+│  Caddy Reverse Proxy (akior-caddy)                              │
 │  Routes: /socket.io, /api, /files, /static → server              │
 │          Everything else → web                                    │
 └──────────┬──────────────────────────────────┬────────────────────┘
            │                                  │
 ┌──────────▼──────────┐        ┌──────────────▼──────────────────┐
 │  Next.js Web        │        │  Fastify + Socket.IO Server     │
-│  (jarvis-web:3001)  │        │  (jarvis-server:1234)           │
+│  (akior-web:3001)  │        │  (akior-server:1234)           │
 └─────────────────────┘        └──────────────────────────────────┘
                                           │
                                ┌──────────▼──────────────────────┐
-                               │  Docker Volume: jarvis-data     │
+                               │  Docker Volume: akior-data     │
                                │  Persistent data storage        │
                                └─────────────────────────────────┘
 ```
@@ -106,27 +106,27 @@ sudo tailscale up
 ### 1. Clone the repository
 
 ```bash
-sudo mkdir -p /opt/jarvis
-sudo chown $USER:$USER /opt/jarvis
-cd /opt/jarvis
-git clone https://github.com/yosiwizman/jarvis-v5-os.git JARVIS-V5-OS
-cd JARVIS-V5-OS
+sudo mkdir -p /opt/akior
+sudo chown $USER:$USER /opt/akior
+cd /opt/akior
+git clone https://github.com/yosiwizman/akior-v5-os.git AKIOR-V5-OS
+cd AKIOR-V5-OS
 ```
 
 ### 2. Configure environment variables
 
 ```bash
 cd deploy
-cp jarvis.env.example jarvis.env
-nano jarvis.env  # Add your API keys
+cp akior.env.example akior.env
+nano akior.env  # Add your API keys
 ```
 
 **Required:** `OPENAI_API_KEY` for AI features.
 
-### 3. Start JARVIS
+### 3. Start AKIOR
 
 ```bash
-docker compose -f deploy/compose.jarvis.yml up -d --build
+docker compose -f deploy/compose.akior.yml up -d --build
 ```
 
 ### 4. Enable Tailscale Serve (HTTPS)
@@ -138,7 +138,7 @@ tailscale serve --bg 3000
 
 If prompted with a consent URL, open it in your browser to enable HTTPS.
 
-### 5. Access JARVIS
+### 5. Access AKIOR
 
 ```bash
 # Get your Tailscale URL
@@ -149,18 +149,18 @@ Open `https://<hostname>.<tailnet>.ts.net` in your browser.
 
 ## Install as System Service
 
-To auto-start JARVIS on boot:
+To auto-start AKIOR on boot:
 
 ```bash
 # Copy systemd unit
-sudo cp deploy/systemd/jarvis.service /etc/systemd/system/
+sudo cp deploy/systemd/akior.service /etc/systemd/system/
 
 # Reload and enable
 sudo systemctl daemon-reload
-sudo systemctl enable --now jarvis.service
+sudo systemctl enable --now akior.service
 
 # Check status
-sudo systemctl status jarvis.service
+sudo systemctl status akior.service
 ```
 
 ## Management Commands
@@ -169,46 +169,46 @@ sudo systemctl status jarvis.service
 
 ```bash
 # All services
-docker compose -f deploy/compose.jarvis.yml logs -f
+docker compose -f deploy/compose.akior.yml logs -f
 
 # Specific service
-docker compose -f deploy/compose.jarvis.yml logs -f web
-docker compose -f deploy/compose.jarvis.yml logs -f server
-docker compose -f deploy/compose.jarvis.yml logs -f caddy
+docker compose -f deploy/compose.akior.yml logs -f web
+docker compose -f deploy/compose.akior.yml logs -f server
+docker compose -f deploy/compose.akior.yml logs -f caddy
 ```
 
 ### Restart services
 
 ```bash
-docker compose -f deploy/compose.jarvis.yml restart
+docker compose -f deploy/compose.akior.yml restart
 ```
 
 ### Update to latest version
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 git pull
-docker compose -f deploy/compose.jarvis.yml up -d --build
+docker compose -f deploy/compose.akior.yml up -d --build
 ```
 
 Or with systemd:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 git pull
-sudo systemctl reload jarvis.service
+sudo systemctl reload akior.service
 ```
 
-### Stop JARVIS
+### Stop AKIOR
 
 ```bash
-docker compose -f deploy/compose.jarvis.yml down
+docker compose -f deploy/compose.akior.yml down
 ```
 
 Or with systemd:
 
 ```bash
-sudo systemctl stop jarvis.service
+sudo systemctl stop akior.service
 ```
 
 ## Data Storage
@@ -217,15 +217,15 @@ Persistent data is stored in a Docker volume:
 
 ```bash
 # View volume info
-docker volume inspect jarvis_jarvis-data
+docker volume inspect akior_akior-data
 
 # Backup data
-docker run --rm -v jarvis_jarvis-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/jarvis-data-backup.tar.gz -C /data .
+docker run --rm -v akior_akior-data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/akior-data-backup.tar.gz -C /data .
 
 # Restore data
-docker run --rm -v jarvis_jarvis-data:/data -v $(pwd):/backup alpine \
-  tar xzf /backup/jarvis-data-backup.tar.gz -C /data
+docker run --rm -v akior_akior-data:/data -v $(pwd):/backup alpine \
+  tar xzf /backup/akior-data-backup.tar.gz -C /data
 ```
 
 ## Troubleshooting
@@ -234,10 +234,10 @@ docker run --rm -v jarvis_jarvis-data:/data -v $(pwd):/backup alpine \
 
 ```bash
 # Check container status
-docker compose -f deploy/compose.jarvis.yml ps
+docker compose -f deploy/compose.akior.yml ps
 
 # View logs for errors
-docker compose -f deploy/compose.jarvis.yml logs --tail=50
+docker compose -f deploy/compose.akior.yml logs --tail=50
 ```
 
 ### Port already in use
@@ -246,7 +246,7 @@ docker compose -f deploy/compose.jarvis.yml logs --tail=50
 # Check what's using port 3000
 sudo lsof -i :3000
 
-# Stop conflicting service or change port in compose.jarvis.yml
+# Stop conflicting service or change port in compose.akior.yml
 ```
 
 ### WebSocket connection failing
@@ -292,8 +292,8 @@ curl -I http://localhost:3001/
 
 ## Security Notes
 
-- **Tailnet-only access**: JARVIS is NOT exposed to the public internet. Only devices on your Tailscale network can access it.
-- **No secrets in repo**: Environment variables with API keys are stored in `jarvis.env` (gitignored).
+- **Tailnet-only access**: AKIOR is NOT exposed to the public internet. Only devices on your Tailscale network can access it.
+- **No secrets in repo**: Environment variables with API keys are stored in `akior.env` (gitignored).
 - **Non-root containers**: Both web and server run as non-root users inside containers.
 - **Local data**: All data stays on your host in Docker volumes. Nothing is sent externally except to configured APIs (OpenAI, etc.).
 

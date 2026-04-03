@@ -154,7 +154,7 @@ export default function ScheduledTasksPage() {
         <h1 className="text-2xl font-bold">Scheduled Tasks</h1>
         <button
           type="button"
-          className="btn px-4 py-2 bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border border-[color:rgb(var(--jarvis-accent)_/_0.4)] hover:bg-[color:rgb(var(--jarvis-accent)_/_0.25)] transition-colors"
+          className="btn px-4 py-2 bg-[color:rgb(var(--akior-accent)_/_0.15)] border border-[color:rgb(var(--akior-accent)_/_0.4)] hover:bg-[color:rgb(var(--akior-accent)_/_0.25)] transition-colors"
           onClick={() => setShowAddForm(!showAddForm)}
         >
           {showAddForm ? "Cancel" : "+ Add Task"}
@@ -163,7 +163,7 @@ export default function ScheduledTasksPage() {
 
       {/* Add Task Form */}
       {showAddForm && (
-        <div className="card p-4 space-y-3 border border-[color:rgb(var(--jarvis-accent)_/_0.3)]">
+        <div className="card p-4 space-y-3 border border-[color:rgb(var(--akior-accent)_/_0.3)]">
           <label className="block text-sm text-white/60">
             Describe the task in natural language
           </label>
@@ -174,7 +174,7 @@ export default function ScheduledTasksPage() {
               onChange={(e) => setNewTaskInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
               placeholder='e.g. "Every day at 9am, check disk usage and alert if over 80%"'
-              className="flex-1 bg-black/40 border border-white/20 rounded px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[color:rgb(var(--jarvis-accent)_/_0.6)]"
+              className="flex-1 bg-black/40 border border-white/20 rounded px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[color:rgb(var(--akior-accent)_/_0.6)]"
               disabled={addingTask}
             />
             <button
@@ -235,7 +235,7 @@ export default function ScheduledTasksPage() {
                 key={task.id}
                 className={`card p-4 space-y-3 cursor-pointer transition-all hover:border-white/30 ${
                   isExpanded
-                    ? "border-[color:rgb(var(--jarvis-accent)_/_0.4)] col-span-1 md:col-span-2 xl:col-span-3"
+                    ? "border-[color:rgb(var(--akior-accent)_/_0.4)] col-span-1 md:col-span-2 xl:col-span-3"
                     : ""
                 }`}
                 onClick={() => setExpandedId(isExpanded ? null : task.id)}

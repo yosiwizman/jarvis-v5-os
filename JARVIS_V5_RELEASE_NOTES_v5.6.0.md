@@ -1,4 +1,4 @@
-# Jarvis V5.6.0 – Azure Text-to-Speech Integration
+# AKIOR V5.6.0 – Azure Text-to-Speech Integration
 
 **Release Date:** December 6, 2025  
 **Version:** v5.6.0
@@ -7,9 +7,9 @@
 
 ## Summary
 
-Jarvis V5.6.0 introduces **Azure Text-to-Speech** as a second TTS provider alongside ElevenLabs, giving users flexible voice synthesis options. This release adds full Azure TTS integration with a multi-provider architecture, allowing users to choose between ElevenLabs and Azure TTS (or disable TTS entirely) via a simple dropdown in Settings. The Chat UI intelligently uses the selected provider when it's configured and connected, maintaining full backward compatibility with v5.5.0.
+AKIOR V5.6.0 introduces **Azure Text-to-Speech** as a second TTS provider alongside ElevenLabs, giving users flexible voice synthesis options. This release adds full Azure TTS integration with a multi-provider architecture, allowing users to choose between ElevenLabs and Azure TTS (or disable TTS entirely) via a simple dropdown in Settings. The Chat UI intelligently uses the selected provider when it's configured and connected, maintaining full backward compatibility with v5.5.0.
 
-All previous features from v5.0.0–v5.5.0 remain intact: ElevenLabs TTS, Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Azure TTS is **purely additive**—Jarvis continues to work exactly like v5.5.0 when Azure is not configured.
+All previous features from v5.0.0–v5.5.0 remain intact: ElevenLabs TTS, Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Azure TTS is **purely additive**—AKIOR continues to work exactly like v5.5.0 when Azure is not configured.
 
 ---
 
@@ -17,7 +17,7 @@ All previous features from v5.0.0–v5.5.0 remain intact: ElevenLabs TTS, Local 
 
 ### 🎙️ Azure Text-to-Speech Integration
 
-Azure TTS is now a fully supported TTS provider in Jarvis, offering high-quality neural voices from Microsoft's Azure Cognitive Services.
+Azure TTS is now a fully supported TTS provider in AKIOR, offering high-quality neural voices from Microsoft's Azure Cognitive Services.
 
 #### Azure TTS Configuration Card
 
@@ -159,7 +159,7 @@ New dropdown selector with three options:
    - Click **"⏹ Stop"** to stop audio playback early
    - Or let audio finish naturally
 
-**Note:** If Azure TTS is not configured or the endpoint returns 503, the button will not appear. Jarvis continues to function normally without TTS.
+**Note:** If Azure TTS is not configured or the endpoint returns 503, the button will not appear. AKIOR continues to function normally without TTS.
 
 ---
 
@@ -168,7 +168,7 @@ New dropdown selector with three options:
 ### v5.0.0 – Initial Local OS (June 2025)
 
 - Holomat radial app launcher with draggable windows
-- Jarvis voice assistant with real-time API
+- AKIOR voice assistant with real-time API
 - 3D model generation and viewer
 - Camera streaming and security dashboard
 - Local HTTPS setup with mkcert + dev TLS proxy
@@ -326,7 +326,7 @@ All quality gates passed for v5.6.0:
 ### No Breaking Changes
 
 - **Default `ttsProvider`:** Set to `'elevenlabs'` in settings defaults
-- **Existing behavior preserved:** If Azure TTS is never configured, Jarvis behaves exactly like v5.5.0
+- **Existing behavior preserved:** If Azure TTS is never configured, AKIOR behaves exactly like v5.5.0
 - **ElevenLabs unchanged:** ElevenLabs integration works identically to v5.5.0
 - **Settings migration:** All previous integration settings (Weather, Web Search, Local LLM, ElevenLabs) remain intact
 
@@ -417,7 +417,7 @@ Your existing ElevenLabs configuration will continue to work. The new TTS provid
 
 - Azure supports custom neural voices
 - Add UI for uploading voice samples
-- Train custom voices directly from Jarvis
+- Train custom voices directly from AKIOR
 
 ---
 
@@ -445,7 +445,7 @@ Azure TTS is **disabled by default**. Your existing ElevenLabs workflow continue
 
 ## Support & Resources
 
-- **Repository:** [https://github.com/yosiwizman/jarvis-v5-os](https://github.com/yosiwizman/jarvis-v5-os)
+- **Repository:** [https://github.com/yosiwizman/akior-v5-os](https://github.com/yosiwizman/akior-v5-os)
 - **Documentation:** See repository root for detailed guides
 - **Issues:** Report bugs via GitHub Issues
 - **Discussions:** Use GitHub Discussions for questions and feature requests
@@ -453,4 +453,4 @@ Azure TTS is **disabled by default**. Your existing ElevenLabs workflow continue
 
 ---
 
-**Thank you for using Jarvis V5!** 🚀🎙️
+**Thank you for using AKIOR V5!** 🚀🎙️

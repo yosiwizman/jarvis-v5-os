@@ -97,7 +97,7 @@ All 12 RESTful API endpoints implemented in `apps/server/src/index.ts`:
 
 ### 4. Voice Functions: ✅ VERIFIED
 
-All 11 voice function definitions registered in `jarvis-functions.ts`:
+All 11 voice function definitions registered in `akior-functions.ts`:
 1. ✅ `get_weather` - Weather queries
 2. ✅ `create_note` - Create notes
 3. ✅ `list_notes` - List notes
@@ -112,7 +112,7 @@ All 11 voice function definitions registered in `jarvis-functions.ts`:
 
 ### 5. Function Handlers: ✅ VERIFIED
 
-All 11 function handlers implemented in `jarvis-function-executor.ts`:
+All 11 function handlers implemented in `akior-function-executor.ts`:
 - ✅ All handlers connect to backend APIs
 - ✅ Error handling implemented
 - ✅ Response formatting for voice output
@@ -156,7 +156,7 @@ All 11 function handlers implemented in `jarvis-function-executor.ts`:
 ✓ Build successful
 
 # Server package
-> @jarvis/server@6.0.0 build
+> @akior/server@6.0.0 build
 > tsc -p tsconfig.json
 ✓ Build successful
 ```

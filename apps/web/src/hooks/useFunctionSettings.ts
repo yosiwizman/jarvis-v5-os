@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'jarvis-function-settings';
+const STORAGE_KEY = 'akior-function-settings';
 
 export interface FunctionSettings {
   [functionName: string]: {

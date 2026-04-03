@@ -384,7 +384,7 @@ export default function CreateImagePage() {
           <div className="flex items-center gap-3">
             {!isGenerating ? (
               <button
-                className="btn flex items-center gap-2 border-[color:rgb(var(--jarvis-accent)_/_0.6)] bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white hover:border-[color:rgb(var(--jarvis-accent))] hover:bg-[color:rgb(var(--jarvis-accent))]"
+                className="btn flex items-center gap-2 border-[color:rgb(var(--akior-accent)_/_0.6)] bg-[color:rgb(var(--akior-accent)_/_0.8)] text-white hover:border-[color:rgb(var(--akior-accent))] hover:bg-[color:rgb(var(--akior-accent))]"
                 onClick={generate}
                 type="button"
               >
@@ -465,8 +465,8 @@ export default function CreateImagePage() {
                 </ol>
               </div>
 
-              <div className="rounded-xl border border-[color:rgb(var(--jarvis-accent)_/_0.3)] bg-[color:rgb(var(--jarvis-accent)_/_0.1)] p-4">
-                <div className="text-sm font-semibold jarvis-accent-text mb-2">💡 Quick Tip</div>
+              <div className="rounded-xl border border-[color:rgb(var(--akior-accent)_/_0.3)] bg-[color:rgb(var(--akior-accent)_/_0.1)] p-4">
+                <div className="text-sm font-semibold akior-accent-text mb-2">💡 Quick Tip</div>
                 <p className="text-sm text-white/80">
                   While waiting for verification, you can use <strong>dall-e-3</strong> or <strong>dall-e-2</strong> instead. 
                   These models work immediately without verification!
@@ -476,7 +476,7 @@ export default function CreateImagePage() {
                     updateSetting('model', 'dall-e-3');
                     setError(null);
                   }}
-                  className="mt-3 btn border-[color:rgb(var(--jarvis-accent)_/_0.6)] bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white hover:border-[color:rgb(var(--jarvis-accent))] hover:bg-[color:rgb(var(--jarvis-accent))] text-sm px-3 py-1.5"
+                  className="mt-3 btn border-[color:rgb(var(--akior-accent)_/_0.6)] bg-[color:rgb(var(--akior-accent)_/_0.8)] text-white hover:border-[color:rgb(var(--akior-accent))] hover:bg-[color:rgb(var(--akior-accent))] text-sm px-3 py-1.5"
                 >
                   Switch to DALL-E 3
                 </button>

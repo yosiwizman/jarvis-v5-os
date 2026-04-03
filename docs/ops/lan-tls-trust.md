@@ -14,7 +14,7 @@ Modern browsers require a **secure context** for camera/mic access:
 ## Source of truth (Caddy internal CA)
 
 Our LAN TLS uses **Caddy’s internal CA**.  
-The root certificate lives inside the running `jarvis-caddy` container:
+The root certificate lives inside the running `akior-caddy` container:
 
 ```
 /data/caddy/pki/authorities/local/root.crt
@@ -76,7 +76,7 @@ If you are on the server and want to auto‑trust the CA for that machine:
 
 ```bash
 # inside the caddy container
-docker exec -it jarvis-caddy caddy trust
+docker exec -it akior-caddy caddy trust
 ```
 
 ⚠️ Do **not** expose the Caddy admin API publicly.

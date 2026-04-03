@@ -1,14 +1,14 @@
-# Jarvis V6 OS – Repo Overview
+# AKIOR V6 OS – Repo Overview
 
-This document is your single source of truth for understanding, versioning, and managing the Jarvis V6 OS repository. It's designed for Mr W (the owner) and future collaborators who need to understand how this codebase is organized and how to work with versions and releases.
+This document is your single source of truth for understanding, versioning, and managing the AKIOR V6 OS repository. It's designed for Mr W (the owner) and future collaborators who need to understand how this codebase is organized and how to work with versions and releases.
 
 ---
 
 ## What this repo contains
 
-**Jarvis V6 OS** is a local AI operating system that runs entirely on your machine. It includes:
+**AKIOR V6 OS** is a local AI operating system that runs entirely on your machine. It includes:
 
-- **Jarvis AI Assistant** – Voice and UI-based assistant with chat and function calling
+- **AKIOR AI Assistant** – Voice and UI-based assistant with chat and function calling
 - **Notification System** – Scheduled events with real-time toast UI (NEW in V6.0.0)
 - **Holomat Apps Deck** – Radial UI launcher with interactive app cards (Clock, Calendar, Calculator, 3D Creator/Viewer, Files, Security, and more)
 - **3D Tools** – Model creation, viewing, and printing integration
@@ -17,11 +17,11 @@ This document is your single source of truth for understanding, versioning, and 
 
 Everything runs locally with secure HTTPS via mkcert and a dev TLS proxy.
 
-**For detailed technical architecture**, see `JARVIS_V5_ARCHITECTURE.md` in this repo.
+**For detailed technical architecture**, see `AKIOR_V5_ARCHITECTURE.md` in this repo.
 
-**For Ubuntu shell integration and kiosk mode**, see `JARVIS_V5_UBUNTU_SHELL_PLAN.md` for the architecture and migration plan.
+**For Ubuntu shell integration and kiosk mode**, see `AKIOR_V5_UBUNTU_SHELL_PLAN.md` for the architecture and migration plan.
 
-**For V6.0.0 release details**, see `JARVIS_V6_RELEASE_NOTES_v6.0.0.md` for the complete changelog and notification system documentation.
+**For V6.0.0 release details**, see `AKIOR_V6_RELEASE_NOTES_v6.0.0.md` for the complete changelog and notification system documentation.
 
 ---
 
@@ -30,7 +30,7 @@ Everything runs locally with secure HTTPS via mkcert and a dev TLS proxy.
 Here's what each major folder does:
 
 - **`apps/server/`** – Fastify API server with Socket.IO, settings management, and API routes (3D printing, keys, etc.)
-- **`apps/web/`** – Next.js 14 UI with all pages: Jarvis dashboard, Holomat, 3D viewer, chat, camera, security, settings, etc.
+- **`apps/web/`** – Next.js 14 UI with all pages: AKIOR dashboard, Holomat, 3D viewer, chat, camera, security, settings, etc.
 - **`packages/shared/`** – Shared TypeScript types and settings used by both server and web
 - **`assets/`** and **`Screenshots/`** – UI assets, images, and reference screenshots
 - **`infra/`** – TLS certificates, dev proxy scripts, and local infrastructure helpers
@@ -62,14 +62,14 @@ This repo uses a simple and clear versioning approach:
 
 ## What's in v5.0.0 (our first baseline)
 
-**`v5.0.0`** is the initial frozen baseline of Jarvis V5 OS. This tag includes:
+**`v5.0.0`** is the initial frozen baseline of AKIOR V5 OS. This tag includes:
 
 - ✅ **Holomat apps deck** visible and clickable with radial layout
 - ✅ **App windows** open and are draggable (Clock, Calendar, Calculator, Creator, Viewer, Files, Security)
 - ✅ **Settings system** working (server-side storage, UI loads settings on startup)
 - ✅ **Full local HTTPS setup** with mkcert + dev TLS proxy
-- ✅ **Jarvis UI, chat, camera, 3D tools** all wired and functional
-- ✅ **Architecture documentation** (`JARVIS_V5_ARCHITECTURE.md`) committed and pushed
+- ✅ **AKIOR UI, chat, camera, 3D tools** all wired and functional
+- ✅ **Architecture documentation** (`AKIOR_V5_ARCHITECTURE.md`) committed and pushed
 
 This is your **"last known good"** state. If anything goes wrong in future development, you can always return to `v5.0.0`.
 
@@ -79,7 +79,7 @@ This is your **"last known good"** state. If anything goes wrong in future devel
 
 Here's a summary of each major version released:
 
-- **v5.0.0** (June 2025) – Initial baseline: Holomat, Jarvis UI, 3D tools, camera/security, local HTTPS
+- **v5.0.0** (June 2025) – Initial baseline: Holomat, AKIOR UI, 3D tools, camera/security, local HTTPS
 - **v5.2.0** (November 2025) – Theming system, HUD with live metrics, Weather integration, Integrations cockpit
 - **v5.3.0** (November 2025) – Web Search integration (Tavily, SerpAPI support)
 - **v5.4.0** (December 2025) – Local LLM integration (Ollama, custom HTTP, intelligent routing with fallback)
@@ -91,7 +91,7 @@ Here's a summary of each major version released:
 - **v6.0.0** (December 2025) – **Notification Foundation**: Event scheduler with persistent storage, REST + SSE endpoints, toast UI, TypeScript zero-error codebase, enhanced action logging
 - **v6.1.0** (December 2025) – **Notification Drawer & History UI**: Bell icon with unread badge, sliding drawer panel, read/unread tracking, mark-as-read controls, complete notification history UI
 
-For detailed release notes, see `JARVIS_V5_RELEASE_NOTES_v5.X.0.md`, `JARVIS_V6_RELEASE_NOTES_v6.0.0.md`, or `JARVIS_V6_RELEASE_NOTES_v6.1.0.md` files in the repository root.
+For detailed release notes, see `AKIOR_V5_RELEASE_NOTES_v5.X.0.md`, `AKIOR_V6_RELEASE_NOTES_v6.0.0.md`, or `AKIOR_V6_RELEASE_NOTES_v6.1.0.md` files in the repository root.
 
 ---
 
@@ -160,12 +160,12 @@ git push --force origin main
 Before creating a new version tag, make sure you've checked these items:
 
 - [ ] **Local smoke test**: Run `npm install` and `npm start` successfully
-- [ ] **UI loads correctly**: Open `https://localhost:3000`, `/jarvis`, and `/holomat` – no crashes or white screens
+- [ ] **UI loads correctly**: Open `https://localhost:3000`, `/akior`, and `/holomat` – no crashes or white screens
 - [ ] **No critical console errors**: Check browser DevTools console for red errors
 - [ ] **Holomat apps open and close**: Click at least 2-3 app cards and verify windows work
 - [ ] **Settings load**: Confirm settings are fetched from the server on startup
-- [ ] **Architecture doc is current**: `JARVIS_V5_ARCHITECTURE.md` still matches reality
-- [ ] **This overview doc is current**: `JARVIS_V5_REPO_OVERVIEW.md` reflects any process changes
+- [ ] **Architecture doc is current**: `AKIOR_V5_ARCHITECTURE.md` still matches reality
+- [ ] **This overview doc is current**: `AKIOR_V5_REPO_OVERVIEW.md` reflects any process changes
 - [ ] **Version tag created and pushed**: Tag is created with a clear message and pushed to GitHub
 
 Once all items are checked, the new version is ready to be tagged and released.
@@ -174,7 +174,7 @@ Once all items are checked, the new version is ready to be tagged and released.
 
 ## Quick dev reminder
 
-To run Jarvis V6 OS locally:
+To run AKIOR V6 OS locally:
 
 ```bash
 npm install
@@ -190,7 +190,7 @@ npm start
 
 **Where to go:**
 - Main UI: `https://localhost:3000`
-- Jarvis dashboard: `https://localhost:3000/jarvis`
+- AKIOR dashboard: `https://localhost:3000/akior`
 - Holomat: `https://localhost:3000/holomat`
 
 If you see certificate warnings on first run, mkcert may need to install the local CA (this is normal and safe for local development).
@@ -203,11 +203,11 @@ If you see certificate warnings on first run, mkcert may need to install the loc
 
 - **`main`** = latest development snapshot (always moving forward)
 - **Version tags** (e.g., `v5.0.0`, `v5.0.1`) = frozen restore points you can always return to
-- **`v5.0.0`** is your first stable baseline with Holomat, Jarvis UI, settings, 3D tools, and full local HTTPS
+- **`v5.0.0`** is your first stable baseline with Holomat, AKIOR UI, settings, 3D tools, and full local HTTPS
 - **To cut a new version**: Test thoroughly, create a tag with `git tag -a`, and push it
 - **To roll back**: Use `git checkout <tag>` to inspect or run old versions
 - **Before each release**: Complete the release checklist above
 
-This document is designed to be simple and practical. For deep technical details, see `JARVIS_V5_ARCHITECTURE.md`.
+This document is designed to be simple and practical. For deep technical details, see `AKIOR_V5_ARCHITECTURE.md`.
 
 **This file is now ready for the CTO to commit and push.**

@@ -31,8 +31,8 @@ A dedicated physical monitor connected to your server displaying the AKIOR conso
 ```bash
 # Clone the repo or copy the scripts to your server
 cd /tmp
-git clone https://github.com/yosiwizman/jarvis-v5-os.git
-cd jarvis-v5-os/ops/linux/console-kiosk
+git clone https://github.com/yosiwizman/akior-v5-os.git
+cd akior-v5-os/ops/linux/console-kiosk
 
 # Install with default settings
 sudo ./install.sh
@@ -63,7 +63,7 @@ This will:
 
 ```bash
 # Custom URL (different AKIOR page or external URL)
-sudo ./install.sh --url https://akior.home.arpa/jarvis
+sudo ./install.sh --url https://akior.home.arpa/akior
 
 # Custom IP (if your AKIOR server is on a different machine)
 sudo ./install.sh --ip 192.168.1.50

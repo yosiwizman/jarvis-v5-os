@@ -1,6 +1,6 @@
 # GitHub UI Tasks for v6.0.0 Release
 
-**Repository:** https://github.com/yosiwizman/jarvis-v5-os  
+**Repository:** https://github.com/yosiwizman/akior-v5-os  
 **Release:** v6.0.0  
 **Date:** December 6, 2025
 
@@ -39,7 +39,7 @@
 ### **Task 1: Verify Default Branch & Protection Rules**
 
 #### **Check Default Branch**
-1. Go to: https://github.com/yosiwizman/jarvis-v5-os/settings
+1. Go to: https://github.com/yosiwizman/akior-v5-os/settings
 2. Navigate to **Branches** section (left sidebar)
 3. Verify **Default branch** is set to `main`
 4. If not, click **Switch default branch** → Select `main` → Update
@@ -72,7 +72,7 @@
 ### **Task 2: Create GitHub Release**
 
 #### **Navigate to Releases**
-1. Go to: https://github.com/yosiwizman/jarvis-v5-os
+1. Go to: https://github.com/yosiwizman/akior-v5-os
 2. Click **Releases** (right sidebar)
 3. Click **Draft a new release**
 
@@ -109,7 +109,7 @@ v6.0.0: Notification & Event Loop System
 2. Click **Publish release**
 
 #### **Verification**
-- Visit: https://github.com/yosiwizman/jarvis-v5-os/releases/tag/v6.0.0
+- Visit: https://github.com/yosiwizman/akior-v5-os/releases/tag/v6.0.0
 - Verify release appears with all documentation links working
 - Verify "Latest" badge appears on release
 - Check that discussion was created (if enabled)
@@ -149,15 +149,15 @@ For each v6.0-related issue:
    ```markdown
    ✅ **Completed in v6.0.0**
    
-   This feature has been implemented and released in [v6.0.0](https://github.com/yosiwizman/jarvis-v5-os/releases/tag/v6.0.0).
+   This feature has been implemented and released in [v6.0.0](https://github.com/yosiwizman/akior-v5-os/releases/tag/v6.0.0).
    
    **Implementation:**
    - [Component/File names if applicable]
-   - See [JARVIS_V5_RELEASE_NOTES_v6.0.0.md](https://github.com/yosiwizman/jarvis-v5-os/blob/main/JARVIS_V5_RELEASE_NOTES_v6.0.0.md) for details
+   - See [AKIOR_V5_RELEASE_NOTES_v6.0.0.md](https://github.com/yosiwizman/akior-v5-os/blob/main/AKIOR_V5_RELEASE_NOTES_v6.0.0.md) for details
    
    **Documentation:**
-   - [CHANGELOG.md](https://github.com/yosiwizman/jarvis-v5-os/blob/main/CHANGELOG.md)
-   - [README.md](https://github.com/yosiwizman/jarvis-v5-os/blob/main/README.md)
+   - [CHANGELOG.md](https://github.com/yosiwizman/akior-v5-os/blob/main/CHANGELOG.md)
+   - [README.md](https://github.com/yosiwizman/akior-v5-os/blob/main/README.md)
    ```
 
 3. **Add label:** `released in v6.0.0` (create if doesn't exist)
@@ -165,7 +165,7 @@ For each v6.0-related issue:
 5. **Close the issue** (button at bottom of comment box)
 
 #### **Create Milestone** (if doesn't exist)
-1. Go to: https://github.com/yosiwizman/jarvis-v5-os/milestones
+1. Go to: https://github.com/yosiwizman/akior-v5-os/milestones
 2. Click **New milestone**
 3. Title: `v6.0.0`
 4. Due date: `December 6, 2025`
@@ -183,7 +183,7 @@ For each v6.0-related issue:
 6. Click **Create milestone**
 
 #### **Create Label** (if doesn't exist)
-1. Go to: https://github.com/yosiwizman/jarvis-v5-os/labels
+1. Go to: https://github.com/yosiwizman/akior-v5-os/labels
 2. Click **New label**
 3. Name: `released in v6.0.0`
 4. Description: `Fixed/implemented in version 6.0.0`
@@ -197,10 +197,10 @@ For each v6.0-related issue:
 #### **If Using GitHub Projects (Classic)**
 
 1. **Navigate to Projects:**
-   - Go to: https://github.com/yosiwizman/jarvis-v5-os/projects
+   - Go to: https://github.com/yosiwizman/akior-v5-os/projects
    
 2. **Open Active Project Board**
-   - If you have a "Jarvis Development" or similar board
+   - If you have a "AKIOR Development" or similar board
 
 3. **Move v6.0 Items:**
    - Find all cards related to v6.0 features
@@ -228,7 +228,7 @@ For each v6.0-related issue:
 #### **If Using GitHub Projects (New Beta)**
 
 1. **Navigate to Projects:**
-   - Go to: https://github.com/yosiwizman/jarvis-v5-os/projects
+   - Go to: https://github.com/yosiwizman/akior-v5-os/projects
    
 2. **Open Active Project**
 
@@ -243,7 +243,7 @@ For each v6.0-related issue:
    - Set milestone to `v6.1.0` (create if needed)
 
 #### **Create v6.1 Milestone**
-1. Go to: https://github.com/yosiwizman/jarvis-v5-os/milestones
+1. Go to: https://github.com/yosiwizman/akior-v5-os/milestones
 2. Click **New milestone**
 3. Title: `v6.1.0`
 4. Due date: ~1-2 months from now
@@ -257,23 +257,23 @@ For each v6.0-related issue:
 #### **Check Repository State**
 
 1. **Verify Latest Commit:**
-   - Go to: https://github.com/yosiwizman/jarvis-v5-os
+   - Go to: https://github.com/yosiwizman/akior-v5-os
    - Latest commit should be: `4f25472` - "docs: Add GitHub Release body for v6.0.0"
 
 2. **Verify Tag Exists:**
-   - Go to: https://github.com/yosiwizman/jarvis-v5-os/tags
+   - Go to: https://github.com/yosiwizman/akior-v5-os/tags
    - Verify `v6.0.0` appears in list
    - Click tag → Verify it points to correct commit (`bb53810`)
 
 3. **Verify Feature Branch Deleted:**
-   - Go to: https://github.com/yosiwizman/jarvis-v5-os/branches
+   - Go to: https://github.com/yosiwizman/akior-v5-os/branches
    - `feature/v6-notification-system` should NOT appear
 
 4. **Verify Documentation:**
    - Browse to main branch
    - Verify all new docs appear:
      - `CHANGELOG.md`
-     - `JARVIS_V5_RELEASE_NOTES_v6.0.0.md`
+     - `AKIOR_V5_RELEASE_NOTES_v6.0.0.md`
      - `MONITORING_CHECKLIST_v6.0.0.md`
      - `MONITORING_METRICS_v6.0.md`
      - `DEPLOYMENT_SUMMARY_v6.0.0.md`
@@ -364,7 +364,7 @@ Once all tasks are complete, verify:
 
 **Example Announcement:**
 ```
-🎉 Jarvis V5 OS v6.0.0 is now live!
+🎉 AKIOR V5 OS v6.0.0 is now live!
 
 New in this release:
 🔔 Real-time notification system
@@ -372,7 +372,7 @@ New in this release:
 🖨️ 3D printer job alerts
 📹 Camera motion detection
 
-Full release notes: https://github.com/yosiwizman/jarvis-v5-os/releases/tag/v6.0.0
+Full release notes: https://github.com/yosiwizman/akior-v5-os/releases/tag/v6.0.0
 
 Upgrade today! 🚀
 ```

@@ -262,17 +262,17 @@ export default function ScanPage() {
         <>
           {/* Main laser beam */}
           <div 
-            className="absolute left-0 right-0 h-2 bg-gradient-to-r from-transparent via-[color:rgb(var(--jarvis-accent))] to-transparent"
+            className="absolute left-0 right-0 h-2 bg-gradient-to-r from-transparent via-[color:rgb(var(--akior-accent))] to-transparent"
             style={{
               animation: 'scan 3s ease-in-out',
               top: 0,
-              boxShadow: '0 0 40px rgb(var(--jarvis-accent)), 0 0 80px rgb(var(--jarvis-accent) / 0.6)'
+              boxShadow: '0 0 40px rgb(var(--akior-accent)), 0 0 80px rgb(var(--akior-accent) / 0.6)'
             }}
           />
           
           {/* Secondary glow effect */}
           <div 
-            className="absolute left-0 right-0 h-12 bg-gradient-to-r from-transparent via-[color:rgb(var(--jarvis-accent)_/_0.5)] to-transparent blur-2xl"
+            className="absolute left-0 right-0 h-12 bg-gradient-to-r from-transparent via-[color:rgb(var(--akior-accent)_/_0.5)] to-transparent blur-2xl"
             style={{
               animation: 'scan 3s ease-in-out',
               top: 0,
@@ -350,16 +350,16 @@ export default function ScanPage() {
           onClick={() => handleModeChange('menu')}
           className={`group relative p-3 backdrop-blur-md border-2 rounded-xl transition-all duration-300 ${
             mode === 'menu'
-              ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.3)] border-[color:rgb(var(--jarvis-accent))] jarvis-accent-shadow'
-              : 'bg-white/10 hover:bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-white/30 hover:border-[color:rgb(var(--jarvis-accent)_/_0.5)]'
+              ? 'bg-[color:rgb(var(--akior-accent)_/_0.3)] border-[color:rgb(var(--akior-accent))] akior-accent-shadow'
+              : 'bg-white/10 hover:bg-[color:rgb(var(--akior-accent)_/_0.2)] border-white/30 hover:border-[color:rgb(var(--akior-accent)_/_0.5)]'
           }`}
           title="App Menu"
         >
-          <svg className={`w-6 h-6 ${mode === 'menu' ? 'jarvis-accent-text' : 'text-white group-hover:jarvis-accent-text'} transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-6 h-6 ${mode === 'menu' ? 'akior-accent-text' : 'text-white group-hover:akior-accent-text'} transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
           </svg>
           {mode === 'menu' && (
-            <div className="absolute top-0 left-0 w-2 h-2 rounded-full animate-ping jarvis-accent-bg" />
+            <div className="absolute top-0 left-0 w-2 h-2 rounded-full animate-ping akior-accent-bg" />
           )}
         </button>
       </div>

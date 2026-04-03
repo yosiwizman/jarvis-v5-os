@@ -1,4 +1,4 @@
-name: Jarvis V5 CI
+name: AKIOR CI
 
 on:
   push:

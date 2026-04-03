@@ -51,7 +51,7 @@ Expected response:
 Check what SHA *should* be deployed:
 
 ```bash
-git -C /path/to/jarvis-v5-os log --oneline -1
+git -C /path/to/akior-v5-os log --oneline -1
 ```
 
 Or check your deployment system (GitHub Actions, CI/CD dashboard).
@@ -127,16 +127,16 @@ $SHA = git rev-parse --short HEAD
 $TIME = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Stop, rebuild, start
-docker compose -f compose.jarvis.yml down
-docker compose -f compose.jarvis.yml build --no-cache `
+docker compose -f compose.akior.yml down
+docker compose -f compose.akior.yml build --no-cache `
     --build-arg GIT_SHA=$SHA `
     --build-arg BUILD_TIME=$TIME
-docker compose -f compose.jarvis.yml up -d --force-recreate
+docker compose -f compose.akior.yml up -d --force-recreate
 ```
 
 **Fix (PM2/Node)**:
 ```bash
-cd /path/to/jarvis-v5-os/apps/web
+cd /path/to/akior-v5-os/apps/web
 npm run build
 pm2 restart akior-web
 ```
@@ -241,7 +241,7 @@ See `docs/ops/dns-setup.md` for setting up AdGuard Home or dnsmasq.
 If `akior.local` correctly points to a dedicated server, redeploy there:
 ```bash
 ssh user@akior-server
-cd /path/to/jarvis-v5-os
+cd /path/to/akior-v5-os
 git pull origin main
 ./deploy/local/redeploy.ps1  # or equivalent for Linux
 ```

@@ -71,7 +71,7 @@ export interface GmailIntegrationConfig {
   clientSecret: string | null;
   redirectUri: string | null;   // where Google will redirect after consent
   refreshToken: string | null;  // long-lived; obtained via manual flow
-  userEmail: string | null;     // the Gmail account Jarvis is reading
+  userEmail: string | null;     // the Gmail account AKIOR is reading
 }
 
 export interface GoogleCalendarIntegrationConfig {

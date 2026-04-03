@@ -6,12 +6,12 @@
 
 ## Recommended canonical hostname
 - Use `akior.home.arpa` (RFC 8375 reserved for home networks).
-- Keep `akior.local` / `jarvis.local` as legacy aliases only.
+- Keep `akior.local` / `akior.local` as legacy aliases only.
 
 ## How to point to the correct host
 ### Preferred: Router / DNS server
 1) Create an A record: `akior.home.arpa` → `<server LAN IP>`
-2) (Optional) Aliases: `akior.local`, `jarvis.local` → `<server LAN IP>`
+2) (Optional) Aliases: `akior.local`, `akior.local` → `<server LAN IP>`
 
 ### Fallback: Hosts file (per device)
 - Add this line (replace `<server LAN IP>`):
@@ -22,8 +22,8 @@
 - macOS/Linux: `/etc/hosts`
 
 ## Certificates / HTTPS
-- Caddy issues an internal CA certificate for `akior.home.arpa`, `akior.local`, `jarvis.local`.
-- Export CA: `docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt`
+- Caddy issues an internal CA certificate for `akior.home.arpa`, `akior.local`, `akior.local`.
+- Export CA: `docker cp akior-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt`
 - Import CA on your device to trust HTTPS for camera/mic access.
 
 ## Self-check (non-technical)
@@ -34,12 +34,12 @@
   - Warning if you're on `.local` or if web/server SHAs differ (deployment drift).
 
 ## Verifying web vs server SHA
-AKIOR runs two containers: `jarvis-web` (Next.js frontend) and `jarvis-server` (Fastify backend).
+AKIOR runs two containers: `akior-web` (Next.js frontend) and `akior-server` (Fastify backend).
 Both must be built and deployed together to stay in sync.
 
 ### Endpoints
-- **Web build**: `/web-build` - served by jarvis-web container
-- **Server build**: `/api/health/build` - served by jarvis-server container
+- **Web build**: `/web-build` - served by akior-web container
+- **Server build**: `/api/health/build` - served by akior-server container
 
 ### Quick verification (curl)
 ```bash
@@ -53,7 +53,7 @@ curl -sk https://akior.local/api/health/build | jq .git_sha
 ```
 
 ### If /diagnostics returns 404
-You're running an old jarvis-web build that doesn't have the diagnostics page.
+You're running an old akior-web build that doesn't have the diagnostics page.
 Redeploy with rebuild to sync both containers:
 ```powershell
 .\ops\deploy.ps1 -Rebuild
@@ -76,7 +76,7 @@ Run:
 ```
 What it does:
 - Adds a managed block to `C:\Windows\System32\drivers\etc\hosts` for:
-  - akior.home.arpa, akior.local, jarvis.local → 127.0.0.1
+  - akior.home.arpa, akior.local, akior.local → 127.0.0.1
 - Flushes DNS cache.
 - Verifies `/api/health/build` on akior.home.arpa and akior.local match the local build SHA.
 

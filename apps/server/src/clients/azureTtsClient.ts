@@ -93,7 +93,7 @@ export async function synthesizeWithAzureTts(
         'Ocp-Apim-Subscription-Key': cfg.apiKey,
         'Content-Type': 'application/ssml+xml',
         'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-        'User-Agent': 'jarvis-v5-azure-tts'
+        'User-Agent': 'akior-v5-azure-tts'
       },
       body: ssml,
       signal

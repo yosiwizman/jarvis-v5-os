@@ -27,7 +27,7 @@
 
 ### Task 2: Voice Functions - COMPLETE
 **File Modified:**
-- ✅ `apps/web/src/lib/jarvis-functions.ts`
+- ✅ `apps/web/src/lib/akior-functions.ts`
 
 **Functions Added (11 total):**
 1. `get_weather` - Query weather by location
@@ -65,7 +65,7 @@
 
 ### Task 5: Function Handlers - COMPLETE ✅
 **File Modified:**
-- ✅ `apps/web/src/lib/jarvis-function-executor.ts` (+497 lines)
+- ✅ `apps/web/src/lib/akior-function-executor.ts` (+497 lines)
 
 **Handlers Implemented (11 total):**
 1. `handleGetWeather` - Fetches weather data from backend API
@@ -142,7 +142,7 @@
 
 ### Task 5: Function Handlers Implementation
 **File to Modify:**
-- `apps/web/src/lib/jarvis-function-executor.ts`
+- `apps/web/src/lib/akior-function-executor.ts`
 
 **Work Required:**
 - Implement handlers for all 11 voice functions
@@ -189,7 +189,7 @@
 ### Task 8: Testing & Validation
 **Work Required:**
 - Test all API endpoints with curl/Postman
-- Test voice commands through J.A.R.V.I.S. interface
+- Test voice commands through AKIOR interface
 - Validate time parsing with various formats
 - Test reminder notification delivery
 - Test motion alarm triggers
@@ -260,9 +260,9 @@ Voice Command
     ↓
 OpenAI Realtime API (function calling)
     ↓
-jarvis-functions.ts (function definitions)
+akior-functions.ts (function definitions)
     ↓
-jarvis-function-executor.ts (handlers) ← TO BE IMPLEMENTED
+akior-function-executor.ts (handlers) ← TO BE IMPLEMENTED
     ↓
 Backend API Endpoints (✅ COMPLETE)
     ↓

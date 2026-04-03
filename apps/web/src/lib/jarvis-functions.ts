@@ -25,7 +25,7 @@ export interface FunctionResult {
 }
 
 /**
- * Available functions that Jarvis can call
+ * Available functions that AKIOR can call
  */
 export const jarvisFunctions: JarvisFunction[] = [
   {

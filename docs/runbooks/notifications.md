@@ -1,6 +1,6 @@
 # Notifications Subsystem Runbook
 
-This document describes the architecture, configuration, and troubleshooting procedures for the Jarvis V5 notifications subsystem.
+This document describes the architecture, configuration, and troubleshooting procedures for the AKIOR V5 notifications subsystem.
 
 ## Architecture Overview
 

@@ -1,6 +1,6 @@
 # Local LLM Integration (v5.4.0)
 
-Jarvis V5 now supports running with local LLM models through **Ollama** or custom OpenAI-compatible HTTP APIs.
+AKIOR V5 now supports running with local LLM models through **Ollama** or custom OpenAI-compatible HTTP APIs.
 
 ---
 
@@ -38,9 +38,9 @@ curl http://127.0.0.1:11434/api/tags
 
 You should see a list of installed models.
 
-### 4. Configure Jarvis
+### 4. Configure AKIOR
 
-1. Open **Settings** in Jarvis web UI
+1. Open **Settings** in AKIOR web UI
 2. Navigate to **Integrations → Local LLM**
 3. Enable the integration
 4. Configure:
@@ -78,19 +78,19 @@ If you're running a different local LLM server (LM Studio, LocalAI, etc.) that p
 
 When **"Local LLM as primary"** is selected:
 1. Chat requests go to the local LLM first
-2. If local fails (connection refused, timeout, error), Jarvis falls back to cloud GPT
+2. If local fails (connection refused, timeout, error), AKIOR falls back to cloud GPT
 3. If both fail, you'll receive an error
 
 ### Cloud as Primary
 
 When **"Cloud as primary"** is selected:
 1. Chat requests go to cloud GPT first
-2. If cloud fails (rate limit, network error, etc.), Jarvis falls back to local LLM
+2. If cloud fails (rate limit, network error, etc.), AKIOR falls back to local LLM
 3. If both fail, you'll receive an error
 
 ### Legacy Mode (Local Disabled)
 
-If **"Use Local LLM when available"** is unchecked, Jarvis behaves exactly as before (cloud-only).
+If **"Use Local LLM when available"** is unchecked, AKIOR behaves exactly as before (cloud-only).
 
 ---
 
@@ -150,7 +150,7 @@ Make sure all three are set.
 ## Security Notes
 
 - Ollama runs on localhost by default and does not require authentication
-- Custom HTTP APIs may require an API key — store it securely in the Jarvis settings
+- Custom HTTP APIs may require an API key — store it securely in the AKIOR settings
 - API keys are saved server-side in `apps/server/data/settings.json` and never sent to the browser
 - **Never expose your local LLM server to the public internet without authentication**
 
@@ -160,7 +160,7 @@ Make sure all three are set.
 
 ### Example: Offline-First Setup
 
-**Use Case**: You want Jarvis to work even when you don't have internet access or want to avoid cloud API costs.
+**Use Case**: You want AKIOR to work even when you don't have internet access or want to avoid cloud API costs.
 
 **Configuration**:
 - Enable Local LLM
@@ -170,7 +170,7 @@ Make sure all three are set.
 - Select "Local LLM as primary, cloud as fallback"
 - Keep cloud OpenAI key configured (optional, for fallback)
 
-**Behavior**: All chat requests go to your local Ollama model. If Ollama is down or errors out, Jarvis falls back to OpenAI.
+**Behavior**: All chat requests go to your local Ollama model. If Ollama is down or errors out, AKIOR falls back to OpenAI.
 
 ---
 
@@ -185,7 +185,7 @@ Make sure all three are set.
 - Enable "Use Local LLM when available"
 - Select "Cloud as primary, local as fallback"
 
-**Behavior**: All chat requests go to OpenAI cloud. If OpenAI returns an error (rate limit, network issue, etc.), Jarvis tries your local Mistral model.
+**Behavior**: All chat requests go to OpenAI cloud. If OpenAI returns an error (rate limit, network issue, etc.), AKIOR tries your local Mistral model.
 
 ---
 

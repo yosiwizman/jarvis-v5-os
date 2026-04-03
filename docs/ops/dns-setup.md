@@ -239,7 +239,7 @@ Caddy generates self-signed certificates for `akior.local`. You need to:
 
 1. Export Caddy's root CA:
    ```bash
-   docker cp jarvis-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt
+   docker cp akior-caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root-ca.crt
    ```
 
 2. Import on Windows:
@@ -309,4 +309,4 @@ If devices aren't picking up new DNS, reboot the router. This forces all DHCP le
 - `scripts/net/verify-dns.ps1` - DNS verification script (Windows)
 - `scripts/net/verify-dns.sh` - DNS verification script (Linux/Mac)
 - `deploy/Caddyfile` - Caddy reverse proxy configuration
-- `deploy/compose.jarvis.yml` - Docker Compose stack
+- `deploy/compose.akior.yml` - Docker Compose stack

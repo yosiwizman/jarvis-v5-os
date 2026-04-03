@@ -213,7 +213,7 @@ export default function DevicesPage() {
                 <div className="space-y-2 text-sm font-mono">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Service Type:</span>
-                    <span className="text-cyan-400">_jarvis-server._tcp</span>
+                    <span className="text-cyan-400">_akior-server._tcp</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Discovery Port:</span>
@@ -252,13 +252,13 @@ export default function DevicesPage() {
                   <div className="text-gray-300">
                     <span className="text-gray-400">macOS:</span>
                     <code className="ml-2 bg-black/50 px-2 py-1 rounded text-cyan-400 text-xs">
-                      dns-sd -B _jarvis-server._tcp
+                      dns-sd -B _akior-server._tcp
                     </code>
                   </div>
                   <div className="text-gray-300">
                     <span className="text-gray-400">Linux:</span>
                     <code className="ml-2 bg-black/50 px-2 py-1 rounded text-cyan-400 text-xs">
-                      avahi-browse -r _jarvis-server._tcp
+                      avahi-browse -r _akior-server._tcp
                     </code>
                   </div>
                 </div>

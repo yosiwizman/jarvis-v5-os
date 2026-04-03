@@ -1,4 +1,4 @@
-# Jarvis V6.0.0 – Notification Foundation Release
+# AKIOR V6.0.0 – Notification Foundation Release
 
 **Release Date:** December 7, 2024  
 **Version:** 6.0.0  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Jarvis V6.0.0 marks the first major version increment of the Jarvis OS platform, introducing the **Notification System Foundation** as a first-class feature. This release builds upon all capabilities from v5.9.0 while adding a complete event-driven notification architecture that enables real-time, scheduled notifications throughout the system.
+AKIOR V6.0.0 marks the first major version increment of the AKIOR OS platform, introducing the **Notification System Foundation** as a first-class feature. This release builds upon all capabilities from v5.9.0 while adding a complete event-driven notification architecture that enables real-time, scheduled notifications throughout the system.
 
 This release maintains **full backward compatibility** with v5.9.0, meaning all existing integrations (LLM, Web Search, Gmail, Google Calendar, Spotify, TTS, Weather, etc.) continue to work without modification. Notifications are purely additive and enhance the user experience without disrupting existing workflows.
 
@@ -135,7 +135,7 @@ data: {"id":"...", "type":"system_update", "payload":{...}, "triggeredAt":"2024-
 #### Integration Points
 - Wired into `apps/web/app/layout.tsx` as a global provider
 - Works seamlessly with existing `ThemeProvider` and theme system
-- Compatible with all Jarvis pages (Chat, Settings, Holomat, Security, etc.)
+- Compatible with all AKIOR pages (Chat, Settings, Holomat, Security, etc.)
 
 ### Developer Experience Improvements
 
@@ -197,7 +197,7 @@ Additional types can be added by simply using a new `type` string in the API. Th
 
 ## How to Use (Developer)
 
-### Starting Jarvis V6
+### Starting AKIOR V6
 
 ```bash
 npm install
@@ -217,7 +217,7 @@ This starts:
 $body = @{
   type = "system_update"
   payload = @{
-    message = "Jarvis V6.0.0 is live!"
+    message = "AKIOR V6.0.0 is live!"
   }
   triggerAt = (Get-Date).AddSeconds(10).ToString("o")
 } | ConvertTo-Json
@@ -232,7 +232,7 @@ curl -k -X POST https://localhost:3000/api/notifications/schedule \
   -H "Content-Type: application/json" \
   -d "{
     \"type\": \"system_update\",
-    \"payload\": { \"message\": \"Jarvis V6.0.0 is live!\" },
+    \"payload\": { \"message\": \"AKIOR V6.0.0 is live!\" },
     \"triggerAt\": \"$(date -u -d '+10 seconds' '+%Y-%m-%dT%H:%M:%SZ')\"
   }"
 ```
@@ -259,8 +259,8 @@ All quality checks passed for this release:
 ### TypeScript Compilation
 ```
 ✅ npm run typecheck
-   @jarvis/server@6.0.0 typecheck - PASS
-   @jarvis/web@6.0.0 typecheck - PASS
+   @akior/server@6.0.0 typecheck - PASS
+   @akior/web@6.0.0 typecheck - PASS
    @shared/core@6.0.0 typecheck - PASS
    
    Result: 0 errors, 0 warnings
@@ -269,8 +269,8 @@ All quality checks passed for this release:
 ### Production Build
 ```
 ✅ npm run build
-   @jarvis/server@6.0.0 build - PASS
-   @jarvis/web@6.0.0 build - PASS (20 routes generated)
+   @akior/server@6.0.0 build - PASS
+   @akior/web@6.0.0 build - PASS (20 routes generated)
    @shared/core@6.0.0 build - PASS
    
    Bundle sizes:
@@ -301,7 +301,7 @@ All quality checks passed for this release:
 V6.0.0 is **100% backward compatible** with v5.9.0:
 
 **Preserved Features:**
-- ✅ Jarvis realtime voice assistant (GPT-realtime models)
+- ✅ AKIOR realtime voice assistant (GPT-realtime models)
 - ✅ Text chat with GPT-5 and local LLM support
 - ✅ Web search integration (Tavily, SerpAPI)
 - ✅ ElevenLabs and Azure TTS
@@ -440,7 +440,7 @@ These limitations are intentional for v6.0.0 as a foundation release. They are a
 
 - Firebase Cloud Messaging for mobile push
 - iOS/Android PWA or native app support
-- Voice-triggered notification queries ("Jarvis, read my notifications")
+- Voice-triggered notification queries ("AKIOR, read my notifications")
 - AI-powered notification summaries
 - Cross-device notification sync
 
@@ -462,13 +462,13 @@ These limitations are intentional for v6.0.0 as a foundation release. They are a
    npm install
    ```
 
-3. **Start Jarvis:**
+3. **Start AKIOR:**
    ```bash
    npm start
    ```
 
 4. **Verify notification system:**
-   - Open Jarvis at `https://localhost:3000`
+   - Open AKIOR at `https://localhost:3000`
    - Schedule a test notification using the curl examples above
    - Verify toast appears after the scheduled time
 
@@ -488,8 +488,8 @@ These limitations are intentional for v6.0.0 as a foundation release. They are a
 
 For issues, questions, or feedback:
 
-- **GitHub Issues:** https://github.com/yosiwizman/jarvis-v5-os/issues
-- **Documentation:** See `JARVIS_V6_REPO_OVERVIEW.md` and `JARVIS_V6_TEST_PLAN.md`
+- **GitHub Issues:** https://github.com/yosiwizman/akior-v5-os/issues
+- **Documentation:** See `AKIOR_V6_REPO_OVERVIEW.md` and `AKIOR_V6_TEST_PLAN.md`
 
 ---
 

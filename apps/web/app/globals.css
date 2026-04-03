@@ -6,16 +6,23 @@
   color-scheme: dark;
 }
 
+/* Prevent inline SVG icons from expanding beyond their intended size */
+svg:not([class*="w-full"]):not([class*="w-2/"]):not([class*="w-1/"]) {
+  max-width: 100%;
+  max-height: 100%;
+  flex-shrink: 0;
+}
+
 html,
 body {
   min-height: 100%;
   color: #e6edf3;
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: rgb(var(--jarvis-bg-base));
+  background-color: rgb(var(--akior-bg-base));
   background-image: radial-gradient(
     circle at 80% -10%,
-    rgba(var(--jarvis-bg-gradient-from), 0.22),
-    rgba(var(--jarvis-bg-gradient-to), 0) 60%
+    rgba(var(--akior-bg-gradient-from), 0.22),
+    rgba(var(--akior-bg-gradient-to), 0) 60%
   );
 }
 
@@ -32,170 +39,192 @@ body {
 }
 
 /* Theme-aware utility classes */
-.jarvis-accent-bg {
-  background-color: rgb(var(--jarvis-accent));
+.akior-accent-bg {
+  background-color: rgb(var(--akior-accent));
 }
 
-.jarvis-accent-bg-soft {
-  background-color: rgb(var(--jarvis-accent) / 0.2);
+.akior-accent-bg-soft {
+  background-color: rgb(var(--akior-accent) / 0.2);
 }
 
-.jarvis-accent-text {
-  color: rgb(var(--jarvis-accent));
+.akior-accent-text {
+  color: rgb(var(--akior-accent));
 }
 
-.jarvis-accent-border {
-  border-color: rgb(var(--jarvis-accent));
+.akior-accent-border {
+  border-color: rgb(var(--akior-accent));
 }
 
-.jarvis-accent-shadow {
-  box-shadow: 0 0 20px rgb(var(--jarvis-accent) / 0.3);
+.akior-accent-shadow {
+  box-shadow: 0 0 20px rgb(var(--akior-accent) / 0.3);
 }
 
-.jarvis-focus-ring {
-  outline-color: rgb(var(--jarvis-focus-ring));
+.akior-focus-ring {
+  outline-color: rgb(var(--akior-focus-ring));
 }
 
 /* =====================================
    V5 THEME SYSTEM - Color Themes
    ===================================== */
 
-/* Default theme colors (Cyber Blue) */
+/* Default theme colors (AKIOR Brand - Electric Cyan) */
 :root {
   /* Core accent colors */
-  --jarvis-accent: 59, 130, 246;  /* blue-500 */
-  --jarvis-accent-soft: 37, 99, 235;  /* blue-600 - softer variant */
-  --jarvis-accent-strong: 37, 99, 235;  /* blue-600 - stronger variant */
-  --jarvis-accent-muted: 37, 99, 235;  /* blue-600 - legacy compat */
-  
-  /* Background colors - theme-aware shell */
-  --jarvis-bg-base: 10, 18, 32;  /* deep blue-tinted dark */
-  --jarvis-bg-elevated: 16, 25, 44;  /* slightly elevated panels */
-  --jarvis-bg-gradient-from: 37, 99, 235;  /* muted accent for gradient */
-  --jarvis-bg-gradient-to: 10, 18, 32;  /* back to base */
-  
+  --akior-accent: 0, 212, 255;  /* #00D4FF - electric cyan */
+  --akior-accent-soft: 0, 180, 220;  /* softer cyan variant */
+  --akior-accent-strong: 0, 144, 176;  /* #0090B0 - deeper cyan */
+  --akior-accent-muted: 0, 160, 200;  /* muted variant */
+
+  /* Background colors - AKIOR dark theme */
+  --akior-bg-base: 10, 10, 15;  /* #0A0A0F - near-black */
+  --akior-bg-elevated: 18, 18, 26;  /* #12121A */
+  --akior-bg-gradient-from: 0, 212, 255;  /* cyan accent gradient */
+  --akior-bg-gradient-to: 10, 10, 15;  /* back to base */
+
   /* Surface colors */
-  --jarvis-surface: 13, 17, 23;  /* bg-[#0d1117] - default panel */
-  --jarvis-surface-alt: 22, 27, 34;  /* slightly elevated */
-  --jarvis-panel-surface: 30, 58, 138;  /* blue-900 - legacy compat */
-  
+  --akior-surface: 18, 18, 26;  /* #12121A */
+  --akior-surface-alt: 26, 26, 46;  /* #1A1A2E - secondary */
+  --akior-panel-surface: 26, 26, 40;  /* deep navy panel */
+
   /* Border & outline colors */
-  --jarvis-border: 255, 255, 255;  /* white for border-white/10 */
-  --jarvis-focus-ring: 59, 130, 246;  /* matches accent */
-  
+  --akior-border: 255, 255, 255;  /* white for border-white/10 */
+  --akior-focus-ring: 0, 212, 255;  /* matches accent */
+
   /* Effect colors */
-  --jarvis-bg-grid: 59, 130, 246;  /* blue for grid - legacy */
-  --jarvis-glow: 59, 130, 246;  /* blue-500 - legacy */
+  --akior-bg-grid: 0, 212, 255;  /* cyan for grid */
+  --akior-glow: 0, 212, 255;  /* electric cyan glow */
 }
 
 /* Cyber Blue Theme - Classic futuristic blue */
 .theme-cyber-blue {
-  --jarvis-accent: 59, 130, 246;  /* blue-500 */
-  --jarvis-accent-soft: 37, 99, 235;  /* blue-600 */
-  --jarvis-accent-strong: 29, 78, 216;  /* blue-700 */
-  --jarvis-accent-muted: 37, 99, 235;  /* blue-600 */
+  --akior-accent: 59, 130, 246;  /* blue-500 */
+  --akior-accent-soft: 37, 99, 235;  /* blue-600 */
+  --akior-accent-strong: 29, 78, 216;  /* blue-700 */
+  --akior-accent-muted: 37, 99, 235;  /* blue-600 */
   
   /* Blue-tinted backgrounds */
-  --jarvis-bg-base: 10, 18, 32;  /* deep blue-tinted dark */
-  --jarvis-bg-elevated: 16, 25, 44;  /* slightly elevated panels */
-  --jarvis-bg-gradient-from: 37, 99, 235;  /* muted blue accent */
-  --jarvis-bg-gradient-to: 10, 18, 32;
+  --akior-bg-base: 10, 18, 32;  /* deep blue-tinted dark */
+  --akior-bg-elevated: 16, 25, 44;  /* slightly elevated panels */
+  --akior-bg-gradient-from: 37, 99, 235;  /* muted blue accent */
+  --akior-bg-gradient-to: 10, 18, 32;
   
-  --jarvis-surface: 13, 17, 23;
-  --jarvis-surface-alt: 22, 27, 34;
-  --jarvis-panel-surface: 30, 58, 138;  /* blue-900 */
-  --jarvis-border: 255, 255, 255;
-  --jarvis-focus-ring: 59, 130, 246;
-  --jarvis-bg-grid: 59, 130, 246;
-  --jarvis-glow: 59, 130, 246;
+  --akior-surface: 13, 17, 23;
+  --akior-surface-alt: 22, 27, 34;
+  --akior-panel-surface: 30, 58, 138;  /* blue-900 */
+  --akior-border: 255, 255, 255;
+  --akior-focus-ring: 59, 130, 246;
+  --akior-bg-grid: 59, 130, 246;
+  --akior-glow: 59, 130, 246;
 }
 
 /* Midnight Purple Theme - Deep space purple vibes */
 .theme-midnight-purple {
-  --jarvis-accent: 147, 51, 234;  /* purple-600 */
-  --jarvis-accent-soft: 126, 34, 206;  /* purple-700 */
-  --jarvis-accent-strong: 107, 33, 168;  /* purple-800 */
-  --jarvis-accent-muted: 126, 34, 206;  /* purple-700 */
+  --akior-accent: 147, 51, 234;  /* purple-600 */
+  --akior-accent-soft: 126, 34, 206;  /* purple-700 */
+  --akior-accent-strong: 107, 33, 168;  /* purple-800 */
+  --akior-accent-muted: 126, 34, 206;  /* purple-700 */
   
   /* Purple-tinted backgrounds */
-  --jarvis-bg-base: 11, 10, 26;  /* deep purple-tinted dark */
-  --jarvis-bg-elevated: 20, 16, 40;  /* slightly elevated panels */
-  --jarvis-bg-gradient-from: 126, 34, 206;  /* muted purple accent */
-  --jarvis-bg-gradient-to: 11, 10, 26;
+  --akior-bg-base: 11, 10, 26;  /* deep purple-tinted dark */
+  --akior-bg-elevated: 20, 16, 40;  /* slightly elevated panels */
+  --akior-bg-gradient-from: 126, 34, 206;  /* muted purple accent */
+  --akior-bg-gradient-to: 11, 10, 26;
   
-  --jarvis-surface: 13, 17, 23;
-  --jarvis-surface-alt: 22, 27, 34;
-  --jarvis-panel-surface: 88, 28, 135;  /* purple-900 */
-  --jarvis-border: 255, 255, 255;
-  --jarvis-focus-ring: 147, 51, 234;
-  --jarvis-bg-grid: 147, 51, 234;
-  --jarvis-glow: 147, 51, 234;
+  --akior-surface: 13, 17, 23;
+  --akior-surface-alt: 22, 27, 34;
+  --akior-panel-surface: 88, 28, 135;  /* purple-900 */
+  --akior-border: 255, 255, 255;
+  --akior-focus-ring: 147, 51, 234;
+  --akior-bg-grid: 147, 51, 234;
+  --akior-glow: 147, 51, 234;
 }
 
 /* Solar Flare Theme - Warm orange energy */
 .theme-solar-flare {
-  --jarvis-accent: 249, 115, 22;  /* orange-500 */
-  --jarvis-accent-soft: 234, 88, 12;  /* orange-600 */
-  --jarvis-accent-strong: 194, 65, 12;  /* orange-700 */
-  --jarvis-accent-muted: 234, 88, 12;  /* orange-600 */
+  --akior-accent: 249, 115, 22;  /* orange-500 */
+  --akior-accent-soft: 234, 88, 12;  /* orange-600 */
+  --akior-accent-strong: 194, 65, 12;  /* orange-700 */
+  --akior-accent-muted: 234, 88, 12;  /* orange-600 */
   
   /* Orange-tinted backgrounds */
-  --jarvis-bg-base: 20, 12, 8;  /* deep orange-tinted dark */
-  --jarvis-bg-elevated: 30, 18, 12;  /* slightly elevated panels */
-  --jarvis-bg-gradient-from: 234, 88, 12;  /* muted orange accent */
-  --jarvis-bg-gradient-to: 20, 12, 8;
+  --akior-bg-base: 20, 12, 8;  /* deep orange-tinted dark */
+  --akior-bg-elevated: 30, 18, 12;  /* slightly elevated panels */
+  --akior-bg-gradient-from: 234, 88, 12;  /* muted orange accent */
+  --akior-bg-gradient-to: 20, 12, 8;
   
-  --jarvis-surface: 13, 17, 23;
-  --jarvis-surface-alt: 22, 27, 34;
-  --jarvis-panel-surface: 124, 45, 18;  /* orange-900 */
-  --jarvis-border: 255, 255, 255;
-  --jarvis-focus-ring: 249, 115, 22;
-  --jarvis-bg-grid: 249, 115, 22;
-  --jarvis-glow: 249, 115, 22;
+  --akior-surface: 13, 17, 23;
+  --akior-surface-alt: 22, 27, 34;
+  --akior-panel-surface: 124, 45, 18;  /* orange-900 */
+  --akior-border: 255, 255, 255;
+  --akior-focus-ring: 249, 115, 22;
+  --akior-bg-grid: 249, 115, 22;
+  --akior-glow: 249, 115, 22;
 }
 
 /* Digital Rain Theme - Hacker green matrix style */
 .theme-digital-rain {
-  --jarvis-accent: 34, 197, 94;  /* green-500 */
-  --jarvis-accent-soft: 22, 163, 74;  /* green-600 */
-  --jarvis-accent-strong: 21, 128, 61;  /* green-700 */
-  --jarvis-accent-muted: 22, 163, 74;  /* green-600 */
+  --akior-accent: 34, 197, 94;  /* green-500 */
+  --akior-accent-soft: 22, 163, 74;  /* green-600 */
+  --akior-accent-strong: 21, 128, 61;  /* green-700 */
+  --akior-accent-muted: 22, 163, 74;  /* green-600 */
   
   /* Green-tinted backgrounds */
-  --jarvis-bg-base: 4, 24, 17;  /* deep green-tinted dark */
-  --jarvis-bg-elevated: 14, 32, 24;  /* slightly elevated panels */
-  --jarvis-bg-gradient-from: 22, 163, 74;  /* muted green accent */
-  --jarvis-bg-gradient-to: 4, 24, 17;
+  --akior-bg-base: 4, 24, 17;  /* deep green-tinted dark */
+  --akior-bg-elevated: 14, 32, 24;  /* slightly elevated panels */
+  --akior-bg-gradient-from: 22, 163, 74;  /* muted green accent */
+  --akior-bg-gradient-to: 4, 24, 17;
   
-  --jarvis-surface: 13, 17, 23;
-  --jarvis-surface-alt: 22, 27, 34;
-  --jarvis-panel-surface: 20, 83, 45;  /* green-900 */
-  --jarvis-border: 255, 255, 255;
-  --jarvis-focus-ring: 34, 197, 94;
-  --jarvis-bg-grid: 34, 197, 94;
-  --jarvis-glow: 34, 197, 94;
+  --akior-surface: 13, 17, 23;
+  --akior-surface-alt: 22, 27, 34;
+  --akior-panel-surface: 20, 83, 45;  /* green-900 */
+  --akior-border: 255, 255, 255;
+  --akior-focus-ring: 34, 197, 94;
+  --akior-bg-grid: 34, 197, 94;
+  --akior-glow: 34, 197, 94;
 }
 
 /* Ice Crystal Theme - Cool cyan frost */
 .theme-ice-crystal {
-  --jarvis-accent: 6, 182, 212;  /* cyan-500 */
-  --jarvis-accent-soft: 8, 145, 178;  /* cyan-600 */
-  --jarvis-accent-strong: 14, 116, 144;  /* cyan-700 */
-  --jarvis-accent-muted: 8, 145, 178;  /* cyan-600 */
+  --akior-accent: 6, 182, 212;  /* cyan-500 */
+  --akior-accent-soft: 8, 145, 178;  /* cyan-600 */
+  --akior-accent-strong: 14, 116, 144;  /* cyan-700 */
+  --akior-accent-muted: 8, 145, 178;  /* cyan-600 */
   
   /* Cyan-tinted backgrounds */
-  --jarvis-bg-base: 5, 21, 30;  /* deep cyan-tinted dark */
-  --jarvis-bg-elevated: 16, 32, 44;  /* slightly elevated panels */
-  --jarvis-bg-gradient-from: 8, 145, 178;  /* muted cyan accent */
-  --jarvis-bg-gradient-to: 5, 21, 30;
+  --akior-bg-base: 5, 21, 30;  /* deep cyan-tinted dark */
+  --akior-bg-elevated: 16, 32, 44;  /* slightly elevated panels */
+  --akior-bg-gradient-from: 8, 145, 178;  /* muted cyan accent */
+  --akior-bg-gradient-to: 5, 21, 30;
   
-  --jarvis-surface: 13, 17, 23;
-  --jarvis-surface-alt: 22, 27, 34;
-  --jarvis-panel-surface: 22, 78, 99;  /* cyan-900 */
-  --jarvis-border: 255, 255, 255;
-  --jarvis-focus-ring: 6, 182, 212;
-  --jarvis-bg-grid: 6, 182, 212;
-  --jarvis-glow: 6, 182, 212;
+  --akior-surface: 13, 17, 23;
+  --akior-surface-alt: 22, 27, 34;
+  --akior-panel-surface: 22, 78, 99;  /* cyan-900 */
+  --akior-border: 255, 255, 255;
+  --akior-focus-ring: 6, 182, 212;
+  --akior-bg-grid: 6, 182, 212;
+  --akior-glow: 6, 182, 212;
+}
+
+/* AKIOR Brand Theme - Electric Cyan */
+.theme-akior {
+  --akior-accent: 0, 212, 255;  /* #00D4FF - electric cyan */
+  --akior-accent-soft: 0, 180, 220;  /* softer cyan */
+  --akior-accent-strong: 0, 144, 176;  /* #0090B0 - deeper cyan */
+  --akior-accent-muted: 0, 160, 200;  /* muted variant */
+
+  /* AKIOR dark backgrounds */
+  --akior-bg-base: 10, 10, 15;  /* #0A0A0F - near-black */
+  --akior-bg-elevated: 18, 18, 26;  /* #12121A */
+  --akior-bg-gradient-from: 0, 212, 255;  /* cyan accent gradient */
+  --akior-bg-gradient-to: 10, 10, 15;
+
+  --akior-surface: 18, 18, 26;  /* #12121A */
+  --akior-surface-alt: 26, 26, 46;  /* #1A1A2E - secondary */
+  --akior-panel-surface: 26, 26, 40;  /* deep navy panel */
+  --akior-border: 255, 255, 255;
+  --akior-focus-ring: 0, 212, 255;
+  --akior-bg-grid: 0, 212, 255;
+  --akior-glow: 0, 212, 255;
 }
 
 /* Animation for notification drawer and toast */

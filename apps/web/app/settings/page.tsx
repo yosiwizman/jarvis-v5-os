@@ -715,7 +715,7 @@ export default function SettingsPage() {
             indicate stale cache or wrong host. Try hard-refreshing
             (Ctrl+Shift+R) or check your DNS.{" "}
             <a
-              href="https://github.com/akior-os/jarvis-v5-os/blob/main/docs/ops/dns-setup.md"
+              href="https://github.com/akior-os/akior-v5-os/blob/main/docs/ops/dns-setup.md"
               target="_blank"
               rel="noopener noreferrer"
               className="text-amber-400 underline hover:text-amber-300"
@@ -1027,7 +1027,7 @@ export default function SettingsPage() {
               onClick={() => setColorTheme("cyber-blue")}
               className={`px-4 py-3 text-left rounded-lg border transition-all ${
                 colorTheme === "cyber-blue"
-                  ? "bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow"
+                  ? "bg-[color:rgb(var(--akior-accent)_/_0.2)] border-[color:rgb(var(--akior-accent)_/_0.6)] akior-accent-shadow"
                   : "bg-transparent border-white/10 hover:border-white/30"
               }`}
             >
@@ -1047,7 +1047,7 @@ export default function SettingsPage() {
               onClick={() => setColorTheme("midnight-purple")}
               className={`px-4 py-3 text-left rounded-lg border transition-all ${
                 colorTheme === "midnight-purple"
-                  ? "bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow"
+                  ? "bg-[color:rgb(var(--akior-accent)_/_0.2)] border-[color:rgb(var(--akior-accent)_/_0.6)] akior-accent-shadow"
                   : "bg-transparent border-white/10 hover:border-white/30"
               }`}
             >
@@ -1067,7 +1067,7 @@ export default function SettingsPage() {
               onClick={() => setColorTheme("solar-flare")}
               className={`px-4 py-3 text-left rounded-lg border transition-all ${
                 colorTheme === "solar-flare"
-                  ? "bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow"
+                  ? "bg-[color:rgb(var(--akior-accent)_/_0.2)] border-[color:rgb(var(--akior-accent)_/_0.6)] akior-accent-shadow"
                   : "bg-transparent border-white/10 hover:border-white/30"
               }`}
             >
@@ -1087,7 +1087,7 @@ export default function SettingsPage() {
               onClick={() => setColorTheme("digital-rain")}
               className={`px-4 py-3 text-left rounded-lg border transition-all ${
                 colorTheme === "digital-rain"
-                  ? "bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow"
+                  ? "bg-[color:rgb(var(--akior-accent)_/_0.2)] border-[color:rgb(var(--akior-accent)_/_0.6)] akior-accent-shadow"
                   : "bg-transparent border-white/10 hover:border-white/30"
               }`}
             >
@@ -1107,7 +1107,7 @@ export default function SettingsPage() {
               onClick={() => setColorTheme("ice-crystal")}
               className={`px-4 py-3 text-left rounded-lg border transition-all ${
                 colorTheme === "ice-crystal"
-                  ? "bg-[color:rgb(var(--jarvis-accent)_/_0.2)] border-[color:rgb(var(--jarvis-accent)_/_0.6)] jarvis-accent-shadow"
+                  ? "bg-[color:rgb(var(--akior-accent)_/_0.2)] border-[color:rgb(var(--akior-accent)_/_0.6)] akior-accent-shadow"
                   : "bg-transparent border-white/10 hover:border-white/30"
               }`}
             >
@@ -1824,7 +1824,7 @@ export default function SettingsPage() {
                 "webSearch",
                 settings?.integrations?.webSearch,
               )
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -1926,7 +1926,7 @@ export default function SettingsPage() {
                 "localLLM",
                 settings?.integrations?.localLLM,
               )
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2130,7 +2130,7 @@ export default function SettingsPage() {
                 "elevenLabs",
                 settings?.integrations?.elevenLabs,
               )
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2318,7 +2318,7 @@ export default function SettingsPage() {
                 "azureTTS",
                 settings?.integrations?.azureTTS,
               )
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2484,7 +2484,7 @@ export default function SettingsPage() {
           <div
             className={`border rounded-xl p-4 space-y-3 ${
               isIntegrationConnected("spotify", settings?.integrations?.spotify)
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2586,7 +2586,7 @@ export default function SettingsPage() {
           <div
             className={`border rounded-xl p-4 space-y-3 ${
               isIntegrationConnected("gmail", settings?.integrations?.gmail)
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2714,7 +2714,7 @@ export default function SettingsPage() {
                 "googleCalendar",
                 settings?.integrations?.googleCalendar,
               )
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2865,7 +2865,7 @@ export default function SettingsPage() {
           <div
             className={`border rounded-xl p-4 space-y-3 ${
               isIntegrationConnected("alexa", settings?.integrations?.alexa)
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -2996,7 +2996,7 @@ export default function SettingsPage() {
           <div
             className={`border rounded-xl p-4 space-y-3 ${
               isIntegrationConnected("irobot", settings?.integrations?.irobot)
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -3121,7 +3121,7 @@ export default function SettingsPage() {
           <div
             className={`border rounded-xl p-4 space-y-3 ${
               isIntegrationConnected("nest", settings?.integrations?.nest)
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -3273,7 +3273,7 @@ export default function SettingsPage() {
                 "smartLights",
                 settings?.integrations?.smartLights,
               )
-                ? "border-[color:rgb(var(--jarvis-accent)_/_0.5)] bg-[color:rgb(var(--jarvis-accent)_/_0.05)]"
+                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
                 : "border-white/10"
             }`}
           >
@@ -3671,7 +3671,7 @@ export default function SettingsPage() {
             onClick={() => setActiveMemoryTab("conversations")}
             className={`px-4 py-2 text-sm transition-all border-b-2 ${
               activeMemoryTab === "conversations"
-                ? "border-[color:rgb(var(--jarvis-accent))] text-white"
+                ? "border-[color:rgb(var(--akior-accent))] text-white"
                 : "border-transparent text-white/50 hover:text-white/70"
             }`}
           >
@@ -3681,7 +3681,7 @@ export default function SettingsPage() {
             onClick={() => setActiveMemoryTab("actions")}
             className={`px-4 py-2 text-sm transition-all border-b-2 ${
               activeMemoryTab === "actions"
-                ? "border-[color:rgb(var(--jarvis-accent))] text-white"
+                ? "border-[color:rgb(var(--akior-accent))] text-white"
                 : "border-transparent text-white/50 hover:text-white/70"
             }`}
           >
@@ -3691,7 +3691,7 @@ export default function SettingsPage() {
             onClick={() => setActiveMemoryTab("logs")}
             className={`px-4 py-2 text-sm transition-all border-b-2 ${
               activeMemoryTab === "logs"
-                ? "border-[color:rgb(var(--jarvis-accent))] text-white"
+                ? "border-[color:rgb(var(--akior-accent))] text-white"
                 : "border-transparent text-white/50 hover:text-white/70"
             }`}
           >

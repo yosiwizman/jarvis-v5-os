@@ -125,30 +125,30 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
   return (
     <div
       data-hud-notification-dropdown
-      className="absolute top-full right-0 mt-2 w-[360px] bg-[rgba(var(--jarvis-panel-surface),0.4)] backdrop-blur-xl border border-[rgba(var(--jarvis-accent),0.3)] rounded-2xl shadow-lg overflow-hidden z-[80]"
+      className="absolute top-full right-0 mt-2 w-[360px] bg-[rgba(var(--akior-panel-surface),0.4)] backdrop-blur-xl border border-[rgba(var(--akior-accent),0.3)] rounded-2xl shadow-lg overflow-hidden z-[80]"
       role="dialog"
       aria-label="Notifications"
       style={{
-        boxShadow: '0 0 24px rgba(var(--jarvis-glow), 0.15), 0 8px 32px rgba(0, 0, 0, 0.4)'
+        boxShadow: '0 0 24px rgba(var(--akior-glow), 0.15), 0 8px 32px rgba(0, 0, 0, 0.4)'
       }}
     >
       {/* Header */}
       <div 
         className="flex items-center justify-between px-4 py-3 border-b"
-        style={{ borderColor: 'rgba(var(--jarvis-accent), 0.2)' }}
+        style={{ borderColor: 'rgba(var(--akior-accent), 0.2)' }}
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">🔔</span>
           <span 
             className="text-sm font-semibold"
-            style={{ color: 'rgba(var(--jarvis-accent), 0.9)' }}
+            style={{ color: 'rgba(var(--akior-accent), 0.9)' }}
           >
             Notifications
           </span>
         </div>
         <span 
           className="text-xs"
-          style={{ color: 'rgba(var(--jarvis-accent), 0.6)' }}
+          style={{ color: 'rgba(var(--akior-accent), 0.6)' }}
         >
           {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
         </span>
@@ -161,13 +161,13 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
             <div className="text-4xl mb-2">🔔</div>
             <div 
               className="text-sm mb-1"
-              style={{ color: 'rgba(var(--jarvis-accent), 0.7)' }}
+              style={{ color: 'rgba(var(--akior-accent), 0.7)' }}
             >
               No notifications
             </div>
             <div 
               className="text-xs"
-              style={{ color: 'rgba(var(--jarvis-accent), 0.5)' }}
+              style={{ color: 'rgba(var(--akior-accent), 0.5)' }}
             >
               Notifications will appear here
             </div>
@@ -178,9 +178,9 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
               <button
                 key={notification.id}
                 onClick={() => !notification.read && markAsRead(notification.id)}
-                className="w-full text-left px-4 py-3 flex items-start gap-3 transition-all hover:bg-[rgba(var(--jarvis-accent),0.05)]"
+                className="w-full text-left px-4 py-3 flex items-start gap-3 transition-all hover:bg-[rgba(var(--akior-accent),0.05)]"
                 style={{
-                  backgroundColor: !notification.read ? 'rgba(var(--jarvis-accent), 0.08)' : 'transparent',
+                  backgroundColor: !notification.read ? 'rgba(var(--akior-accent), 0.08)' : 'transparent',
                   opacity: notification.read ? 0.7 : 1
                 }}
               >
@@ -191,7 +191,7 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
                   <div className="flex items-center gap-2 mb-1">
                     <span 
                       className="text-sm font-medium"
-                      style={{ color: !notification.read ? 'rgba(var(--jarvis-accent), 1)' : 'rgba(var(--jarvis-accent), 0.7)' }}
+                      style={{ color: !notification.read ? 'rgba(var(--akior-accent), 1)' : 'rgba(var(--akior-accent), 0.7)' }}
                     >
                       {getNotificationTitle(notification.type)}
                     </span>
@@ -199,8 +199,8 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
                       <span 
                         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                         style={{ 
-                          backgroundColor: 'rgba(var(--jarvis-glow), 0.9)',
-                          boxShadow: '0 0 8px rgba(var(--jarvis-glow), 0.6)'
+                          backgroundColor: 'rgba(var(--akior-glow), 0.9)',
+                          boxShadow: '0 0 8px rgba(var(--akior-glow), 0.6)'
                         }}
                         aria-label="Unread"
                       />
@@ -208,13 +208,13 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
                   </div>
                   <div 
                     className="text-xs mb-1 line-clamp-2"
-                    style={{ color: 'rgba(var(--jarvis-accent), 0.7)' }}
+                    style={{ color: 'rgba(var(--akior-accent), 0.7)' }}
                   >
                     {formatPayload(notification.payload)}
                   </div>
                   <div 
                     className="text-xs"
-                    style={{ color: 'rgba(var(--jarvis-accent), 0.5)' }}
+                    style={{ color: 'rgba(var(--akior-accent), 0.5)' }}
                   >
                     {formatTimestamp(notification.triggeredAt)}
                   </div>
@@ -229,14 +229,14 @@ export function HudNotificationDropdown({ isOpen, onClose }: HudNotificationDrop
       {sortedNotifications.length > 0 && (
         <div 
           className="flex items-center justify-between px-4 py-3 border-t"
-          style={{ borderColor: 'rgba(var(--jarvis-accent), 0.2)' }}
+          style={{ borderColor: 'rgba(var(--akior-accent), 0.2)' }}
         >
           <button
             onClick={markAllAsRead}
-            className="text-xs px-3 py-1.5 rounded-lg transition-all hover:bg-[rgba(var(--jarvis-accent),0.15)]"
+            className="text-xs px-3 py-1.5 rounded-lg transition-all hover:bg-[rgba(var(--akior-accent),0.15)]"
             style={{ 
-              color: 'rgba(var(--jarvis-accent), 0.8)',
-              border: '1px solid rgba(var(--jarvis-accent), 0.2)'
+              color: 'rgba(var(--akior-accent), 0.8)',
+              border: '1px solid rgba(var(--akior-accent), 0.2)'
             }}
           >
             Mark all read

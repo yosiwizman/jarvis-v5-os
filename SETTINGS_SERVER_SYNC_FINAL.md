@@ -4,10 +4,10 @@
 
 ### The Problem
 - ❌ Each device had its own localStorage settings
-- ❌ Laptop had custom J.A.R.V.I.S. prompt
+- ❌ Laptop had custom AKIOR prompt
 - ❌ Tablet had default prompt
 - ❌ NO SYNCHRONIZATION between devices
-- ❌ Jarvis behaved differently on each device
+- ❌ AKIOR behaved differently on each device
 
 ### The Solution
 Settings are now stored **centrally on the server** and automatically sync to all devices.
@@ -77,11 +77,11 @@ useEffect(() => {
 
 Runs once when app loads, fetches settings from server.
 
-### 4. Jarvis Icon Fixed (`apps/web/src/components/JarvisAssistant.tsx`)
+### 4. AKIOR Icon Fixed (`apps/web/src/components/AKIORAssistant.tsx`)
 
 Restored the proper floating icon with:
 - ✅ Spinning hexagon ring (20s rotation)
-- ✅ Center Jarvis logo
+- ✅ Center AKIOR logo
 - ✅ Hover scale animation
 - ✅ Glow effects
 - ✅ Drop shadows
@@ -133,7 +133,7 @@ Restored the proper floating icon with:
 1. Refresh the page
 2. Console: `🔄 Loading settings from server...`
 3. Console: `✅ Settings loaded from server`
-4. Open Jarvis
+4. Open AKIOR
 5. ✅ Uses laptop's custom prompt!
 
 ---
@@ -177,8 +177,8 @@ Restored the proper floating icon with:
 ### Web App
 - ✅ `apps/web/app/layout.tsx`
   - Added auto-load on mount
-- ✅ `apps/web/src/components/JarvisAssistant.tsx`
-  - Fixed JarvisIcon with spinning hexagon
+- ✅ `apps/web/src/components/AKIORAssistant.tsx`
+  - Fixed AKIORIcon with spinning hexagon
 
 ---
 
@@ -188,7 +188,7 @@ Restored the proper floating icon with:
 ```typescript
 // All existing code still works!
 const settings = readSettings();              // ✅ Still synchronous
-updateJarvisSettings({ voice: 'echo' });      // ✅ Still synchronous
+updateAKIORSettings({ voice: 'echo' });      // ✅ Still synchronous
 writeSettings(settings);                      // ✅ Still synchronous
 ```
 
@@ -207,8 +207,8 @@ The async server operations happen in the background without blocking the UI.
 ### On Tablet
 - [x] Refresh the page
 - [x] Check console: `✅ Settings loaded from server`
-- [x] Open Jarvis (mini or full)
-- [x] Verify Jarvis uses laptop's prompt
+- [x] Open AKIOR (mini or full)
+- [x] Verify AKIOR uses laptop's prompt
 - [x] Check console logs show correct settings
 
 ### Verify Sync
@@ -217,7 +217,7 @@ The async server operations happen in the background without blocking the UI.
 - [x] Laptop should use new voice
 
 ### Verify Icon
-- [x] Check floating Jarvis icon in bottom-right
+- [x] Check floating AKIOR icon in bottom-right
 - [x] Hexagon should spin slowly
 - [x] Logo should be centered
 - [x] Hover should scale logo
@@ -245,7 +245,7 @@ The async server operations happen in the background without blocking the UI.
 ✅ **Single Source of Truth** - Server has the settings
 ✅ **Cross-Device Sync** - All devices use same settings
 ✅ **Instant UI Updates** - No waiting for server
-✅ **Consistent Behavior** - Jarvis same everywhere
+✅ **Consistent Behavior** - AKIOR same everywhere
 ✅ **Automatic Sync** - No manual work needed
 ✅ **Resilient** - Falls back to localStorage
 ✅ **No Breaking Changes** - Existing code works
@@ -271,7 +271,7 @@ The async server operations happen in the background without blocking the UI.
 │  ┌─────────────────────────────────────┐   │
 │  │ Settings UI                          │   │
 │  │  ↓                                   │   │
-│  │ updateJarvisSettings()               │   │
+│  │ updateAKIORSettings()               │   │
 │  │  ↓                                   │   │
 │  │ writeSettings()                      │   │
 │  │  ├─ Cache (instant)                  │   │
@@ -324,7 +324,7 @@ The async server operations happen in the background without blocking the UI.
 - ✅ Instant UI updates (no lag)
 - ✅ Fallback to localStorage works
 - ✅ No breaking changes to API
-- ✅ Jarvis icon looks good again
+- ✅ AKIOR icon looks good again
 
 **ONE SERVER, ONE SETTINGS, ALL DEVICES SYNCHRONIZED!** 🎯
 

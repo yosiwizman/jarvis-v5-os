@@ -1,23 +1,23 @@
 #!/usr/bin/env tsx
 /**
- * Jarvis V5 Smoke Test Script
- * 
+ * AKIOR V5 Smoke Test Script
+ *
  * Quick CLI smoke test that verifies key endpoints are responding correctly.
- * 
+ *
  * Usage:
  *   npm run smoke
- * 
+ *
  * Requirements:
  *   - Dev server must be running (npm start)
  *   - Base URL defaults to https://localhost:3000
- * 
+ *
  * Environment:
- *   JARVIS_SMOKE_BASE_URL - Override base URL (default: https://localhost:3000)
+ *   AKIOR_SMOKE_BASE_URL - Override base URL for AKIOR smoke tests (default: https://localhost:3000)
  */
 
-import https from 'https';
+import https from "https";
 
-const BASE_URL = process.env.JARVIS_SMOKE_BASE_URL ?? 'https://localhost:3000';
+const BASE_URL = process.env.JARVIS_SMOKE_BASE_URL ?? "https://localhost:3000";
 const API_BASE_URL = process.env.JARVIS_SMOKE_API_URL ?? BASE_URL;
 
 // Allow self-signed certificates for local dev
@@ -40,18 +40,18 @@ async function check(
     expectedStatus?: number;
     validateJson?: boolean;
     assertOkField?: boolean;
-    method?: 'GET' | 'POST';
+    method?: "GET" | "POST";
     body?: any;
     useApiBase?: boolean;
-  } = {}
+  } = {},
 ): Promise<CheckResult> {
   const {
     expectedStatus = 200,
     validateJson = false,
     assertOkField = false,
-    method = 'GET',
+    method = "GET",
     body = undefined,
-    useApiBase = false
+    useApiBase = false,
   } = options;
   const url = `${useApiBase ? API_BASE_URL : BASE_URL}${path}`;
 
@@ -59,11 +59,11 @@ async function check(
     const response = await fetch(url, {
       method,
       // @ts-ignore - agent is valid for https requests
-      agent: url.startsWith('https') ? agent : undefined,
+      agent: url.startsWith("https") ? agent : undefined,
       ...(body && {
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
     });
 
     const status = response.status;
@@ -74,7 +74,7 @@ async function check(
     if (validateJson && ok) {
       try {
         const json = await response.json();
-        
+
         // If assertOkField is true, check that json.ok === true
         if (assertOkField && json.ok !== true) {
           ok = false;
@@ -111,83 +111,91 @@ function logResult(result: CheckResult): void {
 }
 
 async function runSmokeTests(): Promise<void> {
-  console.log(`🔍 Jarvis V5 Smoke Tests`);
+  console.log(`🔍 AKIOR V5 Smoke Tests`);
   console.log(`   Base URL: ${BASE_URL}\n`);
 
   const checks: Promise<CheckResult>[] = [
     // HTML pages
-    check('Home page', '/'),
-    check('Settings page', '/settings'),
-    check('Chat page', '/chat'),
-    check('Menu page', '/menu'),
-    check('Holomat page', '/holomat'),
+    check("Home page", "/"),
+    check("Settings page", "/settings"),
+    check("Chat page", "/chat"),
+    check("Menu page", "/menu"),
+    check("Holomat page", "/holomat"),
 
     // API endpoints (use API_BASE_URL in CI mode) - all routes have /api prefix
-    check('System metrics API', '/api/system/metrics', {
+    check("System metrics API", "/api/system/metrics", {
       validateJson: true,
       useApiBase: true,
     }),
-    check('3D print token status API', '/api/3dprint/token-status', {
+    check("3D print token status API", "/api/3dprint/token-status", {
       validateJson: true,
       useApiBase: true,
     }),
-    check('Web search API (unconfigured)', '/api/integrations/web-search', {
-      method: 'POST',
-      body: { query: 'test query' },
-      expectedStatus: 503,  // Expected: not configured
+    check("Web search API (unconfigured)", "/api/integrations/web-search", {
+      method: "POST",
+      body: { query: "test query" },
+      expectedStatus: 503, // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('ElevenLabs TTS API (unconfigured)', '/api/integrations/elevenlabs/tts', {
-      method: 'POST',
-      body: { text: 'Hello from smoke tests' },
-      expectedStatus: 503,  // Expected: not configured
+    check(
+      "ElevenLabs TTS API (unconfigured)",
+      "/api/integrations/elevenlabs/tts",
+      {
+        method: "POST",
+        body: { text: "Hello from smoke tests" },
+        expectedStatus: 503, // Expected: not configured
+        validateJson: true,
+        useApiBase: true,
+      },
+    ),
+    check("Azure TTS API (unconfigured)", "/api/integrations/azure-tts/tts", {
+      method: "POST",
+      body: { text: "Hello from smoke tests" },
+      expectedStatus: 503, // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Azure TTS API (unconfigured)', '/api/integrations/azure-tts/tts', {
-      method: 'POST',
-      body: { text: 'Hello from smoke tests' },
-      expectedStatus: 503,  // Expected: not configured
+    check("Spotify API (unconfigured)", "/api/integrations/spotify/search", {
+      method: "POST",
+      body: { query: "test" },
+      expectedStatus: 503, // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Spotify API (unconfigured)', '/api/integrations/spotify/search', {
-      method: 'POST',
-      body: { query: 'test' },
-      expectedStatus: 503,  // Expected: not configured
-      validateJson: true,
-      useApiBase: true,
-    }),
-    check('Gmail API (unconfigured)', '/api/integrations/gmail/test', {
-      method: 'POST',
+    check("Gmail API (unconfigured)", "/api/integrations/gmail/test", {
+      method: "POST",
       body: {},
-      expectedStatus: 503,  // Expected: not configured
+      expectedStatus: 503, // Expected: not configured
       validateJson: true,
       useApiBase: true,
     }),
-    check('Google Calendar API (unconfigured)', '/api/integrations/google-calendar/test', {
-      method: 'POST',
-      body: {},
-      expectedStatus: 503,  // Expected: not configured
-      validateJson: true,
-      useApiBase: true,
-    }),
+    check(
+      "Google Calendar API (unconfigured)",
+      "/api/integrations/google-calendar/test",
+      {
+        method: "POST",
+        body: {},
+        expectedStatus: 503, // Expected: not configured
+        validateJson: true,
+        useApiBase: true,
+      },
+    ),
 
     // Notification system endpoints - backend routes have /api prefix
-    check('Notification schedule API', '/api/notifications/schedule', {
-      method: 'POST',
+    check("Notification schedule API", "/api/notifications/schedule", {
+      method: "POST",
       body: {
-        type: 'system.test',
-        payload: { message: 'smoke test notification' },
-        triggerAt: new Date(Date.now() + 300000).toISOString() // 5 minutes from now
+        type: "system.test",
+        payload: { message: "smoke test notification" },
+        triggerAt: new Date(Date.now() + 300000).toISOString(), // 5 minutes from now
       },
       validateJson: true,
       assertOkField: true,
       useApiBase: true,
     }),
-    check('Notification SSE stream API', '/api/notifications/stream', {
-      method: 'GET',
+    check("Notification SSE stream API", "/api/notifications/stream", {
+      method: "GET",
       expectedStatus: 200,
       useApiBase: true,
     }),
@@ -195,12 +203,12 @@ async function runSmokeTests(): Promise<void> {
 
   const results = await Promise.all(checks);
 
-  console.log('');
+  console.log("");
   results.forEach(logResult);
 
   const failedCount = results.filter((r) => !r.ok).length;
 
-  console.log('');
+  console.log("");
   if (failedCount === 0) {
     console.log(`✅ All ${results.length} checks passed!`);
     process.exit(0);
@@ -212,7 +220,7 @@ async function runSmokeTests(): Promise<void> {
 
 // Run the tests
 runSmokeTests().catch((err) => {
-  console.error('💥 Smoke test runner crashed:');
+  console.error("💥 Smoke test runner crashed:");
   console.error(err);
   process.exit(1);
 });

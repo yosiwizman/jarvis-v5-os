@@ -1,8 +1,8 @@
-# Jarvis Control Center
+# AKIOR Control Center
 
-> **Current Version:** Jarvis V6.1.0 (Notification Drawer & History UI + Complete Notification System + Google Calendar + Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
+> **Current Version:** AKIOR V6.1.0 (Notification Drawer & History UI + Complete Notification System + Google Calendar + Gmail + Spotify + Azure TTS + ElevenLabs TTS + Local LLM + Web Search + Weather + HUD + Theming)
 
-![Jarvis Voice Assistant](Screenshots/Jarvis.png)
+![AKIOR Voice Assistant](Screenshots/AKIOR.png)
 
 A modular AI assistant hub that pairs a Fastify server with a dark-mode Next.js dashboard. The system features voice control, multi-device camera streaming, 3D printing management, AI image generation, and creative tooling through a unified interface.
 
@@ -74,13 +74,13 @@ Keys are stored on the server and shared across all connected devices automatica
 
 ### Documentation
 
-- **Latest Release Notes:** [JARVIS_V6_RELEASE_NOTES_v6.0.0.md](JARVIS_V6_RELEASE_NOTES_v6.0.0.md) - **NEW: Notification System**
+- **Latest Release Notes:** [AKIOR_V6_RELEASE_NOTES_v6.0.0.md](AKIOR_V6_RELEASE_NOTES_v6.0.0.md) - **NEW: Notification System**
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md) - Complete version history
-- **Previous Release Notes:** [v5.9.0](JARVIS_V5_RELEASE_NOTES_v5.9.0.md) | [v5.8.0](JARVIS_V5_RELEASE_NOTES_v5.8.0.md) | [v5.7.0](JARVIS_V5_RELEASE_NOTES_v5.7.0.md)
+- **Previous Release Notes:** [v5.9.0](AKIOR_V5_RELEASE_NOTES_v5.9.0.md) | [v5.8.0](AKIOR_V5_RELEASE_NOTES_v5.8.0.md) | [v5.7.0](AKIOR_V5_RELEASE_NOTES_v5.7.0.md)
 - **Development Workflow:** [DEV_WORKFLOW.md](DEV_WORKFLOW.md) - Branching, CI, and release process
-- **Test Plan:** [JARVIS_V6_TEST_PLAN.md](JARVIS_V6_TEST_PLAN.md)
+- **Test Plan:** [AKIOR_V6_TEST_PLAN.md](AKIOR_V6_TEST_PLAN.md)
 - **Local LLM Setup:** [LOCAL_LLM_INTEGRATION.md](LOCAL_LLM_INTEGRATION.md)
-- **Repository Overview:** [JARVIS_V6_REPO_OVERVIEW.md](JARVIS_V6_REPO_OVERVIEW.md)
+- **Repository Overview:** [AKIOR_V6_REPO_OVERVIEW.md](AKIOR_V6_REPO_OVERVIEW.md)
 
 ## Screenshots
 
@@ -151,16 +151,16 @@ Keys are stored on the server and shared across all connected devices automatica
 - Query history with `GET /api/notifications/history`
 - Full TypeScript types in `@shared/core`
 
-### 🎙️ Jarvis Voice Assistant
+### 🎙️ AKIOR Voice Assistant
 
 **Real-time voice AI powered by OpenAI's Realtime API**
 
-- **Access:** `/jarvis` or click the floating icon on any page
+- **Access:** `/akior` or click the floating icon on any page
 - **Features:**
   - Natural voice conversations with low latency
   - Function calling (image generation, 3D models, navigation, file management)
   - Camera vision analysis ("what do you see?")
-  - Hotword detection ("Hey Jarvis")
+  - Hotword detection ("Hey AKIOR")
   - Audio visualization with FFT rings
   - Configurable voice, model, and personality
 
@@ -187,7 +187,7 @@ Keys are stored on the server and shared across all connected devices automatica
 - WebRTC streaming with ultra-low latency
 - Multi-camera grid view
 - Full-screen individual camera views
-- Remote capture commands via Jarvis
+- Remote capture commands via AKIOR
 - Vision analysis using GPT-4o
 - Auto-save captured images to file library
 
@@ -203,7 +203,7 @@ Keys are stored on the server and shared across all connected devices automatica
   - Quality settings (auto, low, medium, high)
   - Automatic save to file library
   - Revised prompt display
-  - Can be triggered via Jarvis voice commands
+  - Can be triggered via AKIOR voice commands
 
 ### 🗿 3D Model Generation
 
@@ -287,7 +287,7 @@ Keys are stored on the server and shared across all connected devices automatica
   - Meshy API key (for 3D models)
   - Bambu Labs account (for printers)
   
-- **Jarvis Settings:**
+- **AKIOR Settings:**
   - Voice selection (alloy, echo, fable, onyx, nova, shimmer)
   - Model selection (gpt-4o-realtime-preview, gpt-4o-mini-realtime-preview)
   - Custom personality/system prompt
@@ -335,7 +335,7 @@ All settings stored locally in browser and synced via server for multi-device ac
 ## Project Structure
 
 ```
-jarvis/
+akior/
 ├─ apps/
 │  ├─ server/         # Fastify HTTPS server
 │  │  ├─ src/
@@ -353,7 +353,7 @@ jarvis/
 │  │
 │  └─ web/            # Next.js dashboard
 │     ├─ app/
-│     │  ├─ jarvis/          # Voice assistant
+│     │  ├─ akior/          # Voice assistant
 │     │  ├─ camera/          # Camera client
 │     │  ├─ security/        # Security dashboard
 │     │  ├─ createimage/     # Image generation
@@ -367,14 +367,14 @@ jarvis/
 │     │
 │     └─ src/
 │        ├─ components/
-│        │  ├─ JarvisAssistant.tsx     # Global voice assistant
-│        │  ├─ JarvisModelViewer.tsx   # 3D viewer component
+│        │  ├─ AKIORAssistant.tsx     # Global voice assistant
+│        │  ├─ AKIORModelViewer.tsx   # 3D viewer component
 │        │  ├─ FileUpload.tsx          # Drag-drop upload
 │        │  └─ Inline3DViewer.tsx      # Embedded 3D viewer
 │        └─ lib/
 │           ├─ api.ts                  # API client
 │           ├─ socket.ts               # Socket.IO client
-│           ├─ jarvis-functions.ts     # Function definitions
+│           ├─ akior-functions.ts     # Function definitions
 │           └─ camera-handler.ts       # Camera streaming
 │
 └─ packages/
@@ -392,7 +392,7 @@ jarvis/
 1. Server machine: Start `npm start` - note the IP shown (e.g., `192.168.1.100`)
 2. Phone: Open `https://192.168.1.100:3000/camera`
 3. Tablet: Open `https://192.168.1.100:3000/security`
-4. Laptop: Open `https://192.168.1.100:3000/jarvis`
+4. Laptop: Open `https://192.168.1.100:3000/akior`
 
 All devices communicate through the same backend, so camera streams, file uploads, and API keys work seamlessly across the network.
 
@@ -408,7 +408,7 @@ Optional environment variables (server):
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SERVER_TLS_CERT_DIR` | Certificate directory | `apps/server/certs` |
-| `SERVER_TLS_CERT_NAME` | Certificate name | `jarvis.local` |
+| `SERVER_TLS_CERT_NAME` | Certificate name | `akior.local` |
 | `SERVER_PUBLIC_HOST` | Public hostname | Auto-detected |
 | `HOST` | Bind address | `0.0.0.0` |
 

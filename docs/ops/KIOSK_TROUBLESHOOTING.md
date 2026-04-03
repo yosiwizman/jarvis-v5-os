@@ -11,11 +11,11 @@ sudo bash ops/verify/kiosk-diagnostics.sh
 ```
 ## Chromium logging / verification
 Kiosk session log:
-- `/home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log`
+- `/home/akior-kiosk/.local/share/akior-kiosk/kiosk.log`
 
 Tail it:
 ```bash
-sudo tail -n 120 /home/akior-kiosk/.local/share/jarvis-kiosk/kiosk.log
+sudo tail -n 120 /home/akior-kiosk/.local/share/akior-kiosk/kiosk.log
 ```
 If Chromium exits immediately, check whether `XDG_RUNTIME_DIR` is present in the log (missing runtime dir can break snap chromium sessions).
 
@@ -29,7 +29,7 @@ pgrep -a chromium || true
 ## Remote deploy (tmux + bounded verify)
 Prefer tmux so deploys survive SSH disconnects:
 ```bash
-tmux new-session -Ad -s kioskdeploy 'sudo /opt/jarvis/JARVIS-V5-OS/ops/deploy/deploy-kiosk.sh'
+tmux new-session -Ad -s kioskdeploy 'sudo /opt/akior/AKIOR-V5-OS/ops/deploy/deploy-kiosk.sh'
 tmux attach -t kioskdeploy
 ```
 

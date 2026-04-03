@@ -20,11 +20,11 @@ const JarvisModelViewer = dynamic(
 const FFT_BARS = 64;
 
 /**
- * Dedicated Full-Screen Jarvis Page
+ * Dedicated Full-Screen AKIOR Page
  * 
- * This page provides a full-screen, always-on Jarvis experience.
+ * This page provides a full-screen, always-on AKIOR experience.
  * The visualizer auto-starts when the page loads and runs continuously.
- * No panels, no controls - just the pure Jarvis interface.
+ * No panels, no controls - just the pure AKIOR interface.
  */
 export default function JarvisPage() {
   // Setup status - gate connection until setup is complete
@@ -163,12 +163,12 @@ export default function JarvisPage() {
     const connectionId = `jarvis-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     connectionIdRef.current = connectionId;
     
-    console.log(`📡 Auto-starting Jarvis... (connection ID: ${connectionId})`);
+    console.log(`📡 Auto-starting AKIOR... (connection ID: ${connectionId})`);
     startRealtime();
     
     // Cleanup on unmount
     return () => {
-      console.log(`🧹 Cleaning up Jarvis connection ${connectionId} on unmount...`);
+      console.log(`🧹 Cleaning up AKIOR connection ${connectionId} on unmount...`);
       const cleanup = endRealtimeRef.current;
       if (cleanup) {
         cleanup();
@@ -571,7 +571,7 @@ export default function JarvisPage() {
         };
       }
       
-      // Format file list for Jarvis
+      // Format file list for AKIOR
       const fileList = matchingFiles.map((f: any) => ({
         name: f.name,
         type: f.category,
@@ -650,7 +650,7 @@ export default function JarvisPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'cameras.captureAll',
-          args: { tag: args.tag || 'jarvis-capture' }
+          args: { tag: args.tag || 'akior-capture' }
         })
       });
       
@@ -742,7 +742,7 @@ export default function JarvisPage() {
       }
       
       setStatus('listening');
-      console.log(`🎤 Starting Jarvis... (connection: ${connectionIdRef.current})`);
+      console.log(`🎤 Starting AKIOR... (connection: ${connectionIdRef.current})`);
       
       // Check if media devices are available before requesting
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -980,7 +980,7 @@ export default function JarvisPage() {
 
       endRealtimeRef.current = cleanup;
     } catch (error) {
-      console.error('Error starting Jarvis:', error);
+      console.error('Error starting AKIOR:', error);
       setStatus('error');
       
       // Reset connection guards on error

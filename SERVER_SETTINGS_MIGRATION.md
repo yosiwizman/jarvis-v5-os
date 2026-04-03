@@ -8,7 +8,7 @@ Settings were stored **ONLY in localStorage** on each client device:
 - ❌ Phone has settings C (different prompt)
 - ❌ **NO SYNCHRONIZATION** across devices
 
-**Result**: Jarvis behaves differently on each device!
+**Result**: AKIOR behaves differently on each device!
 
 ## The Solution
 
@@ -78,12 +78,12 @@ Device 1                    Server                    Device 2
    |------------------------->|                          |
    |  GET /settings           |                          |
    |<-------------------------|                          |
-   |  {jarvis: {...}}         |                          |
+   |  {akior: {...}}         |                          |
    |                          |  loadSettingsFromServer  |
    |                          |<-------------------------|
    |                          |  GET /settings           |
    |                          |------------------------->|
-   |                          |  {jarvis: {...}}         |
+   |                          |  {akior: {...}}         |
    |                          |                          |
    ✅ Same settings on both devices!
 ```
@@ -96,7 +96,7 @@ Device 1 (Laptop)           Server                    Device 2 (Tablet)
    | writeSettings()          |                          |
    |------------------------->|                          |
    |  POST /settings          |                          |
-   |  {jarvis: {prompt: ...}} |                          |
+   |  {akior: {prompt: ...}} |                          |
    |<-------------------------|                          |
    |  {success: true}         |                          |
    |                          |                          |
@@ -105,7 +105,7 @@ Device 1 (Laptop)           Server                    Device 2 (Tablet)
    |                          |<-------------------------|
    |                          |  GET /settings           |
    |                          |------------------------->|
-   |                          |  {jarvis: {prompt: ...}} |
+   |                          |  {akior: {prompt: ...}} |
    |                          |                          |
    ✅ Tablet gets new prompt!
 ```
@@ -122,17 +122,17 @@ If server is unreachable:
 
 Settings stored on server at:
 ```
-/Users/kevincoda/Desktop/Projects/Jarvis/apps/server/data/settings.json
+/Users/kevincoda/Desktop/Projects/AKIOR/apps/server/data/settings.json
 ```
 
 Format:
 ```json
 {
-  "jarvis": {
+  "akior": {
     "model": "gpt-4o-mini-realtime-preview-2024-12-17",
     "voice": "echo",
-    "initialPrompt": "You are J.A.R.V.I.S. ...",
-    "hotword": "jarvis",
+    "initialPrompt": "You are AKIOR ...",
+    "hotword": "akior",
     "imageDetail": "low"
   },
   "models": { ... },
@@ -188,7 +188,7 @@ await writeSettings(settings);  // Async
 
 All helper functions are also now async:
 - `updateSettings()` → `await updateSettings()`
-- `updateJarvisSettings()` → `await updateJarvisSettings()`
+- `updateAKIORSettings()` → `await updateAKIORSettings()`
 - `updateModelSettings()` → `await updateModelSettings()`
 - etc.
 
@@ -202,7 +202,7 @@ All helper functions are also now async:
 ### On Tablet
 1. Refresh the page
 2. Check console: `✅ Settings loaded from server`
-3. Open Jarvis
+3. Open AKIOR
 4. Verify it uses the laptop's prompt!
 
 ### Verify Sync
@@ -214,7 +214,7 @@ All helper functions are also now async:
 
 ✅ **One source of truth** - Server has the settings
 ✅ **Cross-device sync** - All devices use same settings
-✅ **Consistent behavior** - Jarvis acts the same everywhere
+✅ **Consistent behavior** - AKIOR acts the same everywhere
 ✅ **Centralized management** - Update once, applies everywhere
 ✅ **Backup to localStorage** - Works offline
 ✅ **No manual sync** - Automatic on page load

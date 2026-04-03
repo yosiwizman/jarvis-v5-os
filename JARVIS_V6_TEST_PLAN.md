@@ -1,4 +1,4 @@
-# Jarvis V6 OS – Test Plan (v6.1.0)
+# AKIOR V6 OS – Test Plan (v6.1.0)
 
 **For:** Mr. W  
 **Version:** v6.1.0  
@@ -8,7 +8,7 @@
 
 ## Introduction
 
-This is your step-by-step test plan for **Jarvis V6.1.0** – the Notification Drawer & History UI release. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, all v5.x integrations still work (Web Search, Local LLM, TTS, Spotify, Gmail, Calendar), the v6.0.0 notification system (scheduled notifications + toast UI) works correctly, and the NEW notification drawer UI (bell icon, badge, history panel, read/unread tracking) works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
+This is your step-by-step test plan for **AKIOR V6.1.0** – the Notification Drawer & History UI release. We're testing to make sure all the main pages load correctly, the Holomat apps work smoothly, settings save properly, the theme system functions as expected, all v5.x integrations still work (Web Search, Local LLM, TTS, Spotify, Gmail, Calendar), the v6.0.0 notification system (scheduled notifications + toast UI) works correctly, and the NEW notification drawer UI (bell icon, badge, history panel, read/unread tracking) works correctly. You don't need to know any code – just follow the checkboxes below and test each feature in your browser.
 
 This should take about 15–20 minutes if everything works smoothly. If you encounter any issues, take a screenshot and copy any red error messages from the browser console or terminal window.
 
@@ -16,14 +16,14 @@ This should take about 15–20 minutes if everything works smoothly. If you enco
 
 ## How to Start the System (Dev Mode on Windows)
 
-Follow these steps to start Jarvis V6 OS on your local machine:
+Follow these steps to start AKIOR V6 OS on your local machine:
 
 1. **Open PowerShell**
    - Press `Win + X` and select "Windows PowerShell" or "Terminal"
 
-2. **Navigate to the Jarvis directory**
+2. **Navigate to the AKIOR directory**
    ```powershell
-   cd C:\Users\yosiw\Desktop\Jarvis-main
+   cd C:\Users\yosiw\Desktop\AKIOR-main
    ```
 
 3. **Start the development servers**
@@ -57,8 +57,8 @@ Open your browser (Chrome or Edge recommended) and test each page. Check that it
   ✓ Page loads with a clean menu interface  
   ✓ Navigation buttons respond when clicked
 
-- [ ] **Open https://localhost:3000/jarvis**  
-  ✓ Full-screen Jarvis interface appears  
+- [ ] **Open https://localhost:3000/akior**  
+  ✓ Full-screen AKIOR interface appears  
   ✓ Glowing orb visualization is visible  
   ✓ Chat input and controls are present
 
@@ -68,7 +68,7 @@ Open your browser (Chrome or Edge recommended) and test each page. Check that it
 
 - [ ] **Open https://localhost:3000/settings**  
   ✓ Settings page loads with categories on the left  
-  ✓ "Appearance", "Jarvis", "Text Chat", etc. are visible
+  ✓ "Appearance", "AKIOR", "Text Chat", etc. are visible
 
 - [ ] **Open https://localhost:3000/chat**  
   ✓ Chat interface loads  
@@ -170,35 +170,35 @@ This tests whether your settings and theme choices are saved correctly:
 
 ### Settings Persistence
 
-1. **Change a Jarvis Setting**
-   - [ ] In Settings sidebar, click "Jarvis"
-   - [ ] Change the "Assistant Name" field (e.g., from "Jarvis" to "Max")
+1. **Change a AKIOR Setting**
+   - [ ] In Settings sidebar, click "AKIOR"
+   - [ ] Change the "Assistant Name" field (e.g., from "AKIOR" to "Max")
    - [ ] Click the **Save Settings** button
    - [ ] You should see a success message (green notification or similar)
 
 2. **Verify Persistence**
    - [ ] **Refresh the page** (press F5)
-   - [ ] Go back to the "Jarvis" section
+   - [ ] Go back to the "AKIOR" section
    - [ ] The Assistant Name should still show your changed value ("Max")
 
 **Expected Result:** Settings are saved to the server and persist after refresh.
 
 ---
 
-## Jarvis & Chat Behavior (API Integration)
+## AKIOR & Chat Behavior (API Integration)
 
 This tests whether the AI chat functions properly (or fails gracefully if not configured):
 
 ### If API Keys Are NOT Configured
 
-- [ ] Go to https://localhost:3000/chat (or /jarvis)
+- [ ] Go to https://localhost:3000/chat (or /akior)
 - [ ] Try sending a message like "Hello"
 - [ ] **Expected:** You should see a clear error message like "API key not configured" or "OpenAI service unavailable"
 - [ ] The page should **NOT crash** – it should show the error gracefully
 
 ### If API Keys ARE Configured
 
-- [ ] Go to https://localhost:3000/chat (or /jarvis)
+- [ ] Go to https://localhost:3000/chat (or /akior)
 - [ ] Send a simple question: **"What time is it in Miami?"**
 - [ ] **Expected:** Within a few seconds, you should get a normal text response
 - [ ] The response should appear in the chat history
@@ -210,7 +210,7 @@ This tests whether the AI chat functions properly (or fails gracefully if not co
 
 ## Local LLM Integration Test (v5.4.0 New Feature)
 
-This tests the new Local LLM integration that allows Jarvis to use local models (Ollama or custom HTTP) instead of or alongside cloud GPT:
+This tests the new Local LLM integration that allows AKIOR to use local models (Ollama or custom HTTP) instead of or alongside cloud GPT:
 
 ### Prerequisites (Optional)
 
@@ -1135,12 +1135,12 @@ This tests the new notification system with event scheduler, REST API, and real-
 
 ### Visual Toast Test (Manual)
 
-1. **Navigate to any Jarvis page**
-   - [ ] Go to https://localhost:3000/jarvis (or /chat, /holomat, etc.)
+1. **Navigate to any AKIOR page**
+   - [ ] Go to https://localhost:3000/akior (or /chat, /holomat, etc.)
    - [ ] Page loads normally
 
 2. **Schedule a Test Notification**
-   - [ ] Open a **new PowerShell window** (keep Jarvis running)
+   - [ ] Open a **new PowerShell window** (keep AKIOR running)
    - [ ] Run this command to schedule a notification for 10 seconds from now:
      ```powershell
      $body = @{
@@ -1156,7 +1156,7 @@ This tests the new notification system with event scheduler, REST API, and real-
    - [ ] **Expected:** Command returns JSON with `ok: true` and an `eventId`
 
 3. **Watch for Toast Notification**
-   - [ ] Keep Jarvis page open and visible
+   - [ ] Keep AKIOR page open and visible
    - [ ] **After 10 seconds**: A toast notification slides in from the **top-right** corner
    - [ ] Toast shows:
      - System update icon (⚙️)
@@ -1271,7 +1271,7 @@ This tests the new notification drawer UI, bell icon with badge, and read/unread
 ### Bell Icon & Badge Test
 
 1. **Verify Bell Icon Appears**
-   - [ ] Open any Jarvis page (https://localhost:3000/jarvis or /chat)
+   - [ ] Open any AKIOR page (https://localhost:3000/akior or /chat)
    - [ ] Look for a **bell icon** in the **top-right corner** of the page
    - [ ] Bell icon should be visible and styled in gray/white
    - [ ] Hover over the bell icon – it should change to white
@@ -1559,7 +1559,7 @@ Before you finish, make sure you've tested:
 - [ ] Multiple Holomat apps can be open at the same time
 - [ ] Theme (Light/Dark) switches and persists after refresh
 - [ ] Settings save and persist after refresh
-- [ ] Chat/Jarvis either works with AI OR shows clear error message
+- [ ] Chat/AKIOR either works with AI OR shows clear error message
 - [ ] Local LLM integration UI works and persists configuration
 - [ ] ElevenLabs TTS integration UI works and persists configuration
 - [ ] Azure TTS integration UI works and persists configuration
@@ -1582,4 +1582,4 @@ If all checkboxes are marked and no major issues were found, **v5.9.0 is ready f
 
 **End of Test Plan**
 
-Thank you for taking the time to test Jarvis V5 OS. Your feedback helps ensure a stable, production-ready system.
+Thank you for taking the time to test AKIOR V5 OS. Your feedback helps ensure a stable, production-ready system.

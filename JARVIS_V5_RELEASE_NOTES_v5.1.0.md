@@ -1,17 +1,17 @@
-# Jarvis V5 OS – Release v5.1.0
+# AKIOR V5 OS – Release v5.1.0
 
 **Type-safe, production-ready build with theme system**
 
 **Release Date:** 2025-12-06  
-**Repository:** https://github.com/yosiwizman/jarvis-v5-os
+**Repository:** https://github.com/yosiwizman/akior-v5-os
 
 ---
 
 ## Overview
 
-Jarvis V5 OS is a comprehensive local AI operating system that combines the Jarvis conversational AI interface, Holomat augmented reality visualization, advanced 3D modeling tools, camera streaming, and security monitoring into a unified platform. Built on a modern TypeScript monorepo architecture, it provides seamless communication between web-based controls and physical devices through Socket.IO and WebRTC.
+AKIOR V5 OS is a comprehensive local AI operating system that combines the AKIOR conversational AI interface, Holomat augmented reality visualization, advanced 3D modeling tools, camera streaming, and security monitoring into a unified platform. Built on a modern TypeScript monorepo architecture, it provides seamless communication between web-based controls and physical devices through Socket.IO and WebRTC.
 
-**Version 5.1.0** marks the first **fully type-checked, production-build-ready** release of Jarvis V5 OS. This milestone represents a complete cleanup of TypeScript errors across all workspaces (server, web, and shared packages), successful production builds, and the introduction of a professional theme system. All changes are type-safety improvements with zero modifications to business logic or API behavior.
+**Version 5.1.0** marks the first **fully type-checked, production-build-ready** release of AKIOR V5 OS. This milestone represents a complete cleanup of TypeScript errors across all workspaces (server, web, and shared packages), successful production builds, and the introduction of a professional theme system. All changes are type-safety improvements with zero modifications to business logic or API behavior.
 
 This is the **recommended version** for cloning and deploying on new Ubuntu AI rigs, providing a stable, well-typed foundation for further development and customization.
 
@@ -30,7 +30,7 @@ This is the **recommended version** for cloning and deploying on new Ubuntu AI r
 - ✅ **Theme System Implementation**  
   - New `ThemeContext` and `ThemeProvider` for app-wide theme management
   - Light/Dark mode toggle in Settings page
-  - Theme preference persisted in localStorage (`jarvis-v5-theme` key)
+  - Theme preference persisted in localStorage (`akior-v5-theme` key)
   - Automatic HTML class management for Tailwind dark mode support
 
 ### Developer Experience
@@ -90,7 +90,7 @@ This is the **recommended version** for cloning and deploying on new Ubuntu AI r
 
 - **Framework:** Next.js 14 with App Router in `apps/web`
 - **Key Pages:**
-  - `/jarvis` – Full-screen Jarvis AI assistant with voice interaction
+  - `/akior` – Full-screen AKIOR AI assistant with voice interaction
   - `/holomat` – Holomat device control deck with draggable AR app widgets
   - `/3dmodel` – 3D model generation from images or text prompts
   - `/3dViewer` – Interactive 3D model viewer with STL export
@@ -200,8 +200,8 @@ npm run clean
 Clone this version as your starting point:
 
 ```bash
-git clone https://github.com/yosiwizman/jarvis-v5-os.git
-cd jarvis-v5-os
+git clone https://github.com/yosiwizman/akior-v5-os.git
+cd akior-v5-os
 git checkout v5.1.0
 npm install
 npm start
@@ -211,10 +211,10 @@ npm start
 
 ## Credits
 
-**Jarvis V5 OS** is developed and maintained by the Jarvis AI team.
+**AKIOR V5 OS** is developed and maintained by the AKIOR AI team.
 
 For questions, issues, or contributions, visit the repository:  
-https://github.com/yosiwizman/jarvis-v5-os
+https://github.com/yosiwizman/akior-v5-os
 
 ---
 

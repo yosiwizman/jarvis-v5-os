@@ -27,7 +27,12 @@ const keyPath = path.join(dir, 'dev-host-key.pem');
 fs.mkdirSync(dir, { recursive: true });
 
 try {
-  execSync('mkcert -install', { stdio: 'inherit' });
+  // Skip mkcert -install if it fails (needs sudo for system trust store)
+  try {
+    execSync('mkcert -install', { stdio: 'inherit' });
+  } catch {
+    console.warn('mkcert -install failed (needs sudo) — skipping CA install, certs will be untrusted but functional for dev');
+  }
   execSync(`mkcert -cert-file "${certPath}" -key-file "${keyPath}" ${ip} localhost 127.0.0.1 ::1`, {
     stdio: 'inherit'
   });

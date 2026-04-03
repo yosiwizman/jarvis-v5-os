@@ -1,6 +1,6 @@
 # Gmail & Google Calendar Integration - Quick Start
 
-This document provides a quick overview of the Gmail and Google Calendar integration features in J.A.R.V.I.S.
+This document provides a quick overview of the Gmail and Google Calendar integration features in AKIOR
 
 ---
 
@@ -27,7 +27,7 @@ This document provides a quick overview of the Gmail and Google Calendar integra
 
 ### 1. Prerequisites
 - Google account with Gmail and Calendar
-- J.A.R.V.I.S. server installed and running
+- AKIOR server installed and running
 
 ### 2. Configuration Steps
 
@@ -41,7 +41,7 @@ This document provides a quick overview of the Gmail and Google Calendar integra
    - Authorize required scopes
    - Save refresh token
 
-3. **Configure J.A.R.V.I.S.** (5 minutes)
+3. **Configure AKIOR** (5 minutes)
    - Update `data/settings.json` with credentials
    - Restart server
    - Test integration
@@ -55,7 +55,7 @@ This document provides a quick overview of the Gmail and Google Calendar integra
 ### Email App
 
 **Accessing:**
-1. Open J.A.R.V.I.S. HoloMat interface
+1. Open AKIOR HoloMat interface
 2. Click the **📧 Email** app icon
 3. Your inbox loads automatically
 
@@ -69,7 +69,7 @@ This document provides a quick overview of the Gmail and Google Calendar integra
 ### Calendar App
 
 **Accessing:**
-1. Open J.A.R.V.I.S. HoloMat interface
+1. Open AKIOR HoloMat interface
 2. Click the **📅 Calendar** app icon
 3. Calendar loads with your Google Calendar events
 
@@ -82,7 +82,7 @@ This document provides a quick overview of the Gmail and Google Calendar integra
 
 ### Voice Commands
 
-Once configured, use these voice commands with J.A.R.V.I.S.:
+Once configured, use these voice commands with AKIOR:
 
 **Email Commands:**
 - "Check my email"
@@ -104,7 +104,7 @@ The Email Notification System runs in the background and:
 1. Checks your Gmail inbox every 5 minutes (configurable)
 2. Detects new unread messages
 3. Sends real-time notifications via SSE (Server-Sent Events)
-4. Displays notification badges in the J.A.R.V.I.S. UI
+4. Displays notification badges in the AKIOR UI
 
 ### Configuration
 
@@ -162,7 +162,7 @@ Content-Type: application/json
 
 ### How It Works
 
-1. J.A.R.V.I.S. syncs with Google Calendar periodically
+1. AKIOR syncs with Google Calendar periodically
 2. Schedules reminder notifications 15 minutes before each event
 3. Notifications appear in real-time via SSE stream
 4. Users receive alerts before meetings/events start
@@ -276,7 +276,7 @@ curl -X POST http://localhost:3001/api/integrations/google-calendar/test
 - Day view and event detail expansion
 - Event fetching and display
 
-**Voice Integration** (`apps/web/src/lib/jarvis-functions.ts` & `jarvis-function-executor.ts`):
+**Voice Integration** (`apps/web/src/lib/akior-functions.ts` & `akior-function-executor.ts`):
 - OpenAI Function Calling for voice commands
 - `compose_email` function
 - `check_email` function

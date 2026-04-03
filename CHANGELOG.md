@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Jarvis V5 OS will be documented in this file.
+All notable changes to AKIOR V5 OS will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -63,7 +63,7 @@ A complete internal notification and event scheduling system enabling real-time 
 
 ### 📝 Documentation
 
-- `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` - Complete release documentation (329 lines)
+- `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` - Complete release documentation (329 lines)
 - `PR_DESCRIPTION_v6.0.0.md` - Pull request description (235 lines)
 - `MONITORING_CHECKLIST_v6.0.0.md` - Post-deployment monitoring guide (273 lines)
 - `MERGE_READY_SUMMARY.md` - Merge preparation summary (221 lines)
@@ -188,7 +188,7 @@ Planned for v6.1+:
 
 ### 👥 Credits
 
-Developed by the Jarvis V5 OS team.
+Developed by the AKIOR V5 OS team.
 
 **Branch:** `feature/v6-notification-system`  
 **Commits:** 11 commits (`9a9030a` → `2b4fa62`)  

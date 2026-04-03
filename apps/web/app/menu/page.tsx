@@ -148,7 +148,7 @@ export default function MenuPage() {
           <Link 
             key={card.href} 
             href={card.locked ? `/login?next=${card.href}` : card.href as any} 
-            className={`card p-6 hover:border-[color:rgb(var(--jarvis-accent)_/_0.3)] transition block group ${
+            className={`card p-6 hover:border-[color:rgb(var(--akior-accent)_/_0.3)] transition block group ${
               card.locked ? 'opacity-75' : ''
             }`}
           >
@@ -159,7 +159,7 @@ export default function MenuPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 )}
-                <div className="text-lg font-semibold group-hover:jarvis-accent-text transition">{card.title}</div>
+                <div className="text-lg font-semibold group-hover:akior-accent-text transition">{card.title}</div>
               </div>
               {card.badge && (
                 <span className="text-xs px-2 py-1 rounded-full border border-amber-500/40 text-amber-300 bg-amber-500/10">
@@ -168,7 +168,7 @@ export default function MenuPage() {
               )}
             </div>
             <div className="mt-2 text-white/60">{card.desc}</div>
-            <div className="mt-4 jarvis-accent-text font-medium">
+            <div className="mt-4 akior-accent-text font-medium">
               {card.locked ? 'Login to access →' : 'Go →'}
             </div>
           </Link>

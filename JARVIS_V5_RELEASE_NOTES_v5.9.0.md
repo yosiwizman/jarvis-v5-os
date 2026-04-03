@@ -1,4 +1,4 @@
-# Jarvis V5.9.0 – Google Calendar Integration Skeleton
+# AKIOR V5.9.0 – Google Calendar Integration Skeleton
 
 **Release Date:** December 6, 2025  
 **Version:** v5.9.0
@@ -7,11 +7,11 @@
 
 ## Summary
 
-Jarvis V5.9.0 introduces a **Google Calendar integration skeleton** using OAuth2 refresh token flow. This release establishes the backend wiring, configuration UI, and testing infrastructure needed for future calendar management features. The implementation includes a Google Calendar API client, test endpoint, full Settings card, and CI smoke test validation.
+AKIOR V5.9.0 introduces a **Google Calendar integration skeleton** using OAuth2 refresh token flow. This release establishes the backend wiring, configuration UI, and testing infrastructure needed for future calendar management features. The implementation includes a Google Calendar API client, test endpoint, full Settings card, and CI smoke test validation.
 
 This is a **backend + config + test** release. The Google Calendar integration provides connection testing and upcoming event fetching through the API, with full configuration options in Settings. User-facing calendar UI, event creation/editing, and OAuth wizard will arrive in future releases (v5.9.x or v5.10.0).
 
-All previous features from v5.0.0–v5.8.0 remain intact: Gmail integration, Spotify integration, dual TTS providers (ElevenLabs + Azure), Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Google Calendar is **purely additive**—Jarvis continues to work exactly like v5.8.0 when Google Calendar is not configured.
+All previous features from v5.0.0–v5.8.0 remain intact: Gmail integration, Spotify integration, dual TTS providers (ElevenLabs + Azure), Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Google Calendar is **purely additive**—AKIOR continues to work exactly like v5.8.0 when Google Calendar is not configured.
 
 ---
 
@@ -19,7 +19,7 @@ All previous features from v5.0.0–v5.8.0 remain intact: Gmail integration, Spo
 
 ### 📅 Google Calendar Integration (Backend Skeleton)
 
-Google Calendar is now a fully supported integration in Jarvis, offering backend calendar connectivity via Google's Calendar API with OAuth2 refresh token authentication.
+Google Calendar is now a fully supported integration in AKIOR, offering backend calendar connectivity via Google's Calendar API with OAuth2 refresh token authentication.
 
 #### Google Calendar Configuration Card
 
@@ -274,7 +274,7 @@ npm run ci:smoke
 
 **Zero-effort upgrade:**
 1. Pull latest code from `main` branch (tag `v5.9.0`)
-2. Restart Jarvis server
+2. Restart AKIOR server
 3. Google Calendar card appears in Settings → Integrations
 4. All Gmail, Spotify, and other integrations remain configured and functional
 
@@ -293,7 +293,7 @@ npm run ci:smoke
 
 2. **No Calendar UI:**
    - Backend test endpoint works, but no user-facing calendar interface
-   - Cannot view events in Jarvis UI yet
+   - Cannot view events in AKIOR UI yet
    - Cannot create, edit, or delete events from UI
    - Future: `/calendar` route with event list, day/week/month views
 
@@ -364,7 +364,7 @@ npm run ci:smoke
 
 **Low Priority (Future):**
 
-7. **Calendar Integration with Jarvis AI:**
+7. **Calendar Integration with AKIOR AI:**
    - Voice commands: "What's on my calendar today?"
    - Event creation via voice: "Schedule meeting tomorrow at 3 PM"
    - Smart suggestions: "When am I free this week?"
@@ -427,7 +427,7 @@ npm run ci:smoke
 ### v5.0.0 – Initial Local OS (June 2025)
 
 - Holomat radial app launcher with draggable windows
-- Jarvis voice assistant with real-time API
+- AKIOR voice assistant with real-time API
 - 3D model generation and viewer
 - Camera streaming and security dashboard
 - Local HTTPS setup with mkcert + dev TLS proxy
@@ -441,8 +441,8 @@ npm run ci:smoke
 
 1. **Clone repository:**
    ```bash
-   git clone https://github.com/yosiwizman/jarvis-v5-os.git
-   cd jarvis-v5-os
+   git clone https://github.com/yosiwizman/akior-v5-os.git
+   cd akior-v5-os
    git checkout v5.9.0
    ```
 
@@ -461,7 +461,7 @@ npm run ci:smoke
    npm start
    ```
 
-5. **Access Jarvis:**
+5. **Access AKIOR:**
    - Navigate to `https://localhost:3000`
    - Configure Google Calendar in Settings → Integrations
 
@@ -655,9 +655,9 @@ https://www.googleapis.com/auth/calendar.events           # Event management
 
 ### Documentation
 
-- **Release Notes:** `JARVIS_V5_RELEASE_NOTES_v5.9.0.md` (this file)
-- **Test Plan:** `JARVIS_V5_TEST_PLAN.md`
-- **Repo Overview:** `JARVIS_V5_REPO_OVERVIEW.md`
+- **Release Notes:** `AKIOR_V5_RELEASE_NOTES_v5.9.0.md` (this file)
+- **Test Plan:** `AKIOR_V5_TEST_PLAN.md`
+- **Repo Overview:** `AKIOR_V5_REPO_OVERVIEW.md`
 - **README:** `README.md`
 
 ### Google Resources
@@ -668,7 +668,7 @@ https://www.googleapis.com/auth/calendar.events           # Event management
 
 ### Community
 
-- **GitHub Repository:** [https://github.com/yosiwizman/jarvis-v5-os](https://github.com/yosiwizman/jarvis-v5-os)
+- **GitHub Repository:** [https://github.com/yosiwizman/akior-v5-os](https://github.com/yosiwizman/akior-v5-os)
 - **Issues:** Report bugs and feature requests via GitHub Issues
 - **Discussions:** Community Q&A and feature discussions on GitHub Discussions
 
@@ -676,10 +676,10 @@ https://www.googleapis.com/auth/calendar.events           # Event management
 
 ## Acknowledgments
 
-Jarvis V5.9.0 builds on the architectural patterns established in v5.8.0 (Gmail) and continues the integration skeleton approach for third-party API connectivity. Special thanks to the open-source community for feedback on the v5.8.0 release, which informed the design decisions for v5.9.0.
+AKIOR V5.9.0 builds on the architectural patterns established in v5.8.0 (Gmail) and continues the integration skeleton approach for third-party API connectivity. Special thanks to the open-source community for feedback on the v5.8.0 release, which informed the design decisions for v5.9.0.
 
 ---
 
 **Happy Scheduling! 📅**
 
-*Jarvis V5.9.0 - Bringing Google Calendar to your personal AI OS*
+*AKIOR V5.9.0 - Bringing Google Calendar to your personal AI OS*

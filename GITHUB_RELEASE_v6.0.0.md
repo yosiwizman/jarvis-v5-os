@@ -1,4 +1,4 @@
-# 🎉 Jarvis V5 OS - v6.0.0: Notification & Event Loop System
+# 🎉 AKIOR V5 OS - v6.0.0: Notification & Event Loop System
 
 **Release Date:** December 6, 2025  
 **Status:** Production Ready  
@@ -61,7 +61,7 @@ v6.0 introduces a production-ready internal notification and event scheduling sy
 
 **Complete documentation included:**
 - [📋 CHANGELOG.md](CHANGELOG.md) - Version history
-- [📘 JARVIS_V5_RELEASE_NOTES_v6.0.0.md](JARVIS_V5_RELEASE_NOTES_v6.0.0.md) - Detailed release notes
+- [📘 AKIOR_V5_RELEASE_NOTES_v6.0.0.md](AKIOR_V5_RELEASE_NOTES_v6.0.0.md) - Detailed release notes
 - [📊 MONITORING_CHECKLIST_v6.0.0.md](MONITORING_CHECKLIST_v6.0.0.md) - Post-deployment monitoring
 - [📈 MONITORING_METRICS_v6.0.md](MONITORING_METRICS_v6.0.md) - KPIs and troubleshooting
 - [🚀 DEPLOYMENT_SUMMARY_v6.0.0.md](DEPLOYMENT_SUMMARY_v6.0.0.md) - Deployment summary
@@ -127,8 +127,8 @@ https://localhost:3000
 
 ### **New Installations**
 ```bash
-git clone https://github.com/yosiwizman/jarvis-v5-os.git
-cd jarvis-v5-os
+git clone https://github.com/yosiwizman/akior-v5-os.git
+cd akior-v5-os
 npm install
 npm start
 ```
@@ -231,13 +231,13 @@ No known issues at release time.
 ## 📞 Support
 
 **Getting Help:**
-- 📖 [Release Notes](JARVIS_V5_RELEASE_NOTES_v6.0.0.md) - Complete feature documentation
+- 📖 [Release Notes](AKIOR_V5_RELEASE_NOTES_v6.0.0.md) - Complete feature documentation
 - 📋 [CHANGELOG](CHANGELOG.md) - Version history
 - 🛠️ [Monitoring Guide](MONITORING_CHECKLIST_v6.0.0.md) - Troubleshooting
 - 📊 [Metrics Guide](MONITORING_METRICS_v6.0.md) - Operational guidance
 
 **Reporting Issues:**
-- Create a [GitHub issue](https://github.com/yosiwizman/jarvis-v5-os/issues)
+- Create a [GitHub issue](https://github.com/yosiwizman/akior-v5-os/issues)
 - Include logs with `[NotificationScheduler]` prefix
 - Provide steps to reproduce
 
@@ -249,9 +249,9 @@ No known issues at release time.
 
 ## 🔗 Links
 
-- **Repository:** https://github.com/yosiwizman/jarvis-v5-os
+- **Repository:** https://github.com/yosiwizman/akior-v5-os
 - **Documentation:** [README.md](README.md)
-- **Previous Release:** [v5.9.0](https://github.com/yosiwizman/jarvis-v5-os/releases/tag/v5.9.0)
+- **Previous Release:** [v5.9.0](https://github.com/yosiwizman/akior-v5-os/releases/tag/v5.9.0)
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -264,7 +264,7 @@ No known issues at release time.
 
 **Docker (if applicable):**
 ```bash
-docker pull yosiwizman/jarvis-v5-os:6.0.0
+docker pull yosiwizman/akior-v5-os:6.0.0
 ```
 
 ---
@@ -276,6 +276,6 @@ docker pull yosiwizman/jarvis-v5-os:6.0.0
 
 ---
 
-**🎉 Thank you for using Jarvis V5 OS!**
+**🎉 Thank you for using AKIOR V5 OS!**
 
 Upgrade today to experience real-time notifications, calendar reminders, and enhanced camera motion detection.

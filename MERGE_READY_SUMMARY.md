@@ -18,7 +18,7 @@
 - ✅ All commits pushed to remote branch
 
 ### **Documentation**
-- ✅ Release Notes: `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` (329 lines)
+- ✅ Release Notes: `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` (329 lines)
 - ✅ PR Description: `PR_DESCRIPTION_v6.0.0.md` (235 lines)
 - ✅ Monitoring Checklist: `MONITORING_CHECKLIST_v6.0.0.md` (273 lines)
 - ✅ Developer Workflow: `DEV_WORKFLOW.md` Section 5 (updated)
@@ -47,7 +47,7 @@
 6. `apps/web/components/NotificationPreferences.tsx` - Preferences UI (70 lines)
 7. `apps/web/components/CameraSettings.tsx` - Camera settings (100 lines)
 8. `scripts/test-v6-integration.ts` - Integration tests (235 lines)
-9. `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` - Release documentation
+9. `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` - Release documentation
 10. `MONITORING_CHECKLIST_v6.0.0.md` - Post-merge monitoring
 
 ### **9 Files Modified**
@@ -196,7 +196,7 @@ git push origin main
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| Release Notes | Complete feature documentation | `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` |
+| Release Notes | Complete feature documentation | `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` |
 | PR Description | Code review summary | `PR_DESCRIPTION_v6.0.0.md` |
 | Monitoring Checklist | Post-merge monitoring | `MONITORING_CHECKLIST_v6.0.0.md` |
 | Developer Workflow | Implementation details | `DEV_WORKFLOW.md` Section 5 |

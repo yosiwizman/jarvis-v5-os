@@ -17,7 +17,7 @@ This runbook explains the **first-run setup** for AKIOR on the LAN. The in-app o
    - Configure OpenAI and Meshy keys (stored server-side).
 
 4. **Test voice**
-   - Go to `/jarvis` and confirm microphone access + audio playback.
+   - Go to `/akior` and confirm microphone access + audio playback.
 
 5. **Optional: Trust LAN certificate**
    - Follow `docs/ops/lan-tls-trust.md` to install the LAN root CA on the device.

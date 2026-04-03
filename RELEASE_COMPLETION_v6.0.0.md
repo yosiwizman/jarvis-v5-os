@@ -47,7 +47,7 @@
 
 ### **✅ Documentation**
 - [x] `CHANGELOG.md` created (214 lines)
-- [x] `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` created (329 lines)
+- [x] `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` created (329 lines)
 - [x] `PR_DESCRIPTION_v6.0.0.md` created (235 lines)
 - [x] `MONITORING_CHECKLIST_v6.0.0.md` created (273 lines)
 - [x] `MONITORING_METRICS_v6.0.md` created (323 lines)
@@ -103,7 +103,7 @@
 ## 🗂️ Repository Structure (Post-Release)
 
 ```
-jarvis-v5-os/
+akior-v5-os/
 ├── apps/
 │   ├── server/
 │   │   ├── package.json (v6.0.0)
@@ -130,7 +130,7 @@ jarvis-v5-os/
 │   └── test-v6-integration.ts (NEW - 235 lines)
 ├── docs/ (release documentation)
 │   ├── CHANGELOG.md (NEW - 214 lines)
-│   ├── JARVIS_V5_RELEASE_NOTES_v6.0.0.md (NEW - 329 lines)
+│   ├── AKIOR_V5_RELEASE_NOTES_v6.0.0.md (NEW - 329 lines)
 │   ├── MONITORING_CHECKLIST_v6.0.0.md (NEW - 273 lines)
 │   ├── MONITORING_METRICS_v6.0.md (NEW - 323 lines)
 │   ├── DEPLOYMENT_SUMMARY_v6.0.0.md (NEW - 357 lines)
@@ -186,7 +186,7 @@ All documentation is committed to the `main` branch and available in the reposit
 |----------|---------|----------|
 | `README.md` | Quick start & feature overview | End Users |
 | `CHANGELOG.md` | Version history | All |
-| `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` | Detailed release notes | All |
+| `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` | Detailed release notes | All |
 | `DEV_WORKFLOW.md` | Implementation details | Developers |
 | `MONITORING_CHECKLIST_v6.0.0.md` | Post-deployment monitoring | Operators |
 | `MONITORING_METRICS_v6.0.md` | KPIs & troubleshooting | Operators |
@@ -332,7 +332,7 @@ git log origin/main..main
 **For issues or questions:**
 - See `MONITORING_CHECKLIST_v6.0.0.md` for troubleshooting
 - Check `MONITORING_METRICS_v6.0.md` for operational guidance
-- Review `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` for features
+- Review `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` for features
 - Consult `CHANGELOG.md` for version history
 
 **For future development:**

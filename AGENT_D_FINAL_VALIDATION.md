@@ -163,7 +163,7 @@ Agent D has been fully implemented and is ready for production deployment. All c
 
 ### Voice Functions
 
-✅ **All 11 voice functions registered** in `jarvis-functions.ts`:
+✅ **All 11 voice functions registered** in `akior-functions.ts`:
 
 1. `get_weather` - Weather queries
 2. `create_note` - Create notes
@@ -179,7 +179,7 @@ Agent D has been fully implemented and is ready for production deployment. All c
 
 ### Function Handlers
 
-✅ **All 11 function handlers implemented** in `jarvis-function-executor.ts`:
+✅ **All 11 function handlers implemented** in `akior-function-executor.ts`:
 
 - All handlers integrated with backend APIs
 - Proper error handling implemented
@@ -452,7 +452,7 @@ Match Alarms → Fire Notifications
 
 2. **Run Test Suite**:
    ```powershell
-   cd C:\Users\yosiw\Desktop\Jarvis-main
+   cd C:\Users\yosiw\Desktop\AKIOR-main
    .\test-agent-d.ps1
    ```
 

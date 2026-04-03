@@ -88,8 +88,8 @@ Device 2 (Tablet)
 
 ```typescript
 const defaultSettings: AppSettings = {
-  jarvis: {
-    initialPrompt: 'You are J.A.R.V.I.S. (Just A Rather Very Intelligent System)...'
+  akior: {
+    initialPrompt: 'You are AKIOR (Just A Rather Very Intelligent System)...'
     // This is the hardcoded default that all devices get initially
   }
 }
@@ -119,8 +119,8 @@ This default is used:
 2. Open browser console
 3. Look for: `🔄 Loading settings from server...`
 4. Then: `✅ Settings loaded from server`
-5. Open Jarvis (full page or mini assistant)
-6. Start talking - Jarvis should use your custom prompt!
+5. Open AKIOR (full page or mini assistant)
+6. Start talking - AKIOR should use your custom prompt!
 
 ### Verify Sync
 
@@ -212,7 +212,7 @@ This default is used:
 │  ┌──────────────────────────────┐  │
 │  │ data/settings.json            │  │
 │  │ {                             │  │
-│  │   "jarvis": {                 │  │
+│  │   "akior": {                 │  │
 │  │     "initialPrompt": "..."    │  │
 │  │   }                           │  │
 │  │ }                             │  │

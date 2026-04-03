@@ -17,19 +17,19 @@ This is the **industry-standard smart device discovery method** used by:
 
 ### Server Side (✅ DONE)
 
-**Added to `/Jarvis/apps/server/src/index.ts`:**
+**Added to `/AKIOR/apps/server/src/index.ts`:**
 
 1. **UDP Discovery Server** listening on port **8888**
 2. **Auto-detects** local IP address (10.0.0.47)
-3. **Responds** to "DISCOVER_JARVIS" broadcasts with server info
+3. **Responds** to "DISCOVER_AKIOR" broadcasts with server info
 4. **Logs** all discovery requests
 
 ### What Server Broadcasts:
 
 ```json
 {
-  "service": "jarvis",
-  "name": "Jarvis",
+  "service": "akior",
+  "name": "AKIOR",
   "ip": "10.0.0.47",
   "port": 1234,
   "protocol": "https",
@@ -43,12 +43,12 @@ This is the **industry-standard smart device discovery method** used by:
 
 ## 🧪 Test Right Now
 
-### 1. Restart Your Jarvis Server
+### 1. Restart Your AKIOR Server
 
 Stop the current server (Ctrl+C) and start it again:
 
 ```bash
-cd /Users/kevincoda/Desktop/Projects/Jarvis
+cd /Users/kevincoda/Desktop/Projects/AKIOR
 npm start
 ```
 
@@ -66,12 +66,12 @@ npm start
 
 ```bash
 # Send discovery request
-echo -n "DISCOVER_JARVIS" | nc -u -w1 255.255.255.255 8888
+echo -n "DISCOVER_AKIOR" | nc -u -w1 255.255.255.255 8888
 ```
 
 **You should get back:**
 ```json
-{"service":"jarvis","name":"Jarvis","ip":"10.0.0.47","port":1234,"protocol":"https","version":"1.0","path":"/cameras","features":"holomat,3d,camera,ai"}
+{"service":"akior","name":"AKIOR","ip":"10.0.0.47","port":1234,"protocol":"https","version":"1.0","path":"/cameras","features":"holomat,3d,camera,ai"}
 ```
 
 **Server logs should show:**
@@ -84,7 +84,7 @@ echo -n "DISCOVER_JARVIS" | nc -u -w1 255.255.255.255 8888
 ```bash
 # Listen on a random port and send discovery
 nc -u -l 12345 &
-echo -n "DISCOVER_JARVIS" | nc -u 255.255.255.255 8888
+echo -n "DISCOVER_AKIOR" | nc -u 255.255.255.255 8888
 ```
 
 ---
@@ -100,7 +100,7 @@ I've created a complete guide: **`/APKTest/UDP_DISCOVERY_GUIDE.md`**
    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
    ```
 
-2. **Replace `JarvisConnection.kt`** with the new UDP discovery version (full code in guide)
+2. **Replace `AKIORConnection.kt`** with the new UDP discovery version (full code in guide)
 
 3. **Add Coroutines** to `build.gradle`:
    ```gradle
@@ -116,7 +116,7 @@ I've created a complete guide: **`/APKTest/UDP_DISCOVERY_GUIDE.md`**
 5. **Install and Test**:
    ```bash
    adb install -r app/build/outputs/apk/debug/app-debug.apk
-   adb logcat | grep JarvisConnection
+   adb logcat | grep AKIORConnection
    ```
 
 ---
@@ -126,7 +126,7 @@ I've created a complete guide: **`/APKTest/UDP_DISCOVERY_GUIDE.md`**
 ### When Android App Opens:
 
 ```
-1. Broadcasts "DISCOVER_JARVIS" on UDP 8888
+1. Broadcasts "DISCOVER_AKIOR" on UDP 8888
 2. Server responds with IP and port
 3. Android connects to that IP automatically
 4. Device appears in /devices page
@@ -136,15 +136,15 @@ I've created a complete guide: **`/APKTest/UDP_DISCOVERY_GUIDE.md`**
 ### Android Logs Will Show:
 
 ```
-I/JarvisConnection: 🔍 Starting UDP broadcast discovery...
-I/JarvisConnection: 📡 Broadcasting discovery request...
-I/JarvisConnection: ✅ Found Jarvis server at: https://10.0.0.47:1234
-I/JarvisConnection:    Name: Jarvis
-I/JarvisConnection:    IP: 10.0.0.47
-I/JarvisConnection:    Port: 1234
-I/JarvisConnection:    Protocol: https
-I/JarvisConnection: ✅ Connected to Jarvis!
-I/JarvisConnection: 📡 Device registered
+I/AKIORConnection: 🔍 Starting UDP broadcast discovery...
+I/AKIORConnection: 📡 Broadcasting discovery request...
+I/AKIORConnection: ✅ Found AKIOR server at: https://10.0.0.47:1234
+I/AKIORConnection:    Name: AKIOR
+I/AKIORConnection:    IP: 10.0.0.47
+I/AKIORConnection:    Port: 1234
+I/AKIORConnection:    Protocol: https
+I/AKIORConnection: ✅ Connected to AKIOR!
+I/AKIORConnection: 📡 Device registered
 ```
 
 ### Server Logs Will Show:
@@ -160,7 +160,7 @@ I/JarvisConnection: 📡 Device registered
 
 ### Ports:
 - **8888 UDP** - Discovery broadcast
-- **1234 TCP** - Jarvis server (WebSocket)
+- **1234 TCP** - AKIOR server (WebSocket)
 
 ### Firewall:
 ```bash
@@ -201,7 +201,7 @@ lsof -i UDP:8888
 nc -u -l 9999
 
 # Terminal 2 - Send discovery from port 9999
-echo -n "DISCOVER_JARVIS" | nc -u -p 9999 255.255.255.255 8888
+echo -n "DISCOVER_AKIOR" | nc -u -p 9999 255.255.255.255 8888
 ```
 
 ### Check Android WiFi:
@@ -215,17 +215,17 @@ adb shell dumpsys wifi | grep "mWifiInfo"
 ## 📁 Files Modified
 
 ### Server Side:
-- ✅ `/Jarvis/apps/server/src/index.ts` - Added UDP discovery server
+- ✅ `/AKIOR/apps/server/src/index.ts` - Added UDP discovery server
 
 ### Documentation Created:
 - ✅ `/APKTest/UDP_DISCOVERY_GUIDE.md` - Complete Android implementation guide
-- ✅ `/Jarvis/UDP_DISCOVERY_IMPLEMENTED.md` - This file
+- ✅ `/AKIOR/UDP_DISCOVERY_IMPLEMENTED.md` - This file
 
 ---
 
 ## 🚀 Next Steps
 
-1. **Restart Jarvis server** - See new discovery logs
+1. **Restart AKIOR server** - See new discovery logs
 2. **Test with netcat** - Verify discovery works
 3. **Update Android app** - Follow `UDP_DISCOVERY_GUIDE.md`
 4. **Build APK** - Rebuild with new discovery code

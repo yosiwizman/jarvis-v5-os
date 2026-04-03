@@ -138,8 +138,8 @@ function CameraDiagnostics() {
 
 const STREAM_FPS = 8;
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds - matches socket ping interval
-const CAMERA_ID_STORAGE_KEY = 'jarvis.cameraId';
-const CAMERA_NAME_STORAGE_KEY = 'jarvis.cameraName';
+const CAMERA_ID_STORAGE_KEY = 'akior.cameraId';
+const CAMERA_NAME_STORAGE_KEY = 'akior.cameraName';
 const RTC_CONFIGURATION: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };

@@ -21,7 +21,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const THEME_STORAGE_KEY = 'jarvis-v5-theme';
+const THEME_STORAGE_KEY = 'akior-v5-theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeState, setThemeStateInternal] = useState<ThemeState>({

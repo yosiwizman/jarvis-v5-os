@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       cache: 'no-store',
       headers: {
-        'User-Agent': request.headers.get('user-agent') ?? 'JarvisModelProxy/1.0'
+        'User-Agent': request.headers.get('user-agent') ?? 'AkiorModelProxy/1.0'
       }
     });
   } catch (err) {

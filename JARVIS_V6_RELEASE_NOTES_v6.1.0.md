@@ -1,4 +1,4 @@
-# Jarvis V6.1.0 – Notification Drawer & History UI
+# AKIOR V6.1.0 – Notification Drawer & History UI
 
 **Release Date:** December 7, 2025  
 **Type:** Feature Enhancement (Incremental)  
@@ -8,14 +8,14 @@
 
 ## Overview
 
-Jarvis V6.1.0 delivers a complete notification UI experience on top of the notification foundation built in v6.0.0. This release adds a **notification drawer**, **bell icon with badge**, and **read/unread tracking** to provide users with a modern, intuitive way to manage and review their notifications.
+AKIOR V6.1.0 delivers a complete notification UI experience on top of the notification foundation built in v6.0.0. This release adds a **notification drawer**, **bell icon with badge**, and **read/unread tracking** to provide users with a modern, intuitive way to manage and review their notifications.
 
 ### Key Highlights
 
 - **🔔 Notification Bell Icon** – Fixed top-right header icon with unread badge counter
 - **📱 Notification Drawer** – Sliding panel with full notification history and controls
 - **✅ Read/Unread Tracking** – Client-side state management for notification status
-- **🎨 Theme-Aware Design** – Consistent with Jarvis dark mode and glassmorphism aesthetic
+- **🎨 Theme-Aware Design** – Consistent with AKIOR dark mode and glassmorphism aesthetic
 - **♿ Accessibility** – ARIA labels, keyboard navigation (Escape to close), focus management
 
 ---
@@ -24,7 +24,7 @@ Jarvis V6.1.0 delivers a complete notification UI experience on top of the notif
 
 ### 1. Notification Bell Icon
 
-A bell icon has been added to the top-right corner of the main Jarvis layout (beside the HUD widget).
+A bell icon has been added to the top-right corner of the main AKIOR layout (beside the HUD widget).
 
 **Features:**
 - **Unread Badge**: Shows count of unread notifications (1-9, "9+" for 10+)
@@ -207,7 +207,7 @@ Client (v6.1.0)
 
 ### Visual Consistency
 
-- **Colors**: Uses Jarvis V6 theme tokens (`--jarvis-accent`, `--jarvis-surface`)
+- **Colors**: Uses AKIOR V6 theme tokens (`--akior-accent`, `--akior-surface`)
 - **Dark Mode**: Black background (`#0b0f14`), white text with opacity variants
 - **Glassmorphism**: Subtle backdrop blur on drawer overlay
 - **Borders**: White/10 opacity for panel borders
@@ -307,7 +307,7 @@ Client (v6.1.0)
 ### Manual UI Testing
 
 1. **Bell Icon & Badge**:
-   - Open Jarvis UI
+   - Open AKIOR UI
    - Verify bell icon appears in top-right corner
    - Schedule a notification (via Settings or API test endpoint)
    - Verify badge appears with count "1"
@@ -326,7 +326,7 @@ Client (v6.1.0)
 
 3. **History Loading**:
    - Clear browser cache
-   - Open Jarvis UI
+   - Open AKIOR UI
    - Open drawer for first time
    - Verify spinner/loading state (if history is large)
    - Verify past notifications appear (marked as read)
@@ -392,14 +392,14 @@ function MyComponent() {
 ### Styling Classes
 
 - **Animation**: `.animate-slide-in-right` (defined in `globals.css`)
-- **Theme Tokens**: `--jarvis-accent`, `--jarvis-surface`, `--jarvis-border`
+- **Theme Tokens**: `--akior-accent`, `--akior-surface`, `--akior-border`
 - **Tailwind**: Uses standard Tailwind utilities (`bg-white/5`, `border-white/10`, etc.)
 
 ---
 
 ## Summary
 
-Jarvis V6.1.0 completes the notification experience by adding a **modern, accessible, and theme-consistent UI** on top of the notification foundation built in v6.0.0. Users can now:
+AKIOR V6.1.0 completes the notification experience by adding a **modern, accessible, and theme-consistent UI** on top of the notification foundation built in v6.0.0. Users can now:
 
 - **See unread notifications** at a glance (bell badge)
 - **Review full notification history** in a dedicated drawer
@@ -417,6 +417,6 @@ This release maintains **full backward compatibility** with v6.0.0 and requires 
 ---
 
 **For Questions or Issues:**
-- See: `JARVIS_V6_TEST_PLAN.md` for detailed test cases
-- See: `JARVIS_V6_REPO_OVERVIEW.md` for architecture overview
+- See: `AKIOR_V6_TEST_PLAN.md` for detailed test cases
+- See: `AKIOR_V6_REPO_OVERVIEW.md` for architecture overview
 - See: `README.md` for quick start and feature list

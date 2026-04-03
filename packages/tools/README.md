@@ -1,3 +1,3 @@
 # Tools Package (placeholder)
 
-Additional Jarvis tool integrations can live here.
+Additional AKIOR tool integrations can live here.

@@ -1,4 +1,4 @@
-# Jarvis Backend Testing - Complete Guide
+# AKIOR Backend Testing - Complete Guide
 
 ## Quick Start (2 Steps)
 
@@ -7,7 +7,7 @@
 Open a PowerShell window and run:
 
 ```powershell
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 .\START-SERVER.ps1
 ```
 
@@ -24,7 +24,7 @@ cd C:\Users\yosiw\Desktop\Jarvis-main
 Open a NEW PowerShell window and run:
 
 ```powershell
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 .\run-all-tests.ps1
 ```
 

@@ -1,29 +1,29 @@
-# Jarvis Code Consolidation - FIXED
+# AKIOR Code Consolidation - FIXED
 
 ## Problem
 
-The `/jarvis` page and the mini Jarvis assistant (modal) were using **completely separate implementations** with duplicate code:
+The `/akior` page and the mini AKIOR assistant (modal) were using **completely separate implementations** with duplicate code:
 
-- ❌ **JarvisAssistant.tsx**: 900+ lines with full WebRTC implementation
-- ❌ **useJarvisConnection.ts**: Shared hook that wasn't being used
+- ❌ **AKIORAssistant.tsx**: 900+ lines with full WebRTC implementation
+- ❌ **useAKIORConnection.ts**: Shared hook that wasn't being used
 - ❌ **Different behavior** between the two implementations
 - ❌ **Settings not being applied** consistently
 
 ## Solution
 
-**Completely refactored JarvisAssistant to use the shared hook!**
+**Completely refactored AKIORAssistant to use the shared hook!**
 
 ### Before:
 ```
-JarvisAssistant.tsx (900+ lines)
+AKIORAssistant.tsx (900+ lines)
 ├── Full WebRTC connection code (duplicate)
 ├── Function execution (duplicate)
 ├── Settings handling (duplicate)
 ├── Audio analysis
 └── UI components
 
-/jarvis page (423 lines)
-├── useJarvisConnection hook
+/akior page (423 lines)
+├── useAKIORConnection hook
 ├── Audio analysis
 └── UI components
 
@@ -32,19 +32,19 @@ JarvisAssistant.tsx (900+ lines)
 
 ### After:
 ```
-useJarvisConnection.ts (340 lines)
+useAKIORConnection.ts (340 lines)
 ├── WebRTC connection (SINGLE SOURCE OF TRUTH)
-├── Function execution via jarvis-function-executor
+├── Function execution via akior-function-executor
 ├── Settings handling
 └── Status management
 
-JarvisAssistant.tsx (390 lines)
-├── Uses useJarvisConnection hook ✅
+AKIORAssistant.tsx (390 lines)
+├── Uses useAKIORConnection hook ✅
 ├── Audio analysis
 └── UI components
 
-/jarvis page (423 lines)
-├── Uses useJarvisConnection hook ✅
+/akior page (423 lines)
+├── Uses useAKIORConnection hook ✅
 ├── Audio analysis  
 └── UI components
 
@@ -53,7 +53,7 @@ JarvisAssistant.tsx (390 lines)
 
 ## What Changed
 
-### JarvisAssistant.tsx - Complete Rewrite
+### AKIORAssistant.tsx - Complete Rewrite
 
 **Removed (~500 lines of duplicate code)**:
 - ❌ Entire WebRTC connection setup
@@ -64,16 +64,16 @@ JarvisAssistant.tsx (390 lines)
 - ❌ Session config handling
 
 **Added (clean implementation)**:
-- ✅ Uses `useJarvisConnection` hook
+- ✅ Uses `useAKIORConnection` hook
 - ✅ Only UI and visualization code
 - ✅ Audio analysis (kept, UI-specific)
 - ✅ Modal controls
-- ✅ Same behavior as /jarvis page
+- ✅ Same behavior as /akior page
 
 ### Key Implementation
 
 ```typescript
-// OLD WAY (900+ lines in JarvisAssistant):
+// OLD WAY (900+ lines in AKIORAssistant):
 async function startRealtime() {
   const stream = await navigator.mediaDevices.getUserMedia(...);
   const pc = new RTCPeerConnection(...);
@@ -90,7 +90,7 @@ const {
   remoteStreamRef,
   startRealtime,
   endRealtime,
-} = useJarvisConnection({
+} = useAKIORConnection({
   autoStart: false,
   onDisplayContent: setDisplayContent,
 });
@@ -108,16 +108,16 @@ const {
 ## Settings Now Work Correctly
 
 Both implementations now correctly use:
-- ✅ Initial prompt (`jarvis.initialPrompt`)
-- ✅ Voice selection (`jarvis.voice`)
-- ✅ Model selection (`jarvis.model`)
+- ✅ Initial prompt (`akior.initialPrompt`)
+- ✅ Voice selection (`akior.voice`)
+- ✅ Model selection (`akior.model`)
 - ✅ All other settings from shared settings storage
 
 ## Files Modified
 
-1. **JarvisAssistant.tsx** - Complete rewrite (900 → 390 lines)
-2. **useJarvisConnection.ts** - Already existed, now used everywhere
-3. **jarvis/page.tsx** - Already using the hook correctly
+1. **AKIORAssistant.tsx** - Complete rewrite (900 → 390 lines)
+2. **useAKIORConnection.ts** - Already existed, now used everywhere
+3. **akior/page.tsx** - Already using the hook correctly
 
 ## Testing
 
@@ -130,7 +130,7 @@ Both UIs should now:
 
 ## No More Duplicate Code!
 
-The issue is FIXED. Both the `/jarvis` page and the mini assistant modal now use the **exact same connection code** via the shared `useJarvisConnection` hook.
+The issue is FIXED. Both the `/akior` page and the mini assistant modal now use the **exact same connection code** via the shared `useAKIORConnection` hook.
 
 **ONE CODEBASE, ONE BEHAVIOR!** 🎯
 

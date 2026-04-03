@@ -85,8 +85,8 @@ updated_by: yosiwizman
 1. **Deploy to New Host**:
    ```bash
    # On the new host
-   git clone https://github.com/yosiwizman/jarvis-v5-os.git
-   cd jarvis-v5-os
+   git clone https://github.com/yosiwizman/akior-v5-os.git
+   cd akior-v5-os
    ./deploy/local/redeploy.ps1   # Windows
    # or
    ./deploy/local/redeploy.sh    # Linux/Mac
@@ -140,7 +140,7 @@ updated_by: yosiwizman
 7. **Decommission Old Host** (if applicable):
    ```bash
    # On the old host
-   docker compose -f deploy/compose.jarvis.yml down
+   docker compose -f deploy/compose.akior.yml down
    ```
 
 ### Rollback Procedure

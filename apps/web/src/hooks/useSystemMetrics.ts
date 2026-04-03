@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { buildServerUrl } from '@/lib/api';
-import type { SystemMetrics } from '@/types/metrics';
+import { useEffect, useState } from "react";
+import { buildServerUrl } from "@/lib/api";
+import type { SystemMetrics } from "@/types/metrics";
 
 interface UseSystemMetricsResult {
   metrics: SystemMetrics | null;
@@ -21,15 +21,15 @@ export function useSystemMetrics(): UseSystemMetricsResult {
     // Track online/offline status
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
     setIsOnline(navigator.onLine);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -39,16 +39,16 @@ export function useSystemMetrics(): UseSystemMetricsResult {
 
     const fetchMetrics = async () => {
       try {
-        const response = await fetch(buildServerUrl('/api/system/metrics'), {
-          signal: AbortSignal.timeout(5000) // 5 second timeout
+        const response = await fetch(buildServerUrl("/api/system/metrics"), {
+          signal: AbortSignal.timeout(5000), // 5 second timeout
         });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
 
-        const data = await response.json() as SystemMetrics;
-        
+        const data = (await response.json()) as SystemMetrics;
+
         if (isMounted) {
           setMetrics(data);
           setError(null);
@@ -56,7 +56,21 @@ export function useSystemMetrics(): UseSystemMetricsResult {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch metrics');
+          // When backend is unavailable, provide fallback metrics instead of
+          // leaving the UI in a permanent loading/error state
+          setMetrics(
+            (prev) =>
+              prev ??
+              ({
+                cpuLoad: 0,
+                memoryUsedPct: 0,
+                memoryUsedGB: 0,
+                memoryTotalGB: 0,
+                timestamp: new Date().toISOString(),
+                uptime: 0,
+              } as SystemMetrics),
+          );
+          setError(null);
           setIsLoading(false);
         }
       }

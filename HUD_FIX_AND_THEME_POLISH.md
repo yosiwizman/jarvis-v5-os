@@ -1,7 +1,7 @@
 # HUD Fix & Theme Polish Summary
 
 ## Overview
-Fixed HUD hydration error and expanded theme color usage across main Jarvis V5 OS pages, making the UI more responsive to theme selection.
+Fixed HUD hydration error and expanded theme color usage across main AKIOR V5 OS pages, making the UI more responsive to theme selection.
 
 ## PART A: HUD Hydration Fix ✅
 
@@ -23,7 +23,7 @@ Applied `suppressHydrationWarning` attribute to the time display elements in `Hu
   {formattedTime.split(':').slice(0, 2).join(':')}
   <span 
     className="text-base ml-1"
-    style={{ color: `rgba(var(--jarvis-accent), 0.6)` }}
+    style={{ color: `rgba(var(--akior-accent), 0.6)` }}
     suppressHydrationWarning
   >
     {formattedTime.split(':')[2]}
@@ -52,9 +52,9 @@ Make more OS surfaces visually respond to active color theme (Cyber Blue, Midnig
 #### 1. Menu Page (`apps/web/app/menu/page.tsx`)
 
 **Changes:**
-- Card hover border uses theme accent: `hover:border-[color:rgb(var(--jarvis-accent)_/_0.3)]`
-- Card title uses theme accent on hover: `group-hover:jarvis-accent-text`
-- "Go →" arrow uses theme accent: `jarvis-accent-text`
+- Card hover border uses theme accent: `hover:border-[color:rgb(var(--akior-accent)_/_0.3)]`
+- Card title uses theme accent on hover: `group-hover:akior-accent-text`
+- "Go →" arrow uses theme accent: `akior-accent-text`
 
 **Visual Impact:**
 - Menu cards now clearly highlight in theme color when hovering
@@ -65,22 +65,22 @@ Make more OS surfaces visually respond to active color theme (Cyber Blue, Midnig
 **Changes:**
 
 **Header & Helper Text:**
-- Function calling badge: `jarvis-accent-text` (line 687)
-- "Try asking me" callout: `jarvis-accent-text` (line 712)
+- Function calling badge: `akior-accent-text` (line 687)
+- "Try asking me" callout: `akior-accent-text` (line 712)
 
 **Message Bubbles:**
-- User messages: `bg-[color:rgb(var(--jarvis-accent)_/_0.8)]` with accent border (line 731)
-- Function executing: `bg-[color:rgb(var(--jarvis-accent)_/_0.2)]` with accent border (line 734)
-- Function complete: `bg-[color:rgb(var(--jarvis-accent)_/_0.1)]` with accent border (line 738)
-- User label: `jarvis-accent-text opacity-80` (line 760)
-- Function label: `jarvis-accent-text` (line 760)
-- Image borders: `border-[color:rgb(var(--jarvis-accent)_/_0.3)]` (line 781)
+- User messages: `bg-[color:rgb(var(--akior-accent)_/_0.8)]` with accent border (line 731)
+- Function executing: `bg-[color:rgb(var(--akior-accent)_/_0.2)]` with accent border (line 734)
+- Function complete: `bg-[color:rgb(var(--akior-accent)_/_0.1)]` with accent border (line 738)
+- User label: `akior-accent-text opacity-80` (line 760)
+- Function label: `akior-accent-text` (line 760)
+- Image borders: `border-[color:rgb(var(--akior-accent)_/_0.3)]` (line 781)
 
 **Input & Actions:**
-- Textarea focus: `focus:border-[color:rgb(var(--jarvis-accent))]` (line 820)
-- Focus ring: `focus:ring-[color:rgb(var(--jarvis-accent)_/_0.4)]` (line 820)
-- Send button: `border-[color:rgb(var(--jarvis-accent)_/_0.4)] bg-[color:rgb(var(--jarvis-accent)_/_0.8)]` (line 826)
-- Send button hover: `hover:bg-[color:rgb(var(--jarvis-accent))]` (line 826)
+- Textarea focus: `focus:border-[color:rgb(var(--akior-accent))]` (line 820)
+- Focus ring: `focus:ring-[color:rgb(var(--akior-accent)_/_0.4)]` (line 820)
+- Send button: `border-[color:rgb(var(--akior-accent)_/_0.4)] bg-[color:rgb(var(--akior-accent)_/_0.8)]` (line 826)
+- Send button hover: `hover:bg-[color:rgb(var(--akior-accent))]` (line 826)
 
 **Visual Impact:**
 - Chat interface now strongly reflects active theme
@@ -91,14 +91,14 @@ Make more OS surfaces visually respond to active color theme (Cyber Blue, Midnig
 #### 3. Functions Page (`apps/web/app/functions/page.tsx`)
 
 **Changes:**
-- Total functions stat: `jarvis-accent-text` (line 104)
-- Function names (titles): `jarvis-accent-text` (line 153)
-- Parameter requirement badges: `bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text` (line 154)
-- Parameters section header: `jarvis-accent-text` (line 208)
-- Parameter names: `jarvis-accent-text` (line 213)
-- Parameter type badges: `bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text` (line 220)
-- Usage notes box: `bg-[color:rgb(var(--jarvis-accent)_/_0.1)] border-[color:rgb(var(--jarvis-accent)_/_0.2)]` (line 247)
-- Usage notes header: `jarvis-accent-text` (line 248)
+- Total functions stat: `akior-accent-text` (line 104)
+- Function names (titles): `akior-accent-text` (line 153)
+- Parameter requirement badges: `bg-[color:rgb(var(--akior-accent)_/_0.2)] akior-accent-text` (line 154)
+- Parameters section header: `akior-accent-text` (line 208)
+- Parameter names: `akior-accent-text` (line 213)
+- Parameter type badges: `bg-[color:rgb(var(--akior-accent)_/_0.2)] akior-accent-text` (line 220)
+- Usage notes box: `bg-[color:rgb(var(--akior-accent)_/_0.1)] border-[color:rgb(var(--akior-accent)_/_0.2)]` (line 247)
+- Usage notes header: `akior-accent-text` (line 248)
 
 **Visual Impact:**
 - Function documentation clearly shows active theme
@@ -110,16 +110,16 @@ Make more OS surfaces visually respond to active color theme (Cyber Blue, Midnig
 **Changes:**
 
 **Scan Animation:**
-- Main laser beam: `via-[color:rgb(var(--jarvis-accent))]` (line 257)
-- Laser shadow: Dynamic `boxShadow` using `rgb(var(--jarvis-accent))` (line 261)
-- Secondary glow: `via-[color:rgb(var(--jarvis-accent)_/_0.5)]` (line 267)
+- Main laser beam: `via-[color:rgb(var(--akior-accent))]` (line 257)
+- Laser shadow: Dynamic `boxShadow` using `rgb(var(--akior-accent))` (line 261)
+- Secondary glow: `via-[color:rgb(var(--akior-accent)_/_0.5)]` (line 267)
 
 **Menu Mode Button:**
-- Active state: `bg-[color:rgb(var(--jarvis-accent)_/_0.3)] border-[color:rgb(var(--jarvis-accent))] jarvis-accent-shadow` (line 345)
-- Hover state: `hover:bg-[color:rgb(var(--jarvis-accent)_/_0.2)] hover:border-[color:rgb(var(--jarvis-accent)_/_0.5)]` (line 346)
-- Icon color (active): `jarvis-accent-text` (line 350)
-- Icon color (hover): `group-hover:jarvis-accent-text` (line 350)
-- Ping indicator: `jarvis-accent-bg` (line 354)
+- Active state: `bg-[color:rgb(var(--akior-accent)_/_0.3)] border-[color:rgb(var(--akior-accent))] akior-accent-shadow` (line 345)
+- Hover state: `hover:bg-[color:rgb(var(--akior-accent)_/_0.2)] hover:border-[color:rgb(var(--akior-accent)_/_0.5)]` (line 346)
+- Icon color (active): `akior-accent-text` (line 350)
+- Icon color (hover): `group-hover:akior-accent-text` (line 350)
+- Ping indicator: `akior-accent-bg` (line 354)
 
 **Visual Impact:**
 - Scan animation now uses theme color (dramatic effect!)
@@ -143,32 +143,32 @@ Make more OS surfaces visually respond to active color theme (Cyber Blue, Midnig
 
 **Accent Background (80% opacity):**
 ```tsx
-bg-[color:rgb(var(--jarvis-accent)_/_0.8)]
+bg-[color:rgb(var(--akior-accent)_/_0.8)]
 ```
 
 **Accent Background (soft, 20% opacity):**
 ```tsx
-bg-[color:rgb(var(--jarvis-accent)_/_0.2)]
+bg-[color:rgb(var(--akior-accent)_/_0.2)]
 ```
 
 **Accent Text:**
 ```tsx
-jarvis-accent-text  // utility class
+akior-accent-text  // utility class
 ```
 
 **Accent Border (40% opacity):**
 ```tsx
-border-[color:rgb(var(--jarvis-accent)_/_0.4)]
+border-[color:rgb(var(--akior-accent)_/_0.4)]
 ```
 
 **Accent Shadow:**
 ```tsx
-jarvis-accent-shadow  // utility class (0 0 20px with 30% opacity)
+akior-accent-shadow  // utility class (0 0 20px with 30% opacity)
 ```
 
 **Focus Ring:**
 ```tsx
-focus:ring-[color:rgb(var(--jarvis-accent)_/_0.4)]
+focus:ring-[color:rgb(var(--akior-accent)_/_0.4)]
 ```
 
 ## Quality Verification
@@ -248,7 +248,7 @@ pnpm build
 1. **More Pages:** Apply theme accents to:
    - `/3dmodel` (generation buttons)
    - `/3dprinters` (printer status indicators)
-   - `/jarvis` (voice visualizer accents)
+   - `/akior` (voice visualizer accents)
    - `/files` (file type badges)
    - `/security` (camera status)
 

@@ -2,7 +2,7 @@
 
 ## ✅ What Was Implemented
 
-This document summarizes the complete implementation of Android device integration with the Jarvis network system.
+This document summarizes the complete implementation of Android device integration with the AKIOR network system.
 
 ---
 
@@ -10,13 +10,13 @@ This document summarizes the complete implementation of Android device integrati
 
 ### Created Files
 
-1. **`/APKTest/JARVIS_INTEGRATION.md`**
+1. **`/APKTest/AKIOR_INTEGRATION.md`**
    - Comprehensive integration guide for Android developers
    - mDNS discovery documentation
    - Command reference
    - Troubleshooting guide
 
-2. **`/Jarvis/apps/web/app/devices/page.tsx`**
+2. **`/AKIOR/apps/web/app/devices/page.tsx`**
    - New web page showing all connected devices
    - Real-time device status
    - Control panel for Android devices
@@ -24,18 +24,18 @@ This document summarizes the complete implementation of Android device integrati
 
 ### Modified Files
 
-1. **`/Jarvis/apps/server/package.json`**
+1. **`/AKIOR/apps/server/package.json`**
    - Added `bonjour-service` dependency for mDNS broadcasting
 
-2. **`/Jarvis/apps/server/src/index.ts`**
+2. **`/AKIOR/apps/server/src/index.ts`**
    - Added mDNS broadcasting on server startup
    - Added `android:status` event handler
    - Automatic service discovery configuration
 
-3. **`/Jarvis/apps/web/app/menu/page.tsx`**
+3. **`/AKIOR/apps/web/app/menu/page.tsx`**
    - Added "Devices" menu item
 
-4. **`/Jarvis/apps/web/src/lib/jarvis-functions.ts`**
+4. **`/AKIOR/apps/web/src/lib/akior-functions.ts`**
    - Added `/devices` to navigation enum for voice commands
 
 ---
@@ -44,11 +44,11 @@ This document summarizes the complete implementation of Android device integrati
 
 ### 1. **Automatic Server Discovery (mDNS)**
 
-The Jarvis server now broadcasts itself on the local network:
+The AKIOR server now broadcasts itself on the local network:
 
 ```typescript
-Service Name: "Jarvis"
-Service Type: "_jarvis-server._tcp"
+Service Name: "AKIOR"
+Service Type: "_akior-server._tcp"
 Port: 1234
 TXT Records:
   - protocol: "https" or "http"
@@ -82,9 +82,9 @@ All connected devices are tracked in real-time:
 
 ### 3. **Command System**
 
-Bidirectional communication between Jarvis and Android devices:
+Bidirectional communication between AKIOR and Android devices:
 
-#### **Jarvis → Android Commands:**
+#### **AKIOR → Android Commands:**
 
 | Command | Event | Args | Description |
 |---------|-------|------|-------------|
@@ -94,7 +94,7 @@ Bidirectional communication between Jarvis and Android devices:
 | Toggle Grid | `holomat:toggleGrid` | `{ mode: string }` | Changes grid display |
 | Clear All | `holomat:clearAll` | `{}` | Closes all apps/measurements |
 
-#### **Android → Jarvis Status:**
+#### **Android → AKIOR Status:**
 
 | Event | Purpose |
 |-------|---------|
@@ -136,14 +136,14 @@ A complete device management interface:
 ┌─────────────────────────────────────────────────────────────────┐
 │                    1. SERVER STARTUP                            │
 │                                                                 │
-│  Jarvis Server starts → Broadcasts mDNS service                │
-│  Service: "_jarvis-server._tcp" on port 1234                   │
+│  AKIOR Server starts → Broadcasts mDNS service                │
+│  Service: "_akior-server._tcp" on port 1234                   │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │                2. ANDROID APP DISCOVERY                         │
 │                                                                 │
-│  Android app starts → Scans for "_jarvis-server._tcp"          │
+│  Android app starts → Scans for "_akior-server._tcp"          │
 │  Finds service → Resolves IP, port, protocol                   │
 │  Cached for faster reconnection                                │
 └─────────────────────────────────────────────────────────────────┘
@@ -186,21 +186,21 @@ A complete device management interface:
 
 ### For Server Admins
 
-1. **Start Jarvis Server:**
+1. **Start AKIOR Server:**
    ```bash
-   cd /Users/kevincoda/Desktop/Projects/Jarvis/apps/server
+   cd /Users/kevincoda/Desktop/Projects/AKIOR/apps/server
    npm run dev
    ```
 
 2. **Verify mDNS Broadcasting:**
    ```
    Look for log message:
-   "📡 Broadcasting Jarvis service via mDNS (auto-discovery enabled)"
+   "📡 Broadcasting AKIOR service via mDNS (auto-discovery enabled)"
    ```
 
 3. **Access Device Manager:**
    ```
-   Open browser: https://jarvis.local:1234/devices
+   Open browser: https://akior.local:1234/devices
    or: https://<your-ip>:1234/devices
    ```
 
@@ -211,15 +211,15 @@ A complete device management interface:
    implementation('io.socket:socket.io-client:2.1.0')
    ```
 
-2. **Implement `JarvisConnection.kt`:**
-   - Copy from `JARVIS_INTEGRATION.md`
+2. **Implement `AKIORConnection.kt`:**
+   - Copy from `AKIOR_INTEGRATION.md`
    - Handles auto-discovery and connection
-   - Processes commands from Jarvis
+   - Processes commands from AKIOR
 
 3. **Integrate with MainActivity:**
    ```kotlin
-   jarvisConnection = JarvisConnection(this, commandHandler)
-   jarvisConnection.connect()
+   akiorConnection = AKIORConnection(this, commandHandler)
+   akiorConnection.connect()
    ```
 
 4. **Handle Commands:**
@@ -237,12 +237,12 @@ A complete device management interface:
 
 1. **Install HoloMat App on Android device**
 
-2. **Connect to same WiFi as Jarvis server**
+2. **Connect to same WiFi as AKIOR server**
 
 3. **Open app** → It automatically discovers and connects
 
 4. **Control from web:**
-   - Visit `https://jarvis.local:1234/devices`
+   - Visit `https://akior.local:1234/devices`
    - Select your Android device
    - Click buttons to control it
 
@@ -252,7 +252,7 @@ A complete device management interface:
 
 ### Ports
 
-- **1234** - Jarvis server (HTTPS/HTTP + WebSocket)
+- **1234** - AKIOR server (HTTPS/HTTP + WebSocket)
 - **5353** - mDNS (UDP) for service discovery
 
 ### Firewall Rules
@@ -260,7 +260,7 @@ A complete device management interface:
 Make sure these are allowed:
 
 ```bash
-# On Jarvis server
+# On AKIOR server
 sudo ufw allow 1234/tcp
 sudo ufw allow 5353/udp
 
@@ -282,7 +282,7 @@ sudo firewall-cmd --reload
 - Corporate networks with strict firewall
 - VPNs (may block local discovery)
 
-**Solution:** Use fallback URL in `JarvisConnection.kt`:
+**Solution:** Use fallback URL in `AKIORConnection.kt`:
 ```kotlin
 private val FALLBACK_SERVER_URL = "https://192.168.1.100:1234"
 ```
@@ -291,12 +291,12 @@ private val FALLBACK_SERVER_URL = "https://192.168.1.100:1234"
 
 ## 🎮 Voice Commands
 
-Jarvis can navigate to the devices page:
+AKIOR can navigate to the devices page:
 
 ```
-User: "Jarvis, go to the devices page"
-User: "Jarvis, show me connected devices"
-User: "Jarvis, open devices"
+User: "AKIOR, go to the devices page"
+User: "AKIOR, show me connected devices"
+User: "AKIOR, open devices"
 ```
 
 ---
@@ -307,7 +307,7 @@ User: "Jarvis, open devices"
 
 **Check logs for:**
 ```
-📡 Broadcasting Jarvis service via mDNS
+📡 Broadcasting AKIOR service via mDNS
 ```
 
 **If you see:**
@@ -329,7 +329,7 @@ User: "Jarvis, open devices"
 - [ ] Check Android logs for discovery errors
 
 **Fallback:**
-- Update `FALLBACK_SERVER_URL` in `JarvisConnection.kt`
+- Update `FALLBACK_SERVER_URL` in `AKIORConnection.kt`
 - Use direct IP: `https://192.168.1.100:1234`
 
 ### SSL Certificate Errors
@@ -422,7 +422,7 @@ User: "Jarvis, open devices"
 
 ✅ **All completed:**
 
-1. ✅ Jarvis server broadcasts via mDNS
+1. ✅ AKIOR server broadcasts via mDNS
 2. ✅ Android devices auto-discover server
 3. ✅ Devices appear in `/devices` page
 4. ✅ Real-time status updates working
@@ -452,7 +452,7 @@ User: "Jarvis, open devices"
 
 3. **Verify Connection:**
    - Open app on Android
-   - Check Jarvis server logs for "Device registered"
+   - Check AKIOR server logs for "Device registered"
    - Visit `/devices` page
 
 ### Future Enhancements
@@ -472,9 +472,9 @@ User: "Jarvis, open devices"
 
 For issues or questions:
 
-1. Check `JARVIS_INTEGRATION.md` in Android project
+1. Check `AKIOR_INTEGRATION.md` in Android project
 2. Check server logs for errors
-3. Check Android logcat: `adb logcat | grep Jarvis`
+3. Check Android logcat: `adb logcat | grep AKIOR`
 4. Verify network connectivity
 
 ---
@@ -483,14 +483,14 @@ For issues or questions:
 
 To demonstrate the system:
 
-1. **Start Jarvis server:**
+1. **Start AKIOR server:**
    ```bash
    cd apps/server && npm run dev
    ```
 
 2. **Open devices page in browser:**
    ```
-   https://jarvis.local:1234/devices
+   https://akior.local:1234/devices
    ```
 
 3. **Start Android app** on device (same WiFi)
@@ -507,7 +507,7 @@ To demonstrate the system:
 
 **Implementation Complete! 🎉**
 
-All Android devices can now automatically discover and connect to Jarvis on your local network with zero configuration.
+All Android devices can now automatically discover and connect to AKIOR on your local network with zero configuration.
 
 
 

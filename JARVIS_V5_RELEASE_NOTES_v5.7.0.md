@@ -1,4 +1,4 @@
-# Jarvis V5.7.0 – Spotify Integration (Client Credentials)
+# AKIOR V5.7.0 – Spotify Integration (Client Credentials)
 
 **Release Date:** December 6, 2025  
 **Version:** v5.7.0
@@ -7,11 +7,11 @@
 
 ## Summary
 
-Jarvis V5.7.0 introduces **Spotify integration** using the Client Credentials Flow, enabling backend track search functionality. This release adds the foundational Spotify backend client, API endpoint, and configuration UI in Settings—establishing the wiring needed for future music-focused features.
+AKIOR V5.7.0 introduces **Spotify integration** using the Client Credentials Flow, enabling backend track search functionality. This release adds the foundational Spotify backend client, API endpoint, and configuration UI in Settings—establishing the wiring needed for future music-focused features.
 
 This is a **backend + config + test** release. The Spotify integration provides track search capabilities through the API, with full configuration options in Settings. User-facing music browsing and playback controls will arrive in future releases (v5.7.x or v5.8.0).
 
-All previous features from v5.0.0–v5.6.0 remain intact: dual TTS providers (ElevenLabs + Azure), Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Spotify is **purely additive**—Jarvis continues to work exactly like v5.6.0 when Spotify is not configured.
+All previous features from v5.0.0–v5.6.0 remain intact: dual TTS providers (ElevenLabs + Azure), Local LLM support, Web Search, Weather integration, comprehensive theming, real-time HUD, and more. Spotify is **purely additive**—AKIOR continues to work exactly like v5.6.0 when Spotify is not configured.
 
 ---
 
@@ -19,7 +19,7 @@ All previous features from v5.0.0–v5.6.0 remain intact: dual TTS providers (El
 
 ### 🎵 Spotify Integration (Client Credentials Flow)
 
-Spotify is now a fully supported integration in Jarvis, offering backend music search capabilities via Spotify's Web API.
+Spotify is now a fully supported integration in AKIOR, offering backend music search capabilities via Spotify's Web API.
 
 #### Spotify Configuration Card
 
@@ -158,7 +158,7 @@ Expected response:
 ### v5.0.0 – Initial Local OS (June 2025)
 
 - Holomat radial app launcher with draggable windows
-- Jarvis voice assistant with real-time API
+- AKIOR voice assistant with real-time API
 - 3D model generation and viewer
 - Camera streaming and security dashboard
 - Local HTTPS setup with mkcert + dev TLS proxy
@@ -333,7 +333,7 @@ All quality gates passed for v5.7.0:
 ### No Breaking Changes
 
 - **Spotify disabled by default:** Integration is opt-in, enabled only when configured
-- **Existing behavior preserved:** If Spotify is never configured, Jarvis behaves exactly like v5.6.0
+- **Existing behavior preserved:** If Spotify is never configured, AKIOR behaves exactly like v5.6.0
 - **All v5.6.0 features intact:** ElevenLabs, Azure TTS, Local LLM, Web Search, Weather all unchanged
 - **Settings migration:** All previous integration settings remain intact
 
@@ -396,7 +396,7 @@ Your existing integrations (TTS, Local LLM, Web Search, etc.) will continue to w
 
 - Control playback on user devices via Spotify Connect API
 - Requires Authorization Code Flow (user login)
-- Play/pause/skip controls in Jarvis UI
+- Play/pause/skip controls in AKIOR UI
 - Real-time playback status display (currently playing track, progress bar)
 
 ### Usage Tracking
@@ -413,7 +413,7 @@ Your existing integrations (TTS, Local LLM, Web Search, etc.) will continue to w
 ### Playlist Management (Authorization Code Flow)
 
 - Fetch user playlists
-- Create/edit playlists from Jarvis
+- Create/edit playlists from AKIOR
 - Add tracks to playlists directly from search results
 
 ### Album and Artist Search
@@ -424,8 +424,8 @@ Your existing integrations (TTS, Local LLM, Web Search, etc.) will continue to w
 
 ### Voice-Activated Music Control
 
-- "Jarvis, play Never Gonna Give You Up"
-- "Jarvis, search for Taylor Swift"
+- "AKIOR, play Never Gonna Give You Up"
+- "AKIOR, search for Taylor Swift"
 - Natural language music commands integrated with voice assistant
 
 ---
@@ -454,7 +454,7 @@ Spotify is **disabled by default**. Your existing workflow with TTS, Local LLM, 
 
 ## Support & Resources
 
-- **Repository:** [https://github.com/yosiwizman/jarvis-v5-os](https://github.com/yosiwizman/jarvis-v5-os)
+- **Repository:** [https://github.com/yosiwizman/akior-v5-os](https://github.com/yosiwizman/akior-v5-os)
 - **Documentation:** See repository root for detailed guides
 - **Issues:** Report bugs via GitHub Issues
 - **Discussions:** Use GitHub Discussions for questions and feature requests
@@ -462,4 +462,4 @@ Spotify is **disabled by default**. Your existing workflow with TTS, Local LLM, 
 
 ---
 
-**Thank you for using Jarvis V5!** 🚀🎵
+**Thank you for using AKIOR V5!** 🚀🎵

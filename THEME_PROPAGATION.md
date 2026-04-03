@@ -1,7 +1,7 @@
-# Jarvis V5 Theme Propagation Summary
+# AKIOR V5 Theme Propagation Summary
 
 ## Overview
-Successfully propagated the V5 color theme system across the entire Jarvis OS UI. All 5 themes (Cyber Blue, Midnight Purple, Solar Flare, Digital Rain, Ice Crystal) now affect the entire interface, not just the HUD widget.
+Successfully propagated the V5 color theme system across the entire AKIOR OS UI. All 5 themes (Cyber Blue, Midnight Purple, Solar Flare, Digital Rain, Ice Crystal) now affect the entire interface, not just the HUD widget.
 
 ## Canonical Theme Token System
 
@@ -9,19 +9,19 @@ Successfully propagated the V5 color theme system across the entire Jarvis OS UI
 
 | Variable | Purpose | Example Usage |
 |----------|---------|---------------|
-| `--jarvis-accent` | Main accent color for buttons, active states, highlights | `rgb(var(--jarvis-accent))` |
-| `--jarvis-accent-soft` | Softer accent variant for subtle backgrounds | `rgb(var(--jarvis-accent-soft))` |
-| `--jarvis-accent-strong` | Stronger accent for borders, emphasis | `rgb(var(--jarvis-accent-strong))` |
-| `--jarvis-surface` | Default panel/card background | `rgb(var(--jarvis-surface))` |
-| `--jarvis-surface-alt` | Elevated panel background | `rgb(var(--jarvis-surface-alt))` |
-| `--jarvis-border` | Border color base (white RGB for /10 opacity) | `rgb(var(--jarvis-border) / 0.1)` |
-| `--jarvis-focus-ring` | Focus outline color | `rgb(var(--jarvis-focus-ring))` |
+| `--akior-accent` | Main accent color for buttons, active states, highlights | `rgb(var(--akior-accent))` |
+| `--akior-accent-soft` | Softer accent variant for subtle backgrounds | `rgb(var(--akior-accent-soft))` |
+| `--akior-accent-strong` | Stronger accent for borders, emphasis | `rgb(var(--akior-accent-strong))` |
+| `--akior-surface` | Default panel/card background | `rgb(var(--akior-surface))` |
+| `--akior-surface-alt` | Elevated panel background | `rgb(var(--akior-surface-alt))` |
+| `--akior-border` | Border color base (white RGB for /10 opacity) | `rgb(var(--akior-border) / 0.1)` |
+| `--akior-focus-ring` | Focus outline color | `rgb(var(--akior-focus-ring))` |
 
 ### Legacy Variables (maintained for HUD compatibility)
-- `--jarvis-accent-muted`
-- `--jarvis-panel-surface`
-- `--jarvis-bg-grid`
-- `--jarvis-glow`
+- `--akior-accent-muted`
+- `--akior-panel-surface`
+- `--akior-bg-grid`
+- `--akior-glow`
 
 ### Theme Color Values
 
@@ -55,12 +55,12 @@ Successfully propagated the V5 color theme system across the entire Jarvis OS UI
 Defined in `apps/web/app/globals.css` for convenient theme-aware styling:
 
 ```css
-.jarvis-accent-bg       /* background-color: rgb(var(--jarvis-accent)) */
-.jarvis-accent-bg-soft  /* background-color: rgb(var(--jarvis-accent) / 0.2) */
-.jarvis-accent-text     /* color: rgb(var(--jarvis-accent)) */
-.jarvis-accent-border   /* border-color: rgb(var(--jarvis-accent)) */
-.jarvis-accent-shadow   /* box-shadow with accent glow */
-.jarvis-focus-ring      /* outline-color for focus states */
+.akior-accent-bg       /* background-color: rgb(var(--akior-accent)) */
+.akior-accent-bg-soft  /* background-color: rgb(var(--akior-accent) / 0.2) */
+.akior-accent-text     /* color: rgb(var(--akior-accent)) */
+.akior-accent-border   /* border-color: rgb(var(--akior-accent)) */
+.akior-accent-shadow   /* box-shadow with accent glow */
+.akior-focus-ring      /* outline-color for focus states */
 ```
 
 ## Components Updated
@@ -69,14 +69,14 @@ Defined in `apps/web/app/globals.css` for convenient theme-aware styling:
 **Changes:**
 - Active nav items now highlight with theme accent color
 - Active state shows:
-  - Accent background at 15% opacity: `bg-[color:rgb(var(--jarvis-accent)_/_0.15)]`
-  - Left border indicator: `border-l-2 border-l-[color:rgb(var(--jarvis-accent))]`
-  - Accent text color: `jarvis-accent-text`
+  - Accent background at 15% opacity: `bg-[color:rgb(var(--akior-accent)_/_0.15)]`
+  - Left border indicator: `border-l-2 border-l-[color:rgb(var(--akior-accent))]`
+  - Accent text color: `akior-accent-text`
 
 **Example:**
 ```tsx
 <Link className={`block btn truncate ${pathname === '/settings' ? 
-  'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' 
+  'bg-[color:rgb(var(--akior-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--akior-accent))] akior-accent-text' 
   : ''}`} href="/settings">
 ```
 
@@ -84,12 +84,12 @@ Defined in `apps/web/app/globals.css` for convenient theme-aware styling:
 
 #### Theme Selector Buttons
 - Selected theme button now uses current theme's accent color
-- Background: `bg-[color:rgb(var(--jarvis-accent)_/_0.2)]`
-- Border: `border-[color:rgb(var(--jarvis-accent)_/_0.6)]`
-- Glow: `jarvis-accent-shadow`
+- Background: `bg-[color:rgb(var(--akior-accent)_/_0.2)]`
+- Border: `border-[color:rgb(var(--akior-accent)_/_0.6)]`
+- Glow: `akior-accent-shadow`
 
 #### Integration Cards
-- "Coming soon" badges use theme accent: `bg-[color:rgb(var(--jarvis-accent)_/_0.2)] jarvis-accent-text`
+- "Coming soon" badges use theme accent: `bg-[color:rgb(var(--akior-accent)_/_0.2)] akior-accent-text`
 - Connected status pills remain green (semantic color preserved)
 - Not connected status pills remain neutral white/40
 
@@ -101,10 +101,10 @@ Defined in `apps/web/app/globals.css` for convenient theme-aware styling:
 
 **Button styling:**
 ```tsx
-className="btn border-[color:rgb(var(--jarvis-accent)_/_0.6)] 
-  bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white 
-  hover:border-[color:rgb(var(--jarvis-accent))] 
-  hover:bg-[color:rgb(var(--jarvis-accent))]"
+className="btn border-[color:rgb(var(--akior-accent)_/_0.6)] 
+  bg-[color:rgb(var(--akior-accent)_/_0.8)] text-white 
+  hover:border-[color:rgb(var(--akior-accent))] 
+  hover:bg-[color:rgb(var(--akior-accent))]"
 ```
 
 ## Intentionally Neutral Elements
@@ -114,7 +114,7 @@ The following elements remain color-neutral for semantic/safety reasons:
 - **Success indicators**: Green (text-emerald-400, bg-emerald-500/10)
 - **Warning indicators**: Amber (text-amber-400, bg-amber-500/10)
 - **Destructive actions**: Red buttons (Cancel, Delete, etc.)
-- **Dark base backgrounds**: Consistent across all themes for "Jarvis OS" feel
+- **Dark base backgrounds**: Consistent across all themes for "AKIOR OS" feel
 
 ## Theme Application Flow
 
@@ -127,7 +127,7 @@ The following elements remain color-neutral for semantic/safety reasons:
    - `.theme-digital-rain`
    - `.theme-ice-crystal`
 4. CSS variables cascade from theme class selectors
-5. All components using `rgb(var(--jarvis-accent))` update instantly
+5. All components using `rgb(var(--akior-accent))` update instantly
 
 ## Usage Guidelines for New Components
 
@@ -143,8 +143,8 @@ The following elements remain color-neutral for semantic/safety reasons:
 
 **Button with theme accent:**
 ```tsx
-<button className="btn border-[color:rgb(var(--jarvis-accent)_/_0.6)] 
-  bg-[color:rgb(var(--jarvis-accent)_/_0.8)] text-white">
+<button className="btn border-[color:rgb(var(--akior-accent)_/_0.6)] 
+  bg-[color:rgb(var(--akior-accent)_/_0.8)] text-white">
   Primary Action
 </button>
 ```
@@ -152,18 +152,18 @@ The following elements remain color-neutral for semantic/safety reasons:
 **Active state with theme:**
 ```tsx
 <div className={isActive ? 
-  'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] jarvis-accent-text' 
+  'bg-[color:rgb(var(--akior-accent)_/_0.15)] akior-accent-text' 
   : 'text-white/70'}>
 ```
 
 **Accent border:**
 ```tsx
-<div className="border-2 border-[color:rgb(var(--jarvis-accent)_/_0.5)]">
+<div className="border-2 border-[color:rgb(var(--akior-accent)_/_0.5)]">
 ```
 
 **Using utility classes:**
 ```tsx
-<span className="jarvis-accent-text jarvis-accent-bg-soft px-2 py-1 rounded">
+<span className="akior-accent-text akior-accent-bg-soft px-2 py-1 rounded">
   Badge
 </span>
 ```
@@ -196,7 +196,7 @@ The following elements remain color-neutral for semantic/safety reasons:
 
 **Branch:** `feature/v5-theme-propagation`  
 **Commit:** `c21160d`  
-**Message:** "feat(v5): apply color themes across Jarvis OS surfaces"
+**Message:** "feat(v5): apply color themes across AKIOR OS surfaces"
 
 ---
 

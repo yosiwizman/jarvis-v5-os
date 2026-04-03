@@ -1,5 +1,5 @@
 {
-  "name": "jarvis",
+  "name": "akior",
   "private": true,
   "workspaces": [
     "apps/*",

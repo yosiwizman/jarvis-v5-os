@@ -1,7 +1,7 @@
 # HUD Widget Implementation Summary
 
 ## Overview
-Successfully upgraded the Jarvis V5 HUD Widget into a production-ready OS-style system monitoring panel with real-time metrics, full theme integration, and graceful error handling.
+Successfully upgraded the AKIOR V5 HUD Widget into a production-ready OS-style system monitoring panel with real-time metrics, full theme integration, and graceful error handling.
 
 ## Files Created
 
@@ -63,18 +63,18 @@ Successfully upgraded the Jarvis V5 HUD Widget into a production-ready OS-style 
 
 **Interactions:**
 - Toggle button (chevron icon) to collapse/expand
-- Collapsed state persists in `localStorage` key: `jarvis-hud-collapsed`
+- Collapsed state persists in `localStorage` key: `akior-hud-collapsed`
 - Smooth transitions (300ms for collapse, 500ms for metric bars)
 - Hover states on toggle button
 
 **Visual Style:**
 - Uses existing CSS variables:
-  - `--jarvis-accent` - Primary theme color
-  - `--jarvis-accent-muted` - Secondary theme color
-  - `--jarvis-panel-surface` - Background with opacity
-  - `--jarvis-glow` - Highlight effects
-- Background: `rgba(var(--jarvis-panel-surface), 0.3)` with backdrop blur
-- Border: `rgba(var(--jarvis-accent), 0.2)`
+  - `--akior-accent` - Primary theme color
+  - `--akior-accent-muted` - Secondary theme color
+  - `--akior-panel-surface` - Background with opacity
+  - `--akior-glow` - Highlight effects
+- Background: `rgba(var(--akior-panel-surface), 0.3)` with backdrop blur
+- Border: `rgba(var(--akior-accent), 0.2)`
 - All colors adapt instantly to theme changes
 
 ### Metrics API
@@ -120,9 +120,9 @@ The HUD is **fully theme-aware** and responds instantly to theme changes:
 
 **Example CSS Usage:**
 ```css
-background: rgba(var(--jarvis-panel-surface), 0.3);
-border: 1px solid rgba(var(--jarvis-accent), 0.2);
-color: rgba(var(--jarvis-accent), 0.9);
+background: rgba(var(--akior-panel-surface), 0.3);
+border: 1px solid rgba(var(--akior-accent), 0.2);
+color: rgba(var(--akior-accent), 0.9);
 ```
 
 ### Layout Integration

@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This task adds comprehensive smart home device integration (Amazon Alexa, iRobot, Google Nest, Smart Lights) to J.A.R.V.I.S. v6.0.0, enhances camera settings management, and implements a security lockdown mode. All implementations follow the existing integration patterns established by Spotify, Gmail, and Google Calendar.
+This task adds comprehensive smart home device integration (Amazon Alexa, iRobot, Google Nest, Smart Lights) to AKIOR v6.0.0, enhances camera settings management, and implements a security lockdown mode. All implementations follow the existing integration patterns established by Spotify, Gmail, and Google Calendar.
 
 ## Task Scope
 
@@ -24,7 +24,7 @@ This task adds comprehensive smart home device integration (Amazon Alexa, iRobot
 - Configuration interfaces in `packages/shared/src/integrations.ts`
 - REST API endpoints in `apps/server/src/routes/smarthome.routes.ts`
 - Settings UI cards in `apps/web/app/settings/page.tsx`
-- Voice command functions in `apps/web/src/lib/jarvis-functions.ts`
+- Voice command functions in `apps/web/src/lib/akior-functions.ts`
 - Smart Home control dashboard in `apps/web/app/smarthome/page.tsx`
 
 **Features**:
@@ -114,7 +114,7 @@ This task adds comprehensive smart home device integration (Amazon Alexa, iRobot
 3. **Server Routes** → `apps/server/src/routes/[feature].routes.ts`
 4. **Test Function** → `apps/web/src/lib/integrations.ts`
 5. **Settings UI** → `apps/web/app/settings/page.tsx`
-6. **Voice Commands** → `apps/web/src/lib/jarvis-functions.ts`
+6. **Voice Commands** → `apps/web/src/lib/akior-functions.ts`
 
 ### API Authentication Methods
 - **Amazon Alexa**: OAuth2 with refresh token
@@ -199,7 +199,7 @@ This task adds comprehensive smart home device integration (Amazon Alexa, iRobot
 - [ ] Test "set temperature" command
 - [ ] Test "start cleaning" command
 - [ ] Test "activate lockdown mode" command
-- [ ] Verify all voice commands work in Jarvis assistant
+- [ ] Verify all voice commands work in AKIOR assistant
 
 ## Dependencies
 
@@ -210,7 +210,7 @@ This task adds comprehensive smart home device integration (Amazon Alexa, iRobot
 - **Smart Lights**: Philips Hue Bridge or LIFX account
 
 ### No New npm Packages
-All HTTP requests use existing `undici` package. All other functionality uses existing J.A.R.V.I.S. infrastructure.
+All HTTP requests use existing `undici` package. All other functionality uses existing AKIOR infrastructure.
 
 ## Security Considerations
 
@@ -253,7 +253,7 @@ All HTTP requests use existing `undici` package. All other functionality uses ex
 ## Questions or Issues?
 
 Refer to:
-- **Architecture**: `JARVIS_V5_ARCHITECTURE.md`
-- **Repository Overview**: `JARVIS_V5_REPO_OVERVIEW.md`
+- **Architecture**: `AKIOR_V5_ARCHITECTURE.md`
+- **Repository Overview**: `AKIOR_V5_REPO_OVERVIEW.md`
 - **Development Workflow**: `DEV_WORKFLOW.md`
 - **Existing Integration Example**: `apps/server/src/clients/spotifyClient.ts`

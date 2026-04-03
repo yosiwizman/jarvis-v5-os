@@ -2,7 +2,7 @@
 
 ## 🎉 Integration Status: 85% Complete
 
-The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with all core features functional and ready for testing!
+The Memory & Logs system for AKIOR has been successfully integrated with all core features functional and ready for testing!
 
 ---
 
@@ -38,7 +38,7 @@ The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with 
    - Backend API integration
 
 6. **Memory Recall Function** ✅
-   - Added to Jarvis functions
+   - Added to AKIOR functions
    - Full implementation with backend integration
    - Time range filtering
    - Content type filtering
@@ -58,7 +58,7 @@ The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with 
 - **Files Modified:** 6
   - `apps/web/app/settings/page.tsx`
   - `apps/web/app/chat/page.tsx`
-  - `apps/web/src/lib/jarvis-functions.ts`
+  - `apps/web/src/lib/akior-functions.ts`
   - `apps/server/src/index.ts`
   - `apps/server/src/routes/3dprint.routes.ts`
   - `apps/server/src/routes/smarthome.routes.ts`
@@ -83,7 +83,7 @@ The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with 
    - Search, filter, and delete capabilities
 
 2. **Memory Recall**
-   - Ask J.A.R.V.I.S.: "What did we discuss yesterday?"
+   - Ask AKIOR: "What did we discuss yesterday?"
    - Ask: "Show me images I generated last week"
    - Natural language time ranges
    - Filtered by content type
@@ -117,9 +117,9 @@ The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with 
 ### 1. Test Memory Recall
 ```bash
 1. Open chat interface
-2. Have a conversation with J.A.R.V.I.S.
+2. Have a conversation with AKIOR
 3. Ask: "What did we just discuss?"
-4. Verify J.A.R.V.I.S. recalls and summarizes the conversation
+4. Verify AKIOR recalls and summarizes the conversation
 ```
 
 ### 2. Test Conversation Storage
@@ -173,7 +173,7 @@ The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with 
    - Validate UI responsiveness
 
 ### Medium Priority (Optional)
-2. **JarvisAssistant Voice Integration** (~2 hours)
+2. **AKIORAssistant Voice Integration** (~2 hours)
    - Add conversation storage for voice sessions
    - Track voice function executions
    - Save sessions on disconnect
@@ -194,7 +194,7 @@ The Memory & Logs system for J.A.R.V.I.S. has been successfully integrated with 
 ## 🔧 Quick Start Guide
 
 ### For Users
-1. Open J.A.R.V.I.S.
+1. Open AKIOR
 2. Navigate to Settings
 3. Scroll to "Memory & Logs"
 4. Explore your conversation history and actions
@@ -228,7 +228,7 @@ await fetch(buildServerUrl('/api/actions/record'), {
 ```
 
 **Use recall in conversation:**
-Just ask J.A.R.V.I.S. naturally:
+Just ask AKIOR naturally:
 - "What did we discuss yesterday?"
 - "Show me the images I generated this week"
 - "What 3D models have I created?"
@@ -256,7 +256,7 @@ Just ask J.A.R.V.I.S. naturally:
 - `apps/web/components/LogViewer.tsx`
 - `apps/web/app/settings/page.tsx` (updated)
 - `apps/web/app/chat/page.tsx` (updated)
-- `apps/web/src/lib/jarvis-functions.ts` (updated)
+- `apps/web/src/lib/akior-functions.ts` (updated)
 
 ---
 
@@ -305,7 +305,7 @@ Testing required to validate all functionality and discover any edge cases.
 3. Create test plan for future validation
 
 ### Short Term (Next Session)
-1. Add voice session tracking to JarvisAssistant
+1. Add voice session tracking to AKIORAssistant
 2. Comprehensive testing
 3. Performance monitoring
 
@@ -320,7 +320,7 @@ Testing required to validate all functionality and discover any edge cases.
 ## 💡 Usage Tips
 
 ### For Maximum Benefit
-1. **Ask J.A.R.V.I.S. to recall:** Use natural language - the AI understands context
+1. **Ask AKIOR to recall:** Use natural language - the AI understands context
 2. **Review action timeline:** See patterns in your usage
 3. **Search conversations:** Find information from weeks ago instantly
 4. **Monitor logs:** Check for errors or unusual activity
@@ -328,7 +328,7 @@ Testing required to validate all functionality and discover any edge cases.
 ### Best Practices
 1. **Clear old conversations:** Delete unnecessary conversations to keep things organized
 2. **Use descriptive first messages:** Makes searching easier later
-3. **Review actions periodically:** Understand how you're using J.A.R.V.I.S.
+3. **Review actions periodically:** Understand how you're using AKIOR
 4. **Check logs after issues:** Logs provide valuable debugging information
 
 ---

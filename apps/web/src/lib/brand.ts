@@ -4,22 +4,22 @@
  */
 
 /** Primary hostname for LAN access (RFC 8375 recommended) */
-export const PRIMARY_HOSTNAME = 'akior.home.arpa';
+export const PRIMARY_HOSTNAME = "akior.home.arpa";
 
 /** Legacy hostname aliases */
-export const SECONDARY_HOSTNAMES = ['akior.local', 'jarvis.local', 'localhost'];
+export const SECONDARY_HOSTNAMES = ["akior.local", "akior.lan", "localhost"];
 
 export const BRAND = {
-  productName: 'AKIOR',
-  legacyName: 'Jarvis',
-  tagline: 'Intelligent AI Assistant Console',
-  description: 'AKIOR - Intelligent AI Assistant Console',
+  productName: "AKIOR",
+  legacyName: "AKIOR",
+  tagline: "Intelligent AI Assistant Console",
+  description: "AKIOR - Intelligent AI Assistant Console",
   /** Derived from PRIMARY_HOSTNAME to keep single source of truth */
-  canonicalUrl: `https://${PRIMARY_HOSTNAME}`
+  canonicalUrl: `https://${PRIMARY_HOSTNAME}`,
 };
 
 /** Branding version for cache-busting (increment when branding assets change) */
-export const BRAND_VERSION = '2026-02-02-canonical-host';
+export const BRAND_VERSION = "2026-02-02-canonical-host";
 
 export const productName = BRAND.productName;
 export const legacyName = BRAND.legacyName;
@@ -40,7 +40,7 @@ export const LEGACY_NAME = BRAND.legacyName;
 export const APP_DESCRIPTION = BRAND.description;
 
 /** Voice assistant route */
-export const VOICE_ROUTE = '/jarvis'; // Legacy route, keep for backward compat
+export const VOICE_ROUTE = "/jarvis"; // Legacy route path, keep for backward compat
 
 /** Settings version for migration tracking */
 export const SETTINGS_VERSION = 1;

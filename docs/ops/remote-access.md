@@ -14,11 +14,11 @@ AKIOR supports optional secure remote access using [Tailscale](https://tailscale
 
 ## Phase B.1 — Tailscale Container (Ubuntu)
 
-**For Ubuntu 22.04 deployments running `/opt/jarvis/JARVIS-V5-OS`**
+**For Ubuntu 22.04 deployments running `/opt/akior/AKIOR-V5-OS`**
 
 ### Overview
 
-This approach runs Tailscale as an **optional Docker container** alongside JARVIS services. It's:
+This approach runs Tailscale as an **optional Docker container** alongside AKIOR services. It's:
 - Profile-gated (disabled by default)
 - Zero-trust remote access (no inbound WAN ports)
 - Isolated from host system
@@ -37,7 +37,7 @@ This approach runs Tailscale as an **optional Docker container** alongside JARVI
 
 1. **Create local secrets file:**
    ```bash
-   cd /opt/jarvis/JARVIS-V5-OS
+   cd /opt/akior/AKIOR-V5-OS
    cp deploy/secrets/tailscale.env.example deploy/secrets/tailscale.env
    ```
 
@@ -62,13 +62,13 @@ This approach runs Tailscale as an **optional Docker container** alongside JARVI
 **Get your Tailscale hostname:**
 ```bash
 # From the Ubuntu host
-cd /opt/jarvis/JARVIS-V5-OS/deploy
+cd /opt/akior/AKIOR-V5-OS/deploy
 docker compose exec tailscale tailscale status
 ```
 
-Your hostname will look like: `jarvis-tailscale.tail12345.ts.net`
+Your hostname will look like: `akior-tailscale.tail12345.ts.net`
 
-**Access JARVIS from any device on your Tailscale network:**
+**Access AKIOR from any device on your Tailscale network:**
 ```
 https://<your-tailscale-hostname>/
 ```
@@ -92,7 +92,7 @@ bash ops/verify/tailscale-check.sh
 
 **View logs:**
 ```bash
-docker logs jarvis-tailscale -f
+docker logs akior-tailscale -f
 ```
 
 ### How It Works
@@ -107,7 +107,7 @@ docker logs jarvis-tailscale -f
 
 1. **No WAN ports:** Tailscale uses NAT traversal - no router configuration needed
 2. **End-to-end encryption:** All traffic is encrypted via WireGuard
-3. **Tailscale ACLs:** Control which devices can access your JARVIS instance
+3. **Tailscale ACLs:** Control which devices can access your AKIOR instance
 4. **Auth key safety:** 
    - Never commit `deploy/secrets/tailscale.env` to git (it's gitignored)
    - Use ephemeral keys for better security
@@ -118,28 +118,28 @@ docker logs jarvis-tailscale -f
 **Container not starting:**
 ```bash
 # Check logs
-docker logs jarvis-tailscale
+docker logs akior-tailscale
 
 # Verify secrets file exists
-ls -la /opt/jarvis/JARVIS-V5-OS/deploy/secrets/tailscale.env
+ls -la /opt/akior/AKIOR-V5-OS/deploy/secrets/tailscale.env
 ```
 
 **Not authenticated:**
 ```bash
 # Check Tailscale status
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml \
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml \
   exec tailscale tailscale status
 
 # If auth failed, regenerate your auth key and update secrets file
 ```
 
-**Can't access JARVIS from Tailscale:**
+**Can't access AKIOR from Tailscale:**
 ```bash
 # Verify Caddy is listening on localhost:3000
 ss -lntp | grep :3000
 
 # Check Tailscale can reach localhost services
-docker compose -f /opt/jarvis/JARVIS-V5-OS/deploy/compose.jarvis.yml \
+docker compose -f /opt/akior/AKIOR-V5-OS/deploy/compose.akior.yml \
   exec tailscale curl -sk https://localhost:3000/
 ```
 
@@ -324,7 +324,7 @@ If you need to disable all remote access features and return to LAN-only operati
 ### Quick Rollback
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 sudo bash ops/rollback/switch-to-local-only-mode.sh
 ```
 
@@ -341,7 +341,7 @@ sudo bash ops/rollback/switch-to-local-only-mode.sh
 Test what would happen without making changes:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 sudo bash ops/rollback/switch-to-local-only-mode.sh --dry-run
 ```
 
@@ -365,7 +365,7 @@ sudo bash ops/rollback/switch-to-local-only-mode.sh --help
 The rollback script automatically runs LAN verification. You can also run it manually:
 
 ```bash
-cd /opt/jarvis/JARVIS-V5-OS
+cd /opt/akior/AKIOR-V5-OS
 bash ops/verify/kiosk-ui-verify.sh
 ```
 
@@ -373,7 +373,7 @@ bash ops/verify/kiosk-ui-verify.sh
 
 Rollback logs are saved to:
 ```
-/opt/jarvis/JARVIS-V5-OS/ops/rollback/_logs/rollback_YYYYMMDD_HHMMSS.log
+/opt/akior/AKIOR-V5-OS/ops/rollback/_logs/rollback_YYYYMMDD_HHMMSS.log
 ```
 
 These logs include:

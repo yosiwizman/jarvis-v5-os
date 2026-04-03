@@ -1,6 +1,6 @@
 # Security Baseline v1
 
-This document describes the production-grade security controls implemented in JARVIS V5 OS.
+This document describes the production-grade security controls implemented in AKIOR V5 OS.
 
 ## Overview
 

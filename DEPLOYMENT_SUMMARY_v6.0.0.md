@@ -88,7 +88,7 @@
 
 ### **Documentation**
 1. `CHANGELOG.md` - Complete v6.0.0 changelog (214 lines)
-2. `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` - Release notes (329 lines)
+2. `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` - Release notes (329 lines)
 3. `PR_DESCRIPTION_v6.0.0.md` - PR description (235 lines)
 4. `MONITORING_CHECKLIST_v6.0.0.md` - Monitoring guide (273 lines)
 5. `MONITORING_METRICS_v6.0.md` - KPIs & alerts (323 lines)
@@ -130,7 +130,7 @@
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| **For Users** | Release notes | `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` |
+| **For Users** | Release notes | `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` |
 | **For Users** | Quick start | `README.md` (updated) |
 | **For Users** | Version history | `CHANGELOG.md` |
 | **For Developers** | Implementation details | `DEV_WORKFLOW.md` Section 5 |
@@ -317,7 +317,7 @@ npm start
 
 **For Questions:**
 - Review `DEV_WORKFLOW.md` Section 5 for implementation details
-- Check `JARVIS_V5_RELEASE_NOTES_v6.0.0.md` for feature documentation
+- Check `AKIOR_V5_RELEASE_NOTES_v6.0.0.md` for feature documentation
 - Consult `MONITORING_METRICS_v6.0.md` for operational questions
 
 **For Feedback:**

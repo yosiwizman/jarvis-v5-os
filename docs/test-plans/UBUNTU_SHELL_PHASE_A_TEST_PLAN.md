@@ -29,7 +29,7 @@ Before testing, ensure:
   - Git installed (`git --version`)
 
 - **Repository:**
-  - Jarvis repository cloned to `~/jarvis-v5-os` (or known location)
+  - AKIOR repository cloned to `~/akior-v5-os` (or known location)
   - Dependencies installed (`npm install` completed)
   - Production build successful (`npm run build` completed)
 
@@ -45,7 +45,7 @@ Before testing, ensure:
 
 1. Navigate to infra directory:
    ```bash
-   cd ~/jarvis-v5-os/infra/ubuntu-shell
+   cd ~/akior-v5-os/infra/ubuntu-shell
    ```
 
 2. Run the setup helper:
@@ -81,19 +81,19 @@ Before testing, ensure:
 
 2. Copy server service:
    ```bash
-   cp ~/jarvis-v5-os/infra/ubuntu-shell/jarvis-server.service.example \
-      ~/.config/systemd/user/jarvis-server.service
+   cp ~/akior-v5-os/infra/ubuntu-shell/akior-server.service.example \
+      ~/.config/systemd/user/akior-server.service
    ```
 
 3. Copy kiosk service:
    ```bash
-   cp ~/jarvis-v5-os/infra/ubuntu-shell/jarvis-kiosk.service.example \
-      ~/.config/systemd/user/jarvis-kiosk.service
+   cp ~/akior-v5-os/infra/ubuntu-shell/akior-kiosk.service.example \
+      ~/.config/systemd/user/akior-kiosk.service
    ```
 
 4. Edit server service to update paths:
    ```bash
-   nano ~/.config/systemd/user/jarvis-server.service
+   nano ~/.config/systemd/user/akior-server.service
    ```
    - Update `WorkingDirectory=` to actual repo path
    - Update `ExecStart=` npm path if needed
@@ -101,14 +101,14 @@ Before testing, ensure:
 
 5. Edit kiosk service if using Chrome instead of Chromium:
    ```bash
-   nano ~/.config/systemd/user/jarvis-kiosk.service
+   nano ~/.config/systemd/user/akior-kiosk.service
    ```
    - Change browser path if needed
 
 **Expected Results:**
 
 - ✅ Files copied successfully
-- ✅ Files exist at `~/.config/systemd/user/jarvis-*.service`
+- ✅ Files exist at `~/.config/systemd/user/akior-*.service`
 - ✅ Service files are valid systemd format
 - ✅ Paths updated to match local environment
 
@@ -117,9 +117,9 @@ Before testing, ensure:
 
 ---
 
-### 3. Jarvis Server Service Test
+### 3. AKIOR Server Service Test
 
-**Objective:** Verify Jarvis server starts and runs as a systemd service.
+**Objective:** Verify AKIOR server starts and runs as a systemd service.
 
 **Steps:**
 
@@ -130,17 +130,17 @@ Before testing, ensure:
 
 2. Start server service:
    ```bash
-   systemctl --user start jarvis-server.service
+   systemctl --user start akior-server.service
    ```
 
 3. Check service status:
    ```bash
-   systemctl --user status jarvis-server.service
+   systemctl --user status akior-server.service
    ```
 
 4. View service logs:
    ```bash
-   journalctl --user -u jarvis-server.service -n 50
+   journalctl --user -u akior-server.service -n 50
    ```
 
 5. Test server endpoint:
@@ -150,7 +150,7 @@ Before testing, ensure:
 
 6. Stop service:
    ```bash
-   systemctl --user stop jarvis-server.service
+   systemctl --user stop akior-server.service
    ```
 
 **Expected Results:**
@@ -174,39 +174,39 @@ Before testing, ensure:
 
 1. Start server service (dependency):
    ```bash
-   systemctl --user start jarvis-server.service
+   systemctl --user start akior-server.service
    ```
 
 2. Start kiosk service:
    ```bash
-   systemctl --user start jarvis-kiosk.service
+   systemctl --user start akior-kiosk.service
    ```
 
 3. Observe:
    - Browser window opens
    - Full-screen mode active (no tabs, URL bar, or browser chrome)
-   - Jarvis dashboard loads at `https://localhost:3000`
+   - AKIOR dashboard loads at `https://localhost:3000`
 
 4. Check service status:
    ```bash
-   systemctl --user status jarvis-kiosk.service
+   systemctl --user status akior-kiosk.service
    ```
 
 5. Stop kiosk service:
    ```bash
-   systemctl --user stop jarvis-kiosk.service
+   systemctl --user stop akior-kiosk.service
    ```
 
 **Expected Results:**
 
 - ✅ Browser opens in full-screen kiosk mode
 - ✅ No browser UI visible (tabs, URL bar, bookmarks)
-- ✅ Jarvis dashboard loads correctly
+- ✅ AKIOR dashboard loads correctly
 - ✅ Service status shows `active (running)`
 - ✅ Closing browser stops the service
 
 **Pass Criteria:**
-- Full-screen browser displays Jarvis dashboard
+- Full-screen browser displays AKIOR dashboard
 
 ---
 
@@ -218,14 +218,14 @@ Before testing, ensure:
 
 1. Enable services for auto-start:
    ```bash
-   systemctl --user enable jarvis-server.service
-   systemctl --user enable jarvis-kiosk.service
+   systemctl --user enable akior-server.service
+   systemctl --user enable akior-kiosk.service
    ```
 
 2. Verify enabled status:
    ```bash
-   systemctl --user is-enabled jarvis-server.service
-   systemctl --user is-enabled jarvis-kiosk.service
+   systemctl --user is-enabled akior-server.service
+   systemctl --user is-enabled akior-kiosk.service
    ```
 
 3. Log out of Ubuntu:
@@ -238,12 +238,12 @@ Before testing, ensure:
 5. Observe:
    - Server starts automatically in background
    - Kiosk browser opens full-screen automatically
-   - Jarvis dashboard loads
+   - AKIOR dashboard loads
 
 6. Check running services:
    ```bash
-   systemctl --user status jarvis-server.service
-   systemctl --user status jarvis-kiosk.service
+   systemctl --user status akior-server.service
+   systemctl --user status akior-kiosk.service
    ```
 
 **Expected Results:**
@@ -251,7 +251,7 @@ Before testing, ensure:
 - ✅ Both services enabled successfully
 - ✅ Services start automatically after login
 - ✅ Browser opens full-screen without manual intervention
-- ✅ Jarvis dashboard accessible immediately
+- ✅ AKIOR dashboard accessible immediately
 
 **Pass Criteria:**
 - Auto-start works on login without manual commands
@@ -268,7 +268,7 @@ Before testing, ensure:
 
 2. Observe notification bell icon in HUD
 
-3. Schedule a test notification from Jarvis interface or API:
+3. Schedule a test notification from AKIOR interface or API:
    ```bash
    curl -X POST http://localhost:1234/api/notifications/schedule \
      -H "Content-Type: application/json" \
@@ -318,8 +318,8 @@ Before testing, ensure:
 
 1. Start services:
    ```bash
-   systemctl --user start jarvis-server.service
-   systemctl --user start jarvis-kiosk.service
+   systemctl --user start akior-server.service
+   systemctl --user start akior-kiosk.service
    ```
 
 2. Find server process ID:
@@ -334,12 +334,12 @@ Before testing, ensure:
 
 4. Wait 2 seconds and check status:
    ```bash
-   systemctl --user status jarvis-server.service
+   systemctl --user status akior-server.service
    ```
 
 5. Verify server restarted:
    ```bash
-   journalctl --user -u jarvis-server.service -n 20
+   journalctl --user -u akior-server.service -n 20
    ```
 
 **Expected Results:**
@@ -362,20 +362,20 @@ Before testing, ensure:
 
 1. Disable services:
    ```bash
-   systemctl --user disable jarvis-server.service
-   systemctl --user disable jarvis-kiosk.service
+   systemctl --user disable akior-server.service
+   systemctl --user disable akior-kiosk.service
    ```
 
 2. Stop services:
    ```bash
-   systemctl --user stop jarvis-server.service
-   systemctl --user stop jarvis-kiosk.service
+   systemctl --user stop akior-server.service
+   systemctl --user stop akior-kiosk.service
    ```
 
 3. Remove service files:
    ```bash
-   rm ~/.config/systemd/user/jarvis-server.service
-   rm ~/.config/systemd/user/jarvis-kiosk.service
+   rm ~/.config/systemd/user/akior-server.service
+   rm ~/.config/systemd/user/akior-kiosk.service
    ```
 
 4. Reload systemd:
@@ -406,7 +406,7 @@ Before testing, ensure:
 
 **Check:**
 ```bash
-journalctl --user -u jarvis-server.service -n 50
+journalctl --user -u akior-server.service -n 50
 ```
 
 **Common Causes:**
@@ -419,7 +419,7 @@ journalctl --user -u jarvis-server.service -n 50
 
 **Check:**
 ```bash
-journalctl --user -u jarvis-kiosk.service -n 50
+journalctl --user -u akior-kiosk.service -n 50
 ```
 
 **Common Causes:**
@@ -473,7 +473,7 @@ After completing all tests, verify:
 
 - [ ] Setup helper script runs successfully
 - [ ] Service files copy and edit correctly
-- [ ] Jarvis server service starts and runs
+- [ ] AKIOR server service starts and runs
 - [ ] Kiosk browser service launches full-screen
 - [ ] Services auto-start on login
 - [ ] HUD notification widget works in kiosk mode

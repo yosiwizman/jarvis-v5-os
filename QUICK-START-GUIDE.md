@@ -1,4 +1,4 @@
-# 🚀 JARVIS - Quick Start Guide
+# 🚀 AKIOR - Quick Start Guide
 
 ## ✅ Current Status
 
@@ -11,13 +11,13 @@
 
 ---
 
-## 🌐 Access Your Jarvis Application
+## 🌐 Access Your AKIOR Application
 
 ### Step 1: Open Your Browser
 Navigate to: **https://localhost:3000**
 
 ### Step 2: Accept Certificate Warning
-Since Jarvis uses a self-signed SSL certificate, you'll see a security warning:
+Since AKIOR uses a self-signed SSL certificate, you'll see a security warning:
 
 **Chrome/Edge:**
 1. Click "Advanced"
@@ -68,15 +68,15 @@ netstat -ano | findstr ":1234 :3000 :3001"
 ### View Server Logs
 ```powershell
 # Application logs
-Get-Content C:\Users\yosiw\Desktop\Jarvis-main\data\logs\app.log -Tail 50
+Get-Content C:\Users\yosiw\Desktop\AKIOR-main\data\logs\app.log -Tail 50
 
 # Error logs (should be empty)
-Get-Content C:\Users\yosiw\Desktop\Jarvis-main\data\logs\error.log -Tail 50
+Get-Content C:\Users\yosiw\Desktop\AKIOR-main\data\logs\error.log -Tail 50
 ```
 
 ### Re-run Backend Tests
 ```bash
-node C:\Users\yosiw\Desktop\Jarvis-main\test-backend-complete.js
+node C:\Users\yosiw\Desktop\AKIOR-main\test-backend-complete.js
 ```
 
 ### Restart Server (if needed)
@@ -85,7 +85,7 @@ node C:\Users\yosiw\Desktop\Jarvis-main\test-backend-complete.js
 Get-Process | Where-Object {$_.ProcessName -match "node"} | Stop-Process -Force
 
 # Restart server
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 npm start
 ```
 
@@ -155,7 +155,7 @@ During this session, the following critical bugs were identified and fixed:
 ### If the server isn't running:
 ```powershell
 # Navigate to project directory
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 
 # Install dependencies (if needed)
 npm install

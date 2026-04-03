@@ -9,7 +9,7 @@ This guide provides step-by-step instructions for executing all Agent D tests.
 Open a terminal and run:
 
 ```bash
-cd C:\Users\yosiw\Desktop\Jarvis-main\apps\server
+cd C:\Users\yosiw\Desktop\AKIOR-main\apps\server
 npm run dev
 ```
 
@@ -32,7 +32,7 @@ Should return `True`.
 ### Option 1: Run Full Test Suite (Recommended)
 
 ```powershell
-cd C:\Users\yosiw\Desktop\Jarvis-main
+cd C:\Users\yosiw\Desktop\AKIOR-main
 .\test-agent-d.ps1
 ```
 
@@ -238,7 +238,7 @@ Invoke-RestMethod -Uri "https://localhost:1234/api/alarms" -Method POST -Body $b
 
 1. **Check current settings:**
 ```powershell
-Get-Content C:\Users\yosiw\Desktop\Jarvis-main\apps\server\data\settings.json | ConvertFrom-Json | Select-Object -ExpandProperty voiceFeedbackProvider
+Get-Content C:\Users\yosiw\Desktop\AKIOR-main\apps\server\data\settings.json | ConvertFrom-Json | Select-Object -ExpandProperty voiceFeedbackProvider
 ```
 
 2. **Test voice feedback module:**
@@ -327,7 +327,7 @@ Invoke-RestMethod -Uri "https://localhost:1234/api/notes" -Method POST -Body $bo
 
 ### Test 2: Verify File Updated
 ```powershell
-Get-Content C:\Users\yosiw\Desktop\Jarvis-main\apps\server\data\notes.json | ConvertFrom-Json | Select-Object -ExpandProperty notes
+Get-Content C:\Users\yosiw\Desktop\AKIOR-main\apps\server\data\notes.json | ConvertFrom-Json | Select-Object -ExpandProperty notes
 ```
 
 Should show the created note.

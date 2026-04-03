@@ -14,8 +14,8 @@ export interface UseJarvisConnectionOptions {
 }
 
 /**
- * Shared hook for Jarvis WebRTC connection and function execution
- * Used by both the full-screen Jarvis page and the mini floating assistant
+ * Shared hook for AKIOR WebRTC connection and function execution
+ * Used by both the full-screen AKIOR page and the mini floating assistant
  */
 export function useJarvisConnection(options: UseJarvisConnectionOptions = {}) {
   const { autoStart = false, onDisplayContent, onStatusChange } = options;
@@ -70,7 +70,7 @@ export function useJarvisConnection(options: UseJarvisConnectionOptions = {}) {
     const currentConnectionId = `conn-${Date.now()}`;
     connectionIdRef.current = currentConnectionId;
 
-    console.log(`🎤 Starting Jarvis Realtime connection (${currentConnectionId})...`);
+    console.log(`🎤 Starting AKIOR Realtime connection (${currentConnectionId})...`);
     
     // Read settings FRESH every time we connect!
     const settings = readSettings();
@@ -329,14 +329,14 @@ export function useJarvisConnection(options: UseJarvisConnectionOptions = {}) {
 
   useEffect(() => {
     if (autoStart) {
-      console.log('🚀 Auto-starting Jarvis connection...');
+      console.log('🚀 Auto-starting AKIOR connection...');
       startRealtime();
     }
 
     return () => {
       // Use statusRef to get current status in cleanup
       if (statusRef.current === 'active') {
-        console.log('🛑 Cleaning up Jarvis connection...');
+        console.log('🛑 Cleaning up AKIOR connection...');
         endRealtime();
       }
     };

@@ -1,6 +1,6 @@
 /**
- * Shared camera analysis handler for Jarvis
- * Works with both full Jarvis page and Mini Jarvis assistant
+ * Shared camera analysis handler for AKIOR
+ * Works with both full AKIOR page and Mini AKIOR assistant
  */
 
 import { getSecuritySocket, type CameraPresence, type SecurityFramePayload } from './socket';
@@ -128,7 +128,7 @@ export async function handleCameraAnalysis(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dataUrl: imageDataUrl,
-          filename: `jarvis-vision-${targetCamera.friendlyName}`,
+          filename: `akior-vision-${targetCamera.friendlyName}`,
           prompt: `Camera view from ${targetCamera.friendlyName}`
         })
       });
@@ -146,7 +146,7 @@ export async function handleCameraAnalysis(
     
     // Send the image through the Realtime API data channel
     if (!dataChannel || dataChannel.readyState !== 'open') {
-      throw new Error('No active Realtime connection. Please ensure Jarvis is connected.');
+      throw new Error('No active Realtime connection. Please ensure AKIOR is connected.');
     }
     
     console.log('🔍 Sending image to Realtime API...');

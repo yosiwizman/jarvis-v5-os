@@ -6,7 +6,7 @@ This guide helps Windows users enable trusted HTTPS access to AKIOR on the LAN, 
 
 1. AKIOR server is running with HTTPS enabled (Phase E completed)
 2. You have the `rootCA.pem` file from the server's `deploy/certs/` directory
-3. Windows hosts file is configured with `jarvis.local` pointing to the server IP
+3. Windows hosts file is configured with `akior.local` pointing to the server IP
 
 ## Quick Setup (Automated)
 
@@ -16,7 +16,7 @@ Copy `rootCA.pem` from the AKIOR server to your Windows machine:
 
 ```
 # On the server, the file is at:
-/path/to/jarvis-v5-os/deploy/certs/rootCA.pem
+/path/to/akior-v5-os/deploy/certs/rootCA.pem
 
 # Copy it to your Windows machine (e.g., Downloads folder)
 ```
@@ -30,7 +30,7 @@ Copy `rootCA.pem` from the AKIOR server to your Windows machine:
 
 2. **Navigate to the repository (if cloned locally):**
    ```powershell
-   cd C:\path\to\jarvis-v5-os
+   cd C:\path\to\akior-v5-os
    ```
 
 3. **Run the import script:**
@@ -43,8 +43,8 @@ Copy `rootCA.pem` from the AKIOR server to your Windows machine:
    ```
 
 4. **Restart your browser** and navigate to:
-   - `https://jarvis.local/`
-   - `https://jarvis.local/camera`
+   - `https://akior.local/`
+   - `https://akior.local/camera`
 
 ## Manual Setup
 
@@ -82,7 +82,7 @@ For **Machine-wide** trust (recommended):
 
 2. **Close all browser windows completely**
 
-3. Open browser and navigate to `https://jarvis.local/`
+3. Open browser and navigate to `https://akior.local/`
 
 4. The padlock icon should appear (no warnings)
 
@@ -104,20 +104,20 @@ For **Machine-wide** trust (recommended):
    certutil -store Root | findstr /i "mkcert"
    ```
 
-### "jarvis.local" Doesn't Resolve
+### "akior.local" Doesn't Resolve
 
 Verify hosts file entry:
 ```powershell
 # View hosts file
-Get-Content C:\Windows\System32\drivers\etc\hosts | Select-String "jarvis"
+Get-Content C:\Windows\System32\drivers\etc\hosts | Select-String "akior"
 
 # Should show something like:
-# 192.168.1.204    jarvis.local aifactory-lan
+# 192.168.1.204    akior.local aifactory-lan
 ```
 
 If missing, add it (as Administrator):
 ```powershell
-Add-Content C:\Windows\System32\drivers\etc\hosts "`n192.168.1.204    jarvis.local aifactory-lan"
+Add-Content C:\Windows\System32\drivers\etc\hosts "`n192.168.1.204    akior.local aifactory-lan"
 ipconfig /flushdns
 ```
 
@@ -125,7 +125,7 @@ ipconfig /flushdns
 
 1. Verify you're accessing via **HTTPS** (not HTTP)
 2. Check browser permissions (click padlock → Site settings)
-3. Open `https://jarvis.local/camera` and check the diagnostics panel
+3. Open `https://akior.local/camera` and check the diagnostics panel
 
 ## Security Notes
 

@@ -1,4 +1,4 @@
-# Jarvis V5 OS - Release Notes v6.0.0
+# AKIOR V5 OS - Release Notes v6.0.0
 
 **Release Date:** December 6, 2025  
 **Branch:** `feature/v6-notification-system`  
@@ -307,7 +307,7 @@ updateSettings({
 
 ## 🙏 Credits
 
-Developed by the Jarvis V5 OS team.
+Developed by the AKIOR V5 OS team.
 
 Branch: `feature/v6-notification-system`  
 Commits: `9a9030a` → `48ccd34` (9 commits)

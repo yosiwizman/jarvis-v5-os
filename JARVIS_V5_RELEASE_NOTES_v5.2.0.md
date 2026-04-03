@@ -1,4 +1,4 @@
-# Jarvis V5.2.0 Release Notes
+# AKIOR V5.2.0 Release Notes
 
 **Release Date:** December 6, 2025  
 **Version:** v5.2.0  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Jarvis V5.2.0 delivers a comprehensive theming system, real-time system monitoring via the HUD widget, weather integration, and stabilized API endpoints. This release transforms the visual experience with theme-aware backgrounds and accent propagation while adding production-ready integrations infrastructure.
+AKIOR V5.2.0 delivers a comprehensive theming system, real-time system monitoring via the HUD widget, weather integration, and stabilized API endpoints. This release transforms the visual experience with theme-aware backgrounds and accent propagation while adding production-ready integrations infrastructure.
 
 ---
 
@@ -106,7 +106,7 @@ Jarvis V5.2.0 delivers a comprehensive theming system, real-time system monitori
 
 ## 🔧 Technical Improvements
 
-- **CSS Variable System:** Introduced `--jarvis-bg-base`, `--jarvis-bg-elevated`, and gradient tokens for all themes
+- **CSS Variable System:** Introduced `--akior-bg-base`, `--akior-bg-elevated`, and gradient tokens for all themes
 - **Shared Types:** Created `packages/shared/src/3dprint.ts` and `packages/shared/src/integrations.ts` for type safety
 - **Dev Environment:** Added `start.log` to `.gitignore` to prevent tracking of runtime logs
 - **TypeScript Coverage:** All new code is fully typed with zero TypeScript errors
@@ -121,8 +121,8 @@ Jarvis V5.2.0 delivers a comprehensive theming system, real-time system monitori
 - **HUD_FIX_AND_THEME_POLISH.md** – HUD hydration fix and accent expansion details
 - **HUD_IMPLEMENTATION_SUMMARY.md** – Complete HUD widget architecture
 - **WEATHER_INTEGRATION.md** – Weather API integration guide
-- **JARVIS_V5_TEST_PLAN.md** – Updated to v5.2.0
-- **JARVIS_V5_REPO_OVERVIEW.md** – Updated version references
+- **AKIOR_V5_TEST_PLAN.md** – Updated to v5.2.0
+- **AKIOR_V5_REPO_OVERVIEW.md** – Updated version references
 
 ---
 
@@ -186,8 +186,8 @@ Built with:
 - **Branch:** `main`
 - **Commit:** (to be tagged)
 
-For detailed technical architecture, see `JARVIS_V5_ARCHITECTURE.md`.
+For detailed technical architecture, see `AKIOR_V5_ARCHITECTURE.md`.
 
 ---
 
-**Enjoy the enhanced Jarvis V5 OS experience! 🎉**
+**Enjoy the enhanced AKIOR V5 OS experience! 🎉**

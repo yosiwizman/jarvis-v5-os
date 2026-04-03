@@ -1,4 +1,4 @@
-# Jarvis V5.5.0 – ElevenLabs Text-to-Speech Integration
+# AKIOR V5.5.0 – ElevenLabs Text-to-Speech Integration
 
 **Release Date:** December 6, 2025  
 **Version:** v5.5.0
@@ -7,9 +7,9 @@
 
 ## Summary
 
-Jarvis V5.5.0 brings **voice to your AI assistant** with the addition of ElevenLabs text-to-speech integration. Assistant responses in the Chat UI can now be spoken aloud with high-quality, natural-sounding voices when an ElevenLabs API key is configured. This release adds another layer of immersion and accessibility to Jarvis, enabling hands-free interaction and multitasking workflows.
+AKIOR V5.5.0 brings **voice to your AI assistant** with the addition of ElevenLabs text-to-speech integration. Assistant responses in the Chat UI can now be spoken aloud with high-quality, natural-sounding voices when an ElevenLabs API key is configured. This release adds another layer of immersion and accessibility to AKIOR, enabling hands-free interaction and multitasking workflows.
 
-All previous features from v5.0.0–v5.4.0 remain intact and fully functional: comprehensive theming system, real-time HUD, Weather integration, Web Search, Local LLM support, 3D generation, camera streaming, and more. ElevenLabs TTS is a **purely additive** feature—Jarvis continues to work seamlessly without it if not configured.
+All previous features from v5.0.0–v5.4.0 remain intact and fully functional: comprehensive theming system, real-time HUD, Weather integration, Web Search, Local LLM support, 3D generation, camera streaming, and more. ElevenLabs TTS is a **purely additive** feature—AKIOR continues to work seamlessly without it if not configured.
 
 ---
 
@@ -158,7 +158,7 @@ The ElevenLabs card in **Settings → Integrations** is now fully functional (no
    - Click **"⏹ Stop"** to stop audio playback early
    - Or let audio finish naturally
 
-**Note:** If ElevenLabs is not configured or the endpoint returns 503, the button will not appear, or clicking it will display an error message in the chat UI. Jarvis continues to function normally without TTS.
+**Note:** If ElevenLabs is not configured or the endpoint returns 503, the button will not appear, or clicking it will display an error message in the chat UI. AKIOR continues to function normally without TTS.
 
 ---
 
@@ -167,7 +167,7 @@ The ElevenLabs card in **Settings → Integrations** is now fully functional (no
 ### v5.0.0 – Initial Local OS (June 2025)
 
 - Holomat radial app launcher with draggable windows
-- Jarvis voice assistant with real-time API
+- AKIOR voice assistant with real-time API
 - 3D model generation and viewer
 - Camera streaming and security dashboard
 - Local HTTPS setup with mkcert + dev TLS proxy
@@ -208,7 +208,7 @@ The ElevenLabs card in **Settings → Integrations** is now fully functional (no
 
 ---
 
-## How to Run Jarvis V5.5.0 Locally
+## How to Run AKIOR V5.5.0 Locally
 
 ### Prerequisites
 
@@ -223,8 +223,8 @@ The ElevenLabs card in **Settings → Integrations** is now fully functional (no
 
 ```bash
 # Clone the repository (if not already done)
-git clone https://github.com/yosiwizman/jarvis-v5-os.git
-cd jarvis-v5-os
+git clone https://github.com/yosiwizman/akior-v5-os.git
+cd akior-v5-os
 
 # Checkout v5.5.0
 git checkout v5.5.0
@@ -305,7 +305,7 @@ All quality gates passed for v5.5.0:
 
 ### ElevenLabs Integration
 
-- **Optional feature:** Jarvis works fully without ElevenLabs if not configured. TTS is purely additive.
+- **Optional feature:** AKIOR works fully without ElevenLabs if not configured. TTS is purely additive.
 - **Internet required:** ElevenLabs API requires internet access (even if using Local LLM for chat).
 - **API rate limits:** Free-tier ElevenLabs accounts have character limits per month. Monitor usage in ElevenLabs dashboard.
 - **Network errors:** If ElevenLabs API is unreachable or returns an error (bad API key, rate limit exceeded), the TTS call fails gracefully. Chat continues to work without audio.
@@ -411,7 +411,7 @@ On audio end → Clean up blob URL, reset button state
 
 ### GitHub Actions CI
 
-- Workflow: `.github/workflows/jarvis-ci.yml`
+- Workflow: `.github/workflows/akior-ci.yml`
 - Triggers: Push to `main` or `feature/*` branches, pull requests to `main`
 - Steps: Install, typecheck, build, smoke tests
 - Node.js: 20 LTS on `ubuntu-latest`
@@ -434,7 +434,7 @@ On audio end → Clean up blob URL, reset button state
 1. **Configure ElevenLabs:** Get an API key and voice ID, configure in Settings → Integrations → ElevenLabs
 2. **Test TTS in Chat:** Send messages in `/chat` and click "🔊 Speak answer" to hear responses
 3. **Experiment with Voice Settings:** Tune stability, similarity boost, and style to find your preferred voice characteristics
-4. **Review Test Plan:** Follow `JARVIS_V5_TEST_PLAN.md` for comprehensive QA
+4. **Review Test Plan:** Follow `AKIOR_V5_TEST_PLAN.md` for comprehensive QA
 5. **Deploy v5.5.0:** Tag and push to production (if applicable)
 
 ### Future Enhancements (v5.6.0+)
@@ -450,7 +450,7 @@ On audio end → Clean up blob URL, reset button state
 
 ## Support & Resources
 
-- **Repository:** [https://github.com/yosiwizman/jarvis-v5-os](https://github.com/yosiwizman/jarvis-v5-os)
+- **Repository:** [https://github.com/yosiwizman/akior-v5-os](https://github.com/yosiwizman/akior-v5-os)
 - **Documentation:** See repository root for detailed guides
 - **Issues:** Report bugs via GitHub Issues
 - **Discussions:** Use GitHub Discussions for questions and feature requests
@@ -458,4 +458,4 @@ On audio end → Clean up blob URL, reset button state
 
 ---
 
-**Thank you for using Jarvis V5!** 🚀🔊
+**Thank you for using AKIOR V5!** 🚀🔊
