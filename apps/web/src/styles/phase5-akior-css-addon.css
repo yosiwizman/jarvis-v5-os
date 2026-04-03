@@ -1,0 +1,23 @@
+/* Phase 5 live interaction refinements */
+
+.akior {
+  contain: layout paint style;
+}
+
+.akior--speaking .akior__asset--speaking {
+  filter: drop-shadow(0 0 calc(10px + (var(--akior-audio-level) * 8px)) rgba(115,251,255,0.34));
+}
+
+.akior--listening .akior__asset--listening {
+  filter: drop-shadow(0 0 10px rgba(115,251,255,0.2));
+}
+
+.akior--thinking .akior__asset--thinking {
+  filter: drop-shadow(0 0 8px rgba(115,251,255,0.12));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akior {
+    --akior-transition: 120ms linear;
+  }
+}
