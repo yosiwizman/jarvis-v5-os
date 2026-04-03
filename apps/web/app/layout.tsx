@@ -1,49 +1,54 @@
-'use client';
+"use client";
 
-import './globals.css';
-import Link from 'next/link';
-import { NavigationBridge } from '@/components/navigation-bridge';
-import { JarvisAssistant, JarvisIcon } from '@/components/JarvisAssistant';
-import { HudWidget } from '@/components/HudWidget';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { NotificationProvider } from '@/context/NotificationContext';
-import { NotificationToast } from '@/components/NotificationToast';
-import { InsecureBanner } from '@/components/InsecureBanner';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { BuildInfo } from '@/components/BuildInfo';
-import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import { loadSettingsFromServer } from '@shared/settings';
-import { BRAND, BRAND_VERSION } from '@/lib/brand';
+import "./globals.css";
+import Link from "next/link";
+import { NavigationBridge } from "@/components/navigation-bridge";
+import { JarvisAssistant, JarvisIcon } from "@/components/JarvisAssistant";
+import { HudWidget } from "@/components/HudWidget";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationToast } from "@/components/NotificationToast";
+import { InsecureBanner } from "@/components/InsecureBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BuildInfo } from "@/components/BuildInfo";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { loadSettingsFromServer } from "@shared/settings";
+import { BRAND, BRAND_VERSION } from "@/lib/brand";
 
 // Note: metadata must be exported from a Server Component, not a Client Component
 // If you need metadata, create a separate server layout wrapper
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isJarvisOpen, setIsJarvisOpen] = useState(false);
   const pathname = usePathname();
 
   // Detect Ubuntu Shell / Kiosk Mode
-  const isUbuntuShellMode = process.env.NEXT_PUBLIC_JARVIS_UBUNTU_MODE === 'kiosk';
+  const isUbuntuShellMode =
+    process.env.NEXT_PUBLIC_JARVIS_UBUNTU_MODE === "kiosk";
 
   // Load settings from server on app mount
   useEffect(() => {
-    loadSettingsFromServer().catch(err => {
-      console.error('Failed to load settings from server:', err);
+    loadSettingsFromServer().catch((err) => {
+      console.error("Failed to load settings from server:", err);
     });
 
     // Log kiosk mode status (for debugging)
     if (isUbuntuShellMode) {
-      console.log('[AKIOR] Ubuntu Shell / Kiosk Mode: ACTIVE');
+      console.log("[AKIOR] Ubuntu Shell / Kiosk Mode: ACTIVE");
     }
   }, [isUbuntuShellMode]);
 
   // Don't show floating icon on the dedicated Jarvis page
-  const showFloatingJarvis = pathname !== '/jarvis';
-  
+  const showFloatingJarvis = pathname !== "/jarvis";
+
   // Hide sidebar on login page
-  const isLoginPage = pathname === '/login';
+  const isLoginPage = pathname === "/login";
   const titleText = `${BRAND.productName} Console`;
 
   // Set document title
@@ -53,15 +58,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // Kill any stale service workers when branding version changes
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-    const stored = window.localStorage.getItem('akior.brandVersion');
+    if (typeof window === "undefined" || !("serviceWorker" in navigator))
+      return;
+    const stored = window.localStorage.getItem("akior.brandVersion");
     if (stored === BRAND_VERSION) return;
     navigator.serviceWorker
       .getRegistrations()
       .then((regs) => Promise.all(regs.map((r) => r.unregister())))
       .catch(() => undefined)
       .finally(() => {
-        window.localStorage.setItem('akior.brandVersion', BRAND_VERSION);
+        window.localStorage.setItem("akior.brandVersion", BRAND_VERSION);
       });
   }, []);
 
@@ -74,104 +80,176 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen relative">
         <ErrorBoundary>
-        <ThemeProvider>
-          <NotificationProvider>
-          {/* HTTP security warning banner */}
-          <InsecureBanner />
-          {!isLoginPage && (
-          <aside className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? '-translate-x-full' : 'translate-x-0'} w-[260px]`}>
-          <div className="flex items-center justify-between mb-4">
-            <button 
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="btn p-2 min-w-0"
-              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              ☰
-            </button>
-            {!isCollapsed && <div className="text-xl font-semibold">{BRAND.productName}</div>}
-          </div>
-          <nav className="space-y-2 flex-1">
-            <Link className={`block btn truncate ${pathname === '/menu' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/menu" title="Dashboard">
-              {isCollapsed ? 'D' : 'Dashboard'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/jarvis' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/jarvis" title="Voice Assistant">
-              {isCollapsed ? 'V' : 'Voice Assistant'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/3dmodel' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/3dmodel" title="3D Model">
-              {isCollapsed ? '3D' : '3D Model'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/3dViewer' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/3dViewer" title="3D Viewer">
-              {isCollapsed ? '3V' : '3D Viewer'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/createimage' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/createimage" title="Create Image">
-              {isCollapsed ? 'I' : 'Create Image'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/3dprinters' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/3dprinters" title="3D Printers">
-              {isCollapsed ? '3P' : '3D Printers'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/files' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/files" title="Files">
-              {isCollapsed ? 'F' : 'Files'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/chat' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/chat" title="Chat">
-              {isCollapsed ? 'C' : 'Chat'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/security' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/security" title="Security">
-              {isCollapsed ? 'S' : 'Security'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/camera' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/camera" title="Camera">
-              {isCollapsed ? 'Ca' : 'Camera'}
-            </Link>
-            {/* Expose Holomat apps deck explicitly in the sidebar (adds UI route without changing existing links) */}
-            <Link className={`block btn truncate ${pathname === '/holomat' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/holomat" title="Holomat">
-              {isCollapsed ? 'Ho' : 'Holomat'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/functions' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/functions" title="Functions">
-              {isCollapsed ? 'Fn' : 'Functions'}
-            </Link>
-            <Link className={`block btn truncate ${pathname === '/settings' ? 'bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text' : ''}`} href="/settings" title="Settings">
-              {isCollapsed ? 'Se' : 'Settings'}
-            </Link>
-          </nav>
-          {!isCollapsed && (
-            <footer className="mt-6 space-y-2">
-              <div className="text-xs text-white/50">dark • modern</div>
-              <BuildInfo />
-            </footer>
-          )}
-        </aside>
-          )}
-        
-        {/* Floating menu button when sidebar is hidden */}
-        {!isLoginPage && isCollapsed && (
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="fixed top-4 left-4 z-40 btn p-3 shadow-lg"
-            title="Show menu"
-          >
-            ☰
-          </button>
-        )}
-        
-        <main className={`relative p-8 space-y-6 transition-all duration-300 ${isLoginPage ? 'ml-0 p-0' : isCollapsed ? 'ml-0' : 'ml-[260px]'}`}>
-          <NavigationBridge />
-          {children}
-        </main>
-        
-          {/* HUD Widget - System Status (V3 inspired) */}
-          {!isLoginPage && <HudWidget />}
-        
-          {/* Global AKIOR Voice Assistant */}
-          {!isLoginPage && showFloatingJarvis && (
-            <>
-              <JarvisIcon onClick={() => setIsJarvisOpen(true)} />
-              <JarvisAssistant isOpen={isJarvisOpen} onClose={() => setIsJarvisOpen(false)} />
-            </>
-          )}
-          
-          {/* Global Notification Toast */}
-          <NotificationToast />
-          </NotificationProvider>
-        </ThemeProvider>
+          <ThemeProvider>
+            <NotificationProvider>
+              {/* HTTP security warning banner */}
+              <InsecureBanner />
+              {!isLoginPage && (
+                <aside
+                  className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? "-translate-x-full" : "translate-x-0"} w-[260px]`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => setIsCollapsed(!isCollapsed)}
+                      className="btn p-2 min-w-0"
+                      title={
+                        isCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                      }
+                    >
+                      ☰
+                    </button>
+                    {!isCollapsed && (
+                      <div className="text-xl font-semibold">
+                        {BRAND.productName}
+                      </div>
+                    )}
+                  </div>
+                  <nav className="space-y-2 flex-1">
+                    <Link
+                      className={`block btn truncate ${pathname === "/menu" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/menu"
+                      title="Dashboard"
+                    >
+                      {isCollapsed ? "D" : "Dashboard"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/jarvis" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/jarvis"
+                      title="Voice Assistant"
+                    >
+                      {isCollapsed ? "V" : "Voice Assistant"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/3dmodel" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/3dmodel"
+                      title="3D Model"
+                    >
+                      {isCollapsed ? "3D" : "3D Model"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/3dViewer" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/3dViewer"
+                      title="3D Viewer"
+                    >
+                      {isCollapsed ? "3V" : "3D Viewer"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/createimage" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/createimage"
+                      title="Create Image"
+                    >
+                      {isCollapsed ? "I" : "Create Image"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/3dprinters" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/3dprinters"
+                      title="3D Printers"
+                    >
+                      {isCollapsed ? "3P" : "3D Printers"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/files" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/files"
+                      title="Files"
+                    >
+                      {isCollapsed ? "F" : "Files"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/chat" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/chat"
+                      title="Chat"
+                    >
+                      {isCollapsed ? "C" : "Chat"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/security" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/security"
+                      title="Security"
+                    >
+                      {isCollapsed ? "S" : "Security"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/camera" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/camera"
+                      title="Camera"
+                    >
+                      {isCollapsed ? "Ca" : "Camera"}
+                    </Link>
+                    {/* Expose Holomat apps deck explicitly in the sidebar (adds UI route without changing existing links) */}
+                    <Link
+                      className={`block btn truncate ${pathname === "/holomat" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/holomat"
+                      title="Holomat"
+                    >
+                      {isCollapsed ? "Ho" : "Holomat"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/functions" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/functions"
+                      title="Functions"
+                    >
+                      {isCollapsed ? "Fn" : "Functions"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/tasks" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/tasks"
+                      title="Scheduled Tasks"
+                    >
+                      {isCollapsed ? "Ts" : "Scheduled Tasks"}
+                    </Link>
+                    <Link
+                      className={`block btn truncate ${pathname === "/settings" ? "bg-[color:rgb(var(--jarvis-accent)_/_0.15)] border-l-2 border-l-[color:rgb(var(--jarvis-accent))] jarvis-accent-text" : ""}`}
+                      href="/settings"
+                      title="Settings"
+                    >
+                      {isCollapsed ? "Se" : "Settings"}
+                    </Link>
+                  </nav>
+                  {!isCollapsed && (
+                    <footer className="mt-6 space-y-2">
+                      <div className="text-xs text-white/50">dark • modern</div>
+                      <BuildInfo />
+                    </footer>
+                  )}
+                </aside>
+              )}
+
+              {/* Floating menu button when sidebar is hidden */}
+              {!isLoginPage && isCollapsed && (
+                <button
+                  onClick={() => setIsCollapsed(false)}
+                  className="fixed top-4 left-4 z-40 btn p-3 shadow-lg"
+                  title="Show menu"
+                >
+                  ☰
+                </button>
+              )}
+
+              <main
+                className={`relative p-8 space-y-6 transition-all duration-300 ${isLoginPage ? "ml-0 p-0" : isCollapsed ? "ml-0" : "ml-[260px]"}`}
+              >
+                <NavigationBridge />
+                {children}
+              </main>
+
+              {/* HUD Widget - System Status (V3 inspired) */}
+              {!isLoginPage && <HudWidget />}
+
+              {/* Global AKIOR Voice Assistant */}
+              {!isLoginPage && showFloatingJarvis && (
+                <>
+                  <JarvisIcon onClick={() => setIsJarvisOpen(true)} />
+                  <JarvisAssistant
+                    isOpen={isJarvisOpen}
+                    onClose={() => setIsJarvisOpen(false)}
+                  />
+                </>
+              )}
+
+              {/* Global Notification Toast */}
+              <NotificationToast />
+            </NotificationProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </body>
     </html>

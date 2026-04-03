@@ -1,24 +1,27 @@
 /**
  * LLM Configuration Store
- * 
+ *
  * Stores LLM provider configuration for the AKIOR platform.
  * Supports:
  * - OpenAI Cloud (API key required, fixed base URL)
  * - Local/OpenAI-Compatible (custom base URL, optional API key)
- * 
+ *
  * SECURITY:
  * - API keys are stored in secrets.json via secretStore (never exposed to clients)
  * - Only metadata (provider type, baseUrl host) is exposed via API
  * - Audit logging for all config changes
  */
 
-import fs from 'fs';
-import path from 'path';
-import { upsertSecret, deleteSecret, readSecrets } from './secretStore.js';
-import { logSystemEvent } from '../utils/logger.js';
+import fs from "fs";
+import path from "path";
+import { upsertSecret, deleteSecret, readSecrets } from "./secretStore.js";
+import { logSystemEvent } from "../utils/logger.js";
 
 // LLM Provider types
-export type LLMProvider = 'openai-cloud' | 'local-compatible';
+export type LLMProvider =
+  | "openai-cloud"
+  | "anthropic-cloud"
+  | "local-compatible";
 
 // Config stored on disk (no secrets)
 export interface LLMConfigData {
@@ -41,12 +44,12 @@ export interface LLMConfigInternal extends LLMConfigData {
   apiKey?: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-const CONFIG_FILE = path.join(DATA_DIR, 'llm-config.json');
+const DATA_DIR = path.resolve(process.cwd(), "data");
+const CONFIG_FILE = path.join(DATA_DIR, "llm-config.json");
 
 // Default config
 const DEFAULT_CONFIG: LLMConfigData = {
-  provider: 'openai-cloud',
+  provider: "openai-cloud",
   updatedAt: new Date().toISOString(),
 };
 
@@ -61,7 +64,7 @@ if (!fs.existsSync(DATA_DIR)) {
 export function readLLMConfig(): LLMConfigData {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
-      const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
+      const raw = fs.readFileSync(CONFIG_FILE, "utf8");
       const data = JSON.parse(raw) as LLMConfigData;
       return {
         provider: data.provider || DEFAULT_CONFIG.provider,
@@ -70,7 +73,7 @@ export function readLLMConfig(): LLMConfigData {
       };
     }
   } catch (error) {
-    console.error('[LLMConfigStore] Error reading config:', error);
+    console.error("[LLMConfigStore] Error reading config:", error);
   }
   return { ...DEFAULT_CONFIG };
 }
@@ -93,12 +96,15 @@ function writeLLMConfig(config: LLMConfigData): void {
 export function getLLMConfigPublic(): LLMConfigPublic {
   const config = readLLMConfig();
   const secrets = readSecrets();
-  
+
   // Check if API key is configured
-  const keyConfigured = config.provider === 'openai-cloud'
-    ? Boolean(secrets.openai)
-    : Boolean(secrets.llmApiKey);
-  
+  const keyConfigured =
+    config.provider === "openai-cloud"
+      ? Boolean(secrets.openai)
+      : config.provider === "anthropic-cloud"
+        ? Boolean((secrets as any).anthropic)
+        : Boolean(secrets.llmApiKey);
+
   // Extract hostname from baseUrl for display
   let baseUrlHost: string | undefined;
   if (config.baseUrl) {
@@ -109,7 +115,7 @@ export function getLLMConfigPublic(): LLMConfigPublic {
       baseUrlHost = undefined;
     }
   }
-  
+
   return {
     provider: config.provider,
     baseUrl: config.baseUrl,
@@ -125,12 +131,11 @@ export function getLLMConfigPublic(): LLMConfigPublic {
 export function getLLMConfigInternal(): LLMConfigInternal {
   const config = readLLMConfig();
   const secrets = readSecrets();
-  
+
   return {
     ...config,
-    apiKey: config.provider === 'openai-cloud'
-      ? secrets.openai
-      : secrets.llmApiKey,
+    apiKey:
+      config.provider === "openai-cloud" ? secrets.openai : secrets.llmApiKey,
   };
 }
 
@@ -140,23 +145,29 @@ export function getLLMConfigInternal(): LLMConfigInternal {
 export function isLLMConfigured(): { configured: boolean; reason?: string } {
   const config = readLLMConfig();
   const secrets = readSecrets();
-  
-  if (config.provider === 'openai-cloud') {
+
+  if (config.provider === "openai-cloud") {
     if (!secrets.openai) {
-      return { configured: false, reason: 'LLM not configured: OpenAI key missing' };
+      return {
+        configured: false,
+        reason: "LLM not configured: OpenAI key missing",
+      };
     }
     return { configured: true };
   }
-  
-  if (config.provider === 'local-compatible') {
+
+  if (config.provider === "local-compatible") {
     if (!config.baseUrl) {
-      return { configured: false, reason: 'LLM not configured: base URL missing' };
+      return {
+        configured: false,
+        reason: "LLM not configured: base URL missing",
+      };
     }
     // API key is optional for local providers
     return { configured: true };
   }
-  
-  return { configured: false, reason: 'LLM provider not configured' };
+
+  return { configured: false, reason: "LLM provider not configured" };
 }
 
 /**
@@ -164,61 +175,64 @@ export function isLLMConfigured(): { configured: boolean; reason?: string } {
  */
 export function updateLLMConfig(
   provider: LLMProvider,
-  options: { baseUrl?: string; apiKey?: string }
+  options: { baseUrl?: string; apiKey?: string },
 ): { ok: boolean; error?: string } {
   try {
     // Validate provider
-    if (provider !== 'openai-cloud' && provider !== 'local-compatible') {
-      return { ok: false, error: 'Invalid provider' };
+    if (provider !== "openai-cloud" && provider !== "local-compatible") {
+      return { ok: false, error: "Invalid provider" };
     }
-    
+
     // Validate baseUrl for local-compatible
-    if (provider === 'local-compatible') {
+    if (provider === "local-compatible") {
       if (!options.baseUrl) {
-        return { ok: false, error: 'Base URL is required for local/compatible provider' };
+        return {
+          ok: false,
+          error: "Base URL is required for local/compatible provider",
+        };
       }
       // Validate URL format
       try {
         new URL(options.baseUrl);
       } catch {
-        return { ok: false, error: 'Invalid base URL format' };
+        return { ok: false, error: "Invalid base URL format" };
       }
     }
-    
+
     // Save config (no secrets)
     const config: LLMConfigData = {
       provider,
-      baseUrl: provider === 'local-compatible' ? options.baseUrl : undefined,
+      baseUrl: provider === "local-compatible" ? options.baseUrl : undefined,
       updatedAt: new Date().toISOString(),
     };
     writeLLMConfig(config);
-    
+
     // Save API key if provided
     if (options.apiKey) {
-      if (provider === 'openai-cloud') {
-        upsertSecret('openai', options.apiKey);
+      if (provider === "openai-cloud") {
+        upsertSecret("openai", options.apiKey);
       } else {
         // Store local provider key separately
         const secrets = readSecrets();
         (secrets as any).llmApiKey = options.apiKey;
         fs.writeFileSync(
-          path.join(DATA_DIR, 'secrets.json'),
-          JSON.stringify(secrets, null, 2)
+          path.join(DATA_DIR, "secrets.json"),
+          JSON.stringify(secrets, null, 2),
         );
       }
     }
-    
+
     // Audit log (no secrets!)
-    logSystemEvent('llm_config_updated', {
+    logSystemEvent("llm_config_updated", {
       provider,
       hasBaseUrl: Boolean(options.baseUrl),
       hasApiKey: Boolean(options.apiKey),
     });
-    
+
     return { ok: true };
   } catch (error) {
-    console.error('[LLMConfigStore] Error updating config:', error);
-    return { ok: false, error: 'Failed to update configuration' };
+    console.error("[LLMConfigStore] Error updating config:", error);
+    return { ok: false, error: "Failed to update configuration" };
   }
 }
 
@@ -227,12 +241,12 @@ export function updateLLMConfig(
  */
 export function getLLMBaseUrl(): string {
   const config = readLLMConfig();
-  
-  if (config.provider === 'openai-cloud') {
-    return 'https://api.openai.com/v1';
+
+  if (config.provider === "openai-cloud") {
+    return "https://api.openai.com/v1";
   }
-  
-  return config.baseUrl || '';
+
+  return config.baseUrl || "";
 }
 
 /**
@@ -241,10 +255,10 @@ export function getLLMBaseUrl(): string {
 export function getLLMApiKey(): string | undefined {
   const config = readLLMConfig();
   const secrets = readSecrets();
-  
-  if (config.provider === 'openai-cloud') {
+
+  if (config.provider === "openai-cloud") {
     return secrets.openai;
   }
-  
+
   return (secrets as any).llmApiKey;
 }

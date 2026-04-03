@@ -24,8 +24,8 @@
     "verbosity": "medium",
     "maxOutputTokens": 800,
     "useWebSearch": false,
-    "useLocalLlm": false,
-    "localLlmPrimary": false,
+    "useLocalLlm": true,
+    "localLlmPrimary": true,
     "ttsProvider": "elevenlabs"
   },
   "imageGeneration": {
@@ -46,9 +46,13 @@
       "apiKey": ""
     },
     "localLLM": {
-      "enabled": false,
-      "baseUrl": "",
-      "modelName": ""
+      "enabled": true,
+      "provider": "ollama",
+      "baseUrl": "http://127.0.0.1:11434",
+      "model": "qwen2.5-coder:7b",
+      "apiKey": null,
+      "temperature": 0.7,
+      "maxTokens": null
     },
     "elevenLabs": {
       "enabled": false,
