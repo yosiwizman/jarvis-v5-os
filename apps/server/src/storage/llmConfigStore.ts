@@ -102,7 +102,7 @@ export function getLLMConfigPublic(): LLMConfigPublic {
     config.provider === "openai-cloud"
       ? Boolean(secrets.openai)
       : config.provider === "anthropic-cloud"
-        ? Boolean((secrets as any).anthropic)
+        ? Boolean(secrets.anthropic)
         : Boolean(secrets.llmApiKey);
 
   // Extract hostname from baseUrl for display
@@ -135,7 +135,11 @@ export function getLLMConfigInternal(): LLMConfigInternal {
   return {
     ...config,
     apiKey:
-      config.provider === "openai-cloud" ? secrets.openai : secrets.llmApiKey,
+      config.provider === "openai-cloud"
+        ? secrets.openai
+        : config.provider === "anthropic-cloud"
+          ? secrets.anthropic || process.env.ANTHROPIC_API_KEY
+          : secrets.llmApiKey,
   };
 }
 
@@ -151,6 +155,17 @@ export function isLLMConfigured(): { configured: boolean; reason?: string } {
       return {
         configured: false,
         reason: "LLM not configured: OpenAI key missing",
+      };
+    }
+    return { configured: true };
+  }
+
+  if (config.provider === "anthropic-cloud") {
+    const anthropicKey = secrets.anthropic || process.env.ANTHROPIC_API_KEY;
+    if (!anthropicKey) {
+      return {
+        configured: false,
+        reason: "LLM not configured: Anthropic key missing",
       };
     }
     return { configured: true };
@@ -179,7 +194,11 @@ export function updateLLMConfig(
 ): { ok: boolean; error?: string } {
   try {
     // Validate provider
-    if (provider !== "openai-cloud" && provider !== "local-compatible") {
+    if (
+      provider !== "openai-cloud" &&
+      provider !== "anthropic-cloud" &&
+      provider !== "local-compatible"
+    ) {
       return { ok: false, error: "Invalid provider" };
     }
 
@@ -211,6 +230,8 @@ export function updateLLMConfig(
     if (options.apiKey) {
       if (provider === "openai-cloud") {
         upsertSecret("openai", options.apiKey);
+      } else if (provider === "anthropic-cloud") {
+        upsertSecret("anthropic", options.apiKey);
       } else {
         // Store local provider key separately
         const secrets = readSecrets();
@@ -246,6 +267,10 @@ export function getLLMBaseUrl(): string {
     return "https://api.openai.com/v1";
   }
 
+  if (config.provider === "anthropic-cloud") {
+    return "https://api.anthropic.com/v1";
+  }
+
   return config.baseUrl || "";
 }
 
@@ -258,6 +283,10 @@ export function getLLMApiKey(): string | undefined {
 
   if (config.provider === "openai-cloud") {
     return secrets.openai;
+  }
+
+  if (config.provider === "anthropic-cloud") {
+    return secrets.anthropic || process.env.ANTHROPIC_API_KEY;
   }
 
   return (secrets as any).llmApiKey;

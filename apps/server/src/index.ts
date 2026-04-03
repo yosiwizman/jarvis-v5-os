@@ -25,6 +25,7 @@ import { isPinConfigured } from "./auth/index.js";
 import {
   isLLMConfigured,
   getLLMConfigPublic,
+  getLLMConfigInternal,
 } from "./storage/llmConfigStore.js";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
@@ -462,41 +463,33 @@ fastify.post("/api/notifications/schedule", async (req, reply) => {
 
   // Validate required fields
   if (!body.type || typeof body.type !== "string") {
-    return reply
-      .status(400)
-      .send({
-        ok: false,
-        error: "type is required and must be a string",
-      } as ScheduleNotificationResponse);
+    return reply.status(400).send({
+      ok: false,
+      error: "type is required and must be a string",
+    } as ScheduleNotificationResponse);
   }
 
   if (!body.payload || typeof body.payload !== "object") {
-    return reply
-      .status(400)
-      .send({
-        ok: false,
-        error: "payload is required and must be an object",
-      } as ScheduleNotificationResponse);
+    return reply.status(400).send({
+      ok: false,
+      error: "payload is required and must be an object",
+    } as ScheduleNotificationResponse);
   }
 
   if (!body.triggerAt || typeof body.triggerAt !== "string") {
-    return reply
-      .status(400)
-      .send({
-        ok: false,
-        error: "triggerAt is required and must be an ISO 8601 timestamp string",
-      } as ScheduleNotificationResponse);
+    return reply.status(400).send({
+      ok: false,
+      error: "triggerAt is required and must be an ISO 8601 timestamp string",
+    } as ScheduleNotificationResponse);
   }
 
   // Validate ISO timestamp format
   const triggerDate = new Date(body.triggerAt);
   if (isNaN(triggerDate.getTime())) {
-    return reply
-      .status(400)
-      .send({
-        ok: false,
-        error: "triggerAt must be a valid ISO 8601 timestamp",
-      } as ScheduleNotificationResponse);
+    return reply.status(400).send({
+      ok: false,
+      error: "triggerAt must be a valid ISO 8601 timestamp",
+    } as ScheduleNotificationResponse);
   }
 
   try {
@@ -522,12 +515,10 @@ fastify.post("/api/notifications/schedule", async (req, reply) => {
     return reply.send({ ok: true, eventId } as ScheduleNotificationResponse);
   } catch (error) {
     logger.error({ error, type: body.type }, "Failed to schedule notification");
-    return reply
-      .status(500)
-      .send({
-        ok: false,
-        error: "failed_to_schedule_notification",
-      } as ScheduleNotificationResponse);
+    return reply.status(500).send({
+      ok: false,
+      error: "failed_to_schedule_notification",
+    } as ScheduleNotificationResponse);
   }
 });
 
@@ -1026,6 +1017,59 @@ fastify.get("/api/integrations/ollama/models", async (req, reply) => {
     logger.warn({ error: err }, msg);
     return reply.status(503).send({ ok: false, error: msg });
   }
+});
+
+// ========================================
+// AKIOR Memory Context — reads cerebrum.md + memory.md
+// ========================================
+
+fastify.get("/api/memory", async (req, reply) => {
+  const homedir = process.env.HOME || process.env.USERPROFILE || "";
+  const cerebrumPath = path.join(homedir, "akior", ".wolf", "cerebrum.md");
+  const memoryPath = path.join(homedir, "akior", ".wolf", "memory.md");
+
+  const sections: { cerebrum?: string; memory?: string } = {};
+
+  try {
+    if (existsSync(cerebrumPath)) {
+      const raw = await readFile(cerebrumPath, "utf-8");
+      // Limit to first 4000 chars to keep context window manageable
+      sections.cerebrum = raw.slice(0, 4000);
+    }
+  } catch (err) {
+    logger.warn({ error: err }, "Failed to read cerebrum.md");
+  }
+
+  try {
+    if (existsSync(memoryPath)) {
+      const raw = await readFile(memoryPath, "utf-8");
+      // Take last 2000 chars (most recent entries)
+      sections.memory = raw.length > 2000 ? raw.slice(-2000) : raw;
+    }
+  } catch (err) {
+    logger.warn({ error: err }, "Failed to read memory.md");
+  }
+
+  // Build a combined context string for injection into system prompts
+  let context = "";
+  if (sections.cerebrum) {
+    context +=
+      "## Key Learnings & Preferences (from cerebrum)\n" +
+      sections.cerebrum +
+      "\n\n";
+  }
+  if (sections.memory) {
+    context += "## Recent Session Memory\n" + sections.memory + "\n";
+  }
+
+  return reply.send({
+    ok: true,
+    context: context || null,
+    sources: {
+      cerebrum: !!sections.cerebrum,
+      memory: !!sections.memory,
+    },
+  });
 });
 
 // Weather integration endpoint (note: /api prefix is stripped by dev-proxy)
@@ -1632,12 +1676,10 @@ fastify.get(
       });
 
       if (!result.ok || !result.events) {
-        return reply
-          .status(502)
-          .send({
-            ok: false,
-            error: result.error || "calendar_api_request_failed",
-          });
+        return reply.status(502).send({
+          ok: false,
+          error: result.error || "calendar_api_request_failed",
+        });
       }
 
       // Return up to maxResults events
@@ -2309,12 +2351,10 @@ fastify.post("/api/alarms", async (req, reply) => {
   }
 
   if (body.type === "motion" && !body.location && !body.cameraId) {
-    return reply
-      .status(400)
-      .send({
-        ok: false,
-        error: "location_or_camera_id_required_for_motion_alarms",
-      });
+    return reply.status(400).send({
+      ok: false,
+      error: "location_or_camera_id_required_for_motion_alarms",
+    });
   }
 
   try {
@@ -2691,21 +2731,26 @@ try {
     const shouldTryCloud =
       !useLocalLlm || !localLlmPrimary || !localLlmConnected;
 
+    // Check which cloud provider is configured
+    const llmInternalConfig = getLLMConfigInternal();
+    const isAnthropicProvider =
+      llmInternalConfig.provider === "anthropic-cloud";
+
     let cloudApiKey: string | null = null;
     if (shouldTryCloud) {
-      try {
-        cloudApiKey = getOpenAiApiKey();
-      } catch (error) {
-        if (!shouldTryLocal) {
-          const message =
-            error instanceof Error
-              ? error.message
-              : "OpenAI API key not configured";
+      if (isAnthropicProvider) {
+        // Get Anthropic key
+        const anthropicKey =
+          llmInternalConfig.apiKey || process.env.ANTHROPIC_API_KEY || "";
+        if (anthropicKey) {
+          cloudApiKey = anthropicKey;
+        } else if (!shouldTryLocal) {
           return reply.status(428).send({
             ok: false,
             error: {
               code: "SETUP_REQUIRED",
-              message,
+              message:
+                "Missing Anthropic API key. Configure one from the Settings page.",
             },
             setup: {
               ownerPin: isPinConfigured(),
@@ -2713,7 +2758,29 @@ try {
             },
           });
         }
-        // If local is available, we can continue without cloud key
+      } else {
+        try {
+          cloudApiKey = getOpenAiApiKey();
+        } catch (error) {
+          if (!shouldTryLocal) {
+            const message =
+              error instanceof Error
+                ? error.message
+                : "OpenAI API key not configured";
+            return reply.status(428).send({
+              ok: false,
+              error: {
+                code: "SETUP_REQUIRED",
+                message,
+              },
+              setup: {
+                ownerPin: isPinConfigured(),
+                llm: isLLMConfigured().configured,
+              },
+            });
+          }
+          // If local is available, we can continue without cloud key
+        }
       }
     }
 
@@ -2723,6 +2790,32 @@ try {
         .status(400)
         .send({ error: "No messages supplied for chat request" });
     }
+
+    // Load AKIOR memory context to enrich system prompt
+    let memoryContext = "";
+    try {
+      const homedir = process.env.HOME || process.env.USERPROFILE || "";
+      const cerebrumPath = path.join(homedir, "akior", ".wolf", "cerebrum.md");
+      const memoryPath = path.join(homedir, "akior", ".wolf", "memory.md");
+
+      if (existsSync(cerebrumPath)) {
+        const raw = await readFile(cerebrumPath, "utf-8");
+        memoryContext +=
+          "## Key Learnings & Preferences\n" + raw.slice(0, 3000) + "\n\n";
+      }
+      if (existsSync(memoryPath)) {
+        const raw = await readFile(memoryPath, "utf-8");
+        const tail = raw.length > 1500 ? raw.slice(-1500) : raw;
+        memoryContext += "## Recent Session Memory\n" + tail + "\n";
+      }
+    } catch {
+      // Non-critical — proceed without memory context
+    }
+
+    // Merge memory context into the system / initial prompt
+    const enrichedInitialPrompt = memoryContext
+      ? [trimmedInitialPrompt, memoryContext].filter(Boolean).join("\n\n")
+      : trimmedInitialPrompt;
 
     // LOCAL LLM PATH (primary or fallback)
     if (shouldTryLocal && localLlmPrimary) {
@@ -2734,7 +2827,7 @@ try {
       }));
       const localResult = await callLocalLlm({
         messages: localMessages,
-        systemPrompt: trimmedInitialPrompt || undefined,
+        systemPrompt: enrichedInitialPrompt || undefined,
       });
 
       if (localResult.ok) {
@@ -2758,8 +2851,95 @@ try {
       }
     }
 
+    // CLOUD (Anthropic) PATH
+    if (cloudApiKey && isAnthropicProvider) {
+      try {
+        const { callAnthropic } = await import("./clients/anthropicClient.js");
+        const anthropicMessages = conversation.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
+        const anthropicResult = await callAnthropic(cloudApiKey, {
+          messages: anthropicMessages,
+          systemPrompt: enrichedInitialPrompt || undefined,
+          model: settings?.model?.trim() || "claude-sonnet-4-20250514",
+          maxTokens: maxOutputTokens || 4096,
+        });
+
+        if (anthropicResult.ok) {
+          return reply.send({
+            message: anthropicResult.message,
+            responseId: null,
+            source: "anthropic-cloud",
+            usage: {
+              inputTokens: anthropicResult.inputTokens,
+              outputTokens: anthropicResult.outputTokens,
+            },
+          });
+        }
+
+        // Anthropic failed -- try local fallback if available
+        logger.error(
+          { error: anthropicResult.error },
+          "Anthropic chat request failed",
+        );
+
+        if (shouldTryLocal && !localLlmPrimary) {
+          logger.warn("[LocalLLM] Anthropic failed, trying local as fallback");
+          const { callLocalLlm } = await import("./clients/localLlmClient.js");
+          const localMessages = conversation.map((m) => ({
+            role: m.role as "system" | "user" | "assistant",
+            content: m.content,
+          }));
+          const localResult = await callLocalLlm({
+            messages: localMessages,
+            systemPrompt: enrichedInitialPrompt || undefined,
+          });
+
+          if (localResult.ok) {
+            logger.info(
+              "[LocalLLM] Successfully used local model (fallback after Anthropic error)",
+            );
+            return reply.send({
+              message: localResult.message,
+              responseId: null,
+              source: "local-llm",
+            });
+          }
+        }
+
+        return reply.status(502).send({ error: anthropicResult.error });
+      } catch (error) {
+        logger.error({ error }, "Failed to call Anthropic API");
+
+        if (shouldTryLocal && !localLlmPrimary) {
+          const { callLocalLlm } = await import("./clients/localLlmClient.js");
+          const localMessages = conversation.map((m) => ({
+            role: m.role as "system" | "user" | "assistant",
+            content: m.content,
+          }));
+          const localResult = await callLocalLlm({
+            messages: localMessages,
+            systemPrompt: enrichedInitialPrompt || undefined,
+          });
+
+          if (localResult.ok) {
+            return reply.send({
+              message: localResult.message,
+              responseId: null,
+              source: "local-llm",
+            });
+          }
+        }
+
+        return reply
+          .status(502)
+          .send({ error: "Failed to reach Anthropic API" });
+      }
+    }
+
     // CLOUD (OpenAI) PATH
-    if (cloudApiKey) {
+    if (cloudApiKey && !isAnthropicProvider) {
       const payload: Record<string, any> = {
         model: settings?.model?.trim() || "gpt-5",
       };
@@ -2975,11 +3155,9 @@ try {
     const parsed = ChatToolResultRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];
-      return reply
-        .status(400)
-        .send({
-          error: firstIssue?.message ?? "Invalid tool result request payload",
-        });
+      return reply.status(400).send({
+        error: firstIssue?.message ?? "Invalid tool result request payload",
+      });
     }
 
     const { responseId, toolResults, settings, tools } = parsed.data;
@@ -3351,11 +3529,9 @@ try {
     const parsed = ImageGenerationRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];
-      return reply
-        .status(400)
-        .send({
-          error: firstIssue?.message ?? "Invalid image generation request",
-        });
+      return reply.status(400).send({
+        error: firstIssue?.message ?? "Invalid image generation request",
+      });
     }
 
     const { prompt, settings } = parsed.data;
@@ -3710,11 +3886,9 @@ try {
     const parsed = VisionRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];
-      return reply
-        .status(400)
-        .send({
-          error: firstIssue?.message ?? "Invalid vision analysis request",
-        });
+      return reply.status(400).send({
+        error: firstIssue?.message ?? "Invalid vision analysis request",
+      });
     }
 
     const { imageUrl, prompt } = parsed.data;
@@ -4722,13 +4896,11 @@ try {
         entry.previousFrameBase64 = entry.latestFrameBase64;
         entry.latestFrameBase64 = jpegBase64;
         entry.latestFrameTs = ts ?? Date.now();
-        cameras
-          .to(`camera:${cameraId}`)
-          .emit("security:frame", {
-            cameraId,
-            ts: entry.latestFrameTs,
-            jpegBase64,
-          });
+        cameras.to(`camera:${cameraId}`).emit("security:frame", {
+          cameraId,
+          ts: entry.latestFrameTs,
+          jpegBase64,
+        });
 
         // Trigger motion alert if detected and not recently alerted (cooldown: 30 seconds)
         if (motionDetected) {
