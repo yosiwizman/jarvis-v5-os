@@ -45,6 +45,7 @@ export default function JarvisPage() {
   >("idle");
   const [audioLevel, setAudioLevel] = useState(0);
   const [fftData, setFftData] = useState<number[]>(new Array(FFT_BARS).fill(0));
+  const [micError, setMicError] = useState<string | null>(null);
   const statusRef = useRef(status);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const settings = useMemo(() => readSettings(), []);
@@ -111,29 +112,7 @@ export default function JarvisPage() {
     };
   }, []);
 
-  // Animate wave pattern when processing (but not for 3D model generation)
-  useEffect(() => {
-    if (!isProcessing || modelProgress !== null) return;
-
-    const interval = setInterval(() => {
-      setFftData((prev) => [...prev]); // Force re-render for wave animation
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [isProcessing, modelProgress]);
-
-  // Animate FFT bars for 3D model progress
-  useEffect(() => {
-    if (modelProgress === null) return;
-
-    const interval = setInterval(() => {
-      setFftData((prev) => [...prev]); // Force re-render for progress animation
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [modelProgress]);
-
-  // Ring rotation effect removed — AkiorLogo handles its own animation
+  // Old FFT wave animation effects removed — AkiorCore handles its own animation
 
   // Auto-start connection on mount with duplicate prevention
   // GATED: Only starts when setup is complete (PIN + LLM configured)
@@ -816,14 +795,32 @@ export default function JarvisPage() {
         throw new Error("Media devices not supported in this browser");
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: false,
-        },
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: false,
+          },
+        });
+        setMicError(null);
+      } catch (micErr: any) {
+        console.warn(
+          "Microphone not available:",
+          micErr?.name,
+          micErr?.message,
+        );
+        const msg =
+          micErr?.name === "NotFoundError" || micErr?.name === "NotAllowedError"
+            ? "No microphone detected"
+            : "Microphone unavailable";
+        setMicError(msg);
+        setStatus("idle");
+        isConnectingRef.current = false;
+        return;
+      }
 
       const pc = new RTCPeerConnection();
       peerConnectionRef.current = pc;
@@ -1101,9 +1098,6 @@ export default function JarvisPage() {
     if (fn) fn();
   }
 
-  const logoScale = 1 + audioLevel * 0.08; // Subtle audio-reactive scale for logo wrapper
-  const glowIntensity = audioLevel * 30; // Audio-reactive glow
-
   // Map internal status to AkiorCore state
   const akiorState: AkiorState =
     status === "active"
@@ -1124,18 +1118,20 @@ export default function JarvisPage() {
   }
 
   return (
-    <div className="fixed inset-0 left-0 flex items-center justify-center bg-[#0a0a0f]">
+    <div
+      className="fixed inset-0 left-0 bg-transparent"
+      style={{ display: "grid", placeItems: "center", minHeight: "70vh" }}
+    >
       {/* Fullscreen Button - Top Right */}
       <button
         onClick={toggleFullscreen}
-        className="fixed top-4 right-4 z-50 w-12 h-12 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-500/50 flex items-center justify-center transition-all hover:shadow-[0_0_20px_rgba(34,211,238,0.5)]"
+        className="fixed top-4 right-4 z-50 w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all"
         title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
       >
         {isFullscreen ? (
-          // Exit fullscreen icon
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-cyan-400"
+            className="w-5 h-5 text-cyan-400/70"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -1148,10 +1144,9 @@ export default function JarvisPage() {
             />
           </svg>
         ) : (
-          // Enter fullscreen icon
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-cyan-400"
+            className="w-5 h-5 text-cyan-400/70"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -1166,33 +1161,19 @@ export default function JarvisPage() {
         )}
       </button>
 
-      {/* AKIOR Visualizer - Full Screen */}
-      <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square overflow-hidden">
-        {/* Geometric Star Logo - replaces old spinning rings */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            transform: `scale(${logoScale})`,
-            transition: "transform 200ms",
-          }}
-        >
-          <AkiorCore state={akiorState} size={500} audioLevel={audioLevel} />
-        </div>
-
-        {/* Logo or Display Content or Progress - Center */}
+      {/* Orb + Controls Column */}
+      <div className="flex flex-col items-center gap-8">
+        {/* Display Content Overlay (image / 3D) */}
         {displayContent ? (
-          <div className="relative z-10 w-[500px] h-[500px] bg-black/50 backdrop-blur-sm rounded-2xl border border-cyan-500/30 flex items-center justify-center overflow-hidden">
-            {/* Close Button */}
+          <div className="relative w-[480px] h-[480px] bg-black/50 backdrop-blur-sm rounded-2xl border border-cyan-500/30 flex items-center justify-center overflow-hidden">
             <button
               onClick={() => setDisplayContent(null)}
               className="absolute top-2 right-2 w-10 h-10 rounded-full bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-500/50 flex items-center justify-center transition-all z-20"
             >
               <span className="text-cyan-400 text-2xl font-bold leading-none">
-                ×
+                &times;
               </span>
             </button>
-
-            {/* Display Content */}
             {displayContent.type === "image" ? (
               <img
                 src={displayContent.url}
@@ -1212,88 +1193,63 @@ export default function JarvisPage() {
             ) : null}
           </div>
         ) : modelProgress !== null ? (
-          // Loading Progress
-          <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="text-white text-[120px] font-bold leading-none tracking-wider drop-shadow-[0_0_30px_rgba(34,211,238,0.8)]">
-              {Math.round(modelProgress)}%
-            </div>
-            <div className="text-cyan-400 text-xl mt-4 tracking-wide">
-              {progressMessage}
+          /* Model generation progress overlay */
+          <div
+            className="relative flex flex-col items-center justify-center"
+            style={{ width: 480, height: 480 }}
+          >
+            <AkiorCore state="thinking" size={480} audioLevel={0} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="text-white text-[100px] font-bold leading-none tracking-wider drop-shadow-[0_0_30px_rgba(34,211,238,0.8)]">
+                {Math.round(modelProgress)}%
+              </div>
+              <div className="text-cyan-400/70 text-base mt-3 tracking-wide">
+                {progressMessage}
+              </div>
             </div>
           </div>
         ) : (
-          <div
-            className="relative z-10 flex flex-col items-center justify-center"
-            style={{
-              transform: `scale(${logoScale})`,
-              filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`,
-            }}
-            data-testid="brand-mark"
-          >
-            <div
-              className="text-7xl font-bold tracking-[0.3em] text-cyan-400"
-              style={{
-                textShadow:
-                  "0 0 40px rgba(34, 211, 238, 0.8), 0 0 80px rgba(34, 211, 238, 0.4)",
-                fontFamily: "system-ui, -apple-system, sans-serif",
-              }}
-            >
-              AKIOR
-            </div>
-            <div
-              className="text-lg tracking-[0.2em] text-cyan-400/70 uppercase text-center leading-relaxed mt-4"
-              style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-            >
-              Advanced Knowledge Intelligence
-              <br />
-              Operating Resource
-            </div>
-          </div>
+          /* Production AKIOR Orb - the living intelligence core */
+          <AkiorCore state={akiorState} size={480} audioLevel={audioLevel} />
         )}
 
-        {/* Status Ring Glow */}
-        {status === "active" && (
-          <div
-            className="absolute inset-0 rounded-full transition-opacity duration-300"
-            style={{
-              background: `radial-gradient(circle, rgba(34,211,238,${audioLevel * 0.3}) 0%, transparent 70%)`,
-              transform: `scale(${1 + audioLevel * 0.5})`,
-            }}
-          />
-        )}
-
-        {/* Status Info */}
-        <div className="absolute bottom-[-120px] left-1/2 -translate-x-1/2 text-center space-y-4 w-full">
-          <div className="flex items-center justify-center gap-3">
+        {/* Minimal controls below the orb */}
+        <div className="flex flex-col items-center gap-3">
+          {/* Status indicator */}
+          <div className="flex items-center gap-2">
             <div
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
                 status === "idle"
-                  ? "bg-gray-500"
+                  ? "bg-white/30"
                   : status === "listening"
-                    ? "bg-yellow-400 animate-pulse"
+                    ? "bg-cyan-400/70 animate-pulse"
                     : status === "active"
                       ? "bg-cyan-400 animate-pulse"
-                      : "bg-red-500"
+                      : "bg-red-400/70"
               }`}
             />
-            <span className="text-xl font-semibold text-cyan-400 uppercase tracking-wider">
-              {status}
+            <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
+              {status === "active" ? "online" : status}
             </span>
           </div>
 
-          <p className="text-sm text-white/60 max-w-md px-4 mx-auto">
-            {status === "listening"
-              ? "Establishing secure connection..."
-              : status === "active"
-                ? "AKIOR is online and listening..."
-                : status === "error"
-                  ? "Connection error. Refresh to try again."
-                  : null}
+          {/* Status message */}
+          <p className="text-xs text-white/30 max-w-sm text-center">
+            {micError
+              ? micError
+              : status === "listening"
+                ? "Establishing connection..."
+                : status === "active"
+                  ? "AKIOR is listening"
+                  : status === "error"
+                    ? "Connection error. Refresh to retry."
+                    : null}
           </p>
 
+          {/* Disconnect button */}
           {status === "active" && (
             <button
-              className="px-6 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 transition-all duration-200 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+              className="mt-1 px-5 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/50 hover:text-white/70 transition-all duration-200"
               onClick={endRealtime}
               type="button"
             >

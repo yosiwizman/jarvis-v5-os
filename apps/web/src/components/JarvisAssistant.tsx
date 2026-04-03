@@ -1300,12 +1300,12 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
   return (
     <button
       onClick={onClick}
-      className="group fixed bottom-5 right-5 z-20 hover:scale-110 transition-transform duration-200 opacity-60 hover:opacity-100"
+      className="group fixed bottom-5 right-5 z-10 hover:scale-110 transition-transform duration-200 opacity-50 hover:opacity-90"
       aria-label="Open AKIOR Assistant"
       data-testid="brand-float"
       style={{ pointerEvents: "auto" }}
     >
-      <AkiorCore state="idle" size={80} />
+      <AkiorCore state="idle" size={72} />
     </button>
   );
 }

@@ -67,7 +67,7 @@ function LoginContent() {
           {/* Logo Section */}
           <div className="text-center" data-testid="brand-mark">
             <div className="flex flex-col items-center gap-4">
-              <AkiorCore state="idle" size={200} />
+              <AkiorCore state="idle" size={220} />
               <div className="flex flex-col items-center gap-1">
                 <div
                   className="text-3xl font-bold tracking-[0.3em] text-cyan-400"
