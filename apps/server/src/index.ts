@@ -5089,6 +5089,33 @@ try {
     return { tasks: loadTasks() };
   });
 
+  function extractScheduleHint(text: string): string {
+    const t = text.toLowerCase();
+    const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+    const dayMatch = days.find(d => t.includes(d));
+    const timeMatch = t.match(/at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    let timePart = "";
+    if (timeMatch) {
+      let h = parseInt(timeMatch[1], 10);
+      const m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+      const ampm = (timeMatch[3] || (h < 12 ? "AM" : "PM")).toUpperCase();
+      if (ampm === "PM" && h < 12) h += 12;
+      if (ampm === "AM" && h === 12) h = 0;
+      const fh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      const fm = m.toString().padStart(2, "0");
+      const fa = h >= 12 ? "PM" : "AM";
+      timePart = ` at ${fh}:${fm} ${fa}`;
+    }
+    if (dayMatch) return `Every ${dayMatch.charAt(0).toUpperCase() + dayMatch.slice(1)}${timePart}`;
+    if (/every\s+day/.test(t) || /daily/.test(t)) return `Daily${timePart}`;
+    if (/every\s+hour/.test(t)) return "Every hour";
+    if (/every\s+(\d+)\s*min/.test(t)) {
+      const n = t.match(/every\s+(\d+)\s*min/)![1];
+      return `Every ${n} minutes`;
+    }
+    return "manual";
+  }
+
   fastify.post("/api/tasks", async (req, reply) => {
     const { input } = req.body as { input?: string };
     if (!input?.trim()) return reply.status(400).send({ error: "input required" });
@@ -5097,7 +5124,7 @@ try {
       id: crypto.randomUUID(),
       name: input.trim(),
       schedule: "",
-      scheduleHuman: "manual",
+      scheduleHuman: extractScheduleHint(input.trim()),
       command: input.trim(),
       enabled: true,
       lastRun: null,
