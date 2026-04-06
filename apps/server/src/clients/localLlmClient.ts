@@ -28,7 +28,7 @@ export type LocalLlmResult =
  */
 function loadSettings(): AppSettings | null {
   try {
-    const settingsPath = join(process.cwd(), 'apps', 'server', 'data', 'settings.json');
+    const settingsPath = join(process.cwd(), 'data', 'settings.json');
     const raw = readFileSync(settingsPath, 'utf-8');
     return JSON.parse(raw) as AppSettings;
   } catch (error) {
