@@ -5254,6 +5254,122 @@ try {
     return { ok: true };
   });
 
+  // ── Google OAuth Flow (/api/auth/google) ──
+  const GOOGLE_TOKENS_FILE = path.join(DATA_DIR, "google-tokens.json");
+
+  function loadGoogleTokens(): any {
+    try {
+      if (existsSync(GOOGLE_TOKENS_FILE)) {
+        return JSON.parse(readFileSync(GOOGLE_TOKENS_FILE, "utf-8"));
+      }
+    } catch {}
+    return null;
+  }
+
+  fastify.get("/api/auth/google/status", async () => {
+    const tokens = loadGoogleTokens();
+    if (tokens?.refresh_token) {
+      return { connected: true, email: tokens.email || "connected" };
+    }
+    return { connected: false };
+  });
+
+  fastify.get("/api/auth/google/start", async (req, reply) => {
+    const settings = JSON.parse(readFileSync(path.join(DATA_DIR, "settings.json"), "utf-8"));
+    const gc = settings?.integrations?.googleCalendar;
+    const clientId = gc?.clientId || process.env.GOOGLE_CLIENT_ID;
+    const redirectUri = `http://localhost:3002/api/auth/google/callback`;
+
+    if (!clientId) {
+      return reply.status(400).send({ error: "Google Client ID not configured. Set it in Settings > Integrations > Google Calendar." });
+    }
+
+    const scopes = [
+      "https://www.googleapis.com/auth/gmail.modify",
+      "https://www.googleapis.com/auth/gmail.send",
+      "https://www.googleapis.com/auth/calendar",
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/contacts.readonly",
+    ].join(" ");
+
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&access_type=offline&prompt=consent`;
+
+    return reply.redirect(url);
+  });
+
+  fastify.get("/api/auth/google/callback", async (req, reply) => {
+    const { code } = req.query as { code?: string };
+    if (!code) return reply.status(400).send({ error: "No authorization code received" });
+
+    const settings = JSON.parse(readFileSync(path.join(DATA_DIR, "settings.json"), "utf-8"));
+    const gc = settings?.integrations?.googleCalendar;
+    const clientId = gc?.clientId || process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = gc?.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = `http://localhost:3002/api/auth/google/callback`;
+
+    // Exchange code for tokens
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    const tokenData = await tokenRes.json() as any;
+
+    if (tokenData.error) {
+      return reply.status(400).send({ error: tokenData.error_description || tokenData.error });
+    }
+
+    // Get user email
+    let email = "";
+    try {
+      const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const profile = await profileRes.json() as any;
+      email = profile.email || "";
+    } catch {}
+
+    // Save tokens
+    const tokens = {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      token_type: tokenData.token_type,
+      expiry_date: Date.now() + (tokenData.expires_in * 1000),
+      email,
+      connectedAt: new Date().toISOString(),
+    };
+    writeFileSync(GOOGLE_TOKENS_FILE, JSON.stringify(tokens, null, 2));
+
+    // Also update settings.json with the refresh token for googleCalendar integration
+    if (tokenData.refresh_token) {
+      settings.integrations = settings.integrations || {};
+      settings.integrations.googleCalendar = {
+        ...settings.integrations.googleCalendar,
+        enabled: true,
+        refreshToken: tokenData.refresh_token,
+        userEmail: email,
+      };
+      settings.integrations.gmail = {
+        ...settings.integrations.gmail,
+        enabled: true,
+        refreshToken: tokenData.refresh_token,
+        userEmail: email,
+      };
+      writeFileSync(path.join(DATA_DIR, "settings.json"), JSON.stringify(settings, null, 2));
+    }
+
+    // Redirect back to settings page with success message
+    return reply.redirect("http://localhost:3000/settings?google=connected");
+  });
+
   const PORT = Number(process.env.PORT || 1234);
   const hostEnv = process.env.BIND_ADDR ?? process.env.HOST;
   const HOST = hostEnv?.trim() || "0.0.0.0";
