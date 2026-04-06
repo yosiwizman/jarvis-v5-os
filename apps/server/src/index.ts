@@ -4,7 +4,8 @@ import fastifyCors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
 import { Server as IOServer } from "socket.io";
-import { readFileSync, existsSync, mkdirSync, readdirSync, statSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "fs";
+import crypto from "crypto";
 import { readFile, writeFile, rm } from "fs/promises";
 import path from "path";
 import { setTimeout as delay } from "timers/promises";
@@ -5066,6 +5067,67 @@ try {
       return res.json();
     }
     return reply.status(404).send({ error: "tool not found" });
+  });
+
+  // ── Scheduled Tasks API (/api/tasks) ──
+  const TASKS_FILE = path.join(DATA_DIR, "tasks.json");
+
+  function loadTasks(): any[] {
+    try {
+      if (existsSync(TASKS_FILE)) {
+        return JSON.parse(readFileSync(TASKS_FILE, "utf-8")).tasks ?? [];
+      }
+    } catch {}
+    return [];
+  }
+
+  function saveTasks(tasks: any[]) {
+    writeFileSync(TASKS_FILE, JSON.stringify({ tasks }, null, 2));
+  }
+
+  fastify.get("/api/tasks", async () => {
+    return { tasks: loadTasks() };
+  });
+
+  fastify.post("/api/tasks", async (req, reply) => {
+    const { input } = req.body as { input?: string };
+    if (!input?.trim()) return reply.status(400).send({ error: "input required" });
+    const tasks = loadTasks();
+    const task = {
+      id: crypto.randomUUID(),
+      name: input.trim(),
+      schedule: "",
+      scheduleHuman: "manual",
+      command: input.trim(),
+      enabled: true,
+      lastRun: null,
+      nextRun: null,
+      status: "idle",
+      createdAt: new Date().toISOString(),
+    };
+    tasks.push(task);
+    saveTasks(tasks);
+    return { ok: true, task };
+  });
+
+  fastify.patch("/api/tasks", async (req, reply) => {
+    const { id, enabled } = req.body as { id?: string; enabled?: boolean };
+    if (!id) return reply.status(400).send({ error: "id required" });
+    const tasks = loadTasks();
+    const task = tasks.find((t: any) => t.id === id);
+    if (!task) return reply.status(404).send({ error: "task not found" });
+    if (typeof enabled === "boolean") task.enabled = enabled;
+    saveTasks(tasks);
+    return { ok: true, task };
+  });
+
+  fastify.delete("/api/tasks", async (req, reply) => {
+    const { id } = req.body as { id?: string };
+    if (!id) return reply.status(400).send({ error: "id required" });
+    let tasks = loadTasks();
+    tasks = tasks.filter((t: any) => t.id !== id);
+    saveTasks(tasks);
+    return { ok: true };
   });
 
   const PORT = Number(process.env.PORT || 1234);
