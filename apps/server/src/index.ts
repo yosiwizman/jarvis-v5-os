@@ -5089,6 +5089,37 @@ try {
     return { tasks: loadTasks() };
   });
 
+  // ── Do Not Disturb API (/api/dnd) ──
+  const DND_FILE = path.join(DATA_DIR, "dnd.json");
+
+  function loadDnd(): any {
+    try {
+      if (existsSync(DND_FILE)) {
+        return JSON.parse(readFileSync(DND_FILE, "utf-8"));
+      }
+    } catch {}
+    return { enabled: false, schedule: null, message: "I'm currently unavailable. I'll get back to you soon.", updatedAt: null };
+  }
+
+  function saveDnd(state: any) {
+    writeFileSync(DND_FILE, JSON.stringify(state, null, 2));
+  }
+
+  fastify.get("/api/dnd", async () => {
+    return loadDnd();
+  });
+
+  fastify.post("/api/dnd", async (req) => {
+    const body = req.body as any;
+    const current = loadDnd();
+    if (typeof body.enabled === "boolean") current.enabled = body.enabled;
+    if (body.schedule !== undefined) current.schedule = body.schedule;
+    if (body.message !== undefined) current.message = body.message;
+    current.updatedAt = new Date().toISOString();
+    saveDnd(current);
+    return { ok: true, ...current };
+  });
+
   function extractScheduleHint(text: string): string {
     const t = text.toLowerCase();
     const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
@@ -5154,6 +5185,72 @@ try {
     let tasks = loadTasks();
     tasks = tasks.filter((t: any) => t.id !== id);
     saveTasks(tasks);
+    return { ok: true };
+  });
+
+  // ── Contacts API (/api/contacts) ──
+  const CONTACTS_FILE = path.join(DATA_DIR, "contacts.json");
+
+  function loadContacts(): any[] {
+    try {
+      if (existsSync(CONTACTS_FILE)) {
+        return JSON.parse(readFileSync(CONTACTS_FILE, "utf-8")).contacts ?? [];
+      }
+    } catch {}
+    return [];
+  }
+
+  function saveContacts(contacts: any[]) {
+    writeFileSync(CONTACTS_FILE, JSON.stringify({ contacts }, null, 2));
+  }
+
+  fastify.get("/api/contacts", async () => {
+    return { contacts: loadContacts() };
+  });
+
+  fastify.post("/api/contacts", async (req, reply) => {
+    const body = req.body as any;
+    if (!body.name?.trim()) return reply.status(400).send({ error: "name required" });
+    const contacts = loadContacts();
+    const contact = {
+      id: crypto.randomUUID(),
+      name: body.name.trim(),
+      relationship: body.relationship || "friend",
+      allowLevel: body.allowLevel || "normal",
+      blockList: body.blockList || [],
+      replyPersona: body.replyPersona || "",
+      standingInstructions: body.standingInstructions || "",
+      takeoverMode: body.takeoverMode ?? false,
+      priority: body.priority || "normal",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    contacts.push(contact);
+    saveContacts(contacts);
+    return { ok: true, contact };
+  });
+
+  fastify.patch("/api/contacts/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+    const contacts = loadContacts();
+    const contact = contacts.find((c: any) => c.id === id);
+    if (!contact) return reply.status(404).send({ error: "contact not found" });
+    for (const key of ["name","relationship","allowLevel","blockList","replyPersona","standingInstructions","takeoverMode","priority"]) {
+      if (body[key] !== undefined) (contact as any)[key] = body[key];
+    }
+    contact.updatedAt = new Date().toISOString();
+    saveContacts(contacts);
+    return { ok: true, contact };
+  });
+
+  fastify.delete("/api/contacts/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    let contacts = loadContacts();
+    const before = contacts.length;
+    contacts = contacts.filter((c: any) => c.id !== id);
+    if (contacts.length === before) return reply.status(404).send({ error: "contact not found" });
+    saveContacts(contacts);
     return { ok: true };
   });
 
