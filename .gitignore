@@ -31,3 +31,5 @@ apps/server/infra/
 # Web certificates
 apps/web/certs/
 apps/web/*.pem
+
+*.tar.gz
