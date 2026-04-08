@@ -1,31 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
-type Channel = {
-  id: string;
-  name: string;
-  icon: string;
-  connected: boolean;
-  lastActive: string;
-};
-
-const CHANNELS: Channel[] = [
-  {
-    id: "whatsapp",
-    name: "WhatsApp",
-    icon: "\uD83D\uDCAC",
-    connected: false,
-    lastActive: "Never",
-  },
-  {
-    id: "imessage",
-    name: "iMessage",
-    icon: "\uD83D\uDCF1",
-    connected: false,
-    lastActive: "Never",
-  },
-];
+import React, { useEffect, useState, useCallback, useRef } from "react";
 
 function StatusBadge({ connected }: { connected: boolean }) {
   return (
@@ -46,22 +21,42 @@ function StatusBadge({ connected }: { connected: boolean }) {
   );
 }
 
+// ── Google Gmail Card (DEC-031 browser-session lane) ──
+
 function GoogleConnectCard() {
   const [status, setStatus] = useState<{
-    connected: boolean;
-    email?: string;
+    running: boolean;
+    gmailOpen: boolean;
+    title: string | null;
   } | null>(null);
+  const [connecting, setConnecting] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/auth/google/status")
+  const checkStatus = () => {
+    fetch("/api/browser/gmail/status")
       .then((r) => r.json())
       .then(setStatus)
-      .catch(() => setStatus({ connected: false }));
+      .catch(() => setStatus({ running: false, gmailOpen: false, title: null }));
+  };
+
+  useEffect(() => {
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000);
+    return () => clearInterval(interval);
   }, []);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      await fetch("/api/browser/gmail/connect", { method: "POST" });
+      setTimeout(checkStatus, 3000);
+    } catch {}
+    setConnecting(false);
+  };
+
+  const isConnected = status?.gmailOpen && status?.title && !status.title.includes("Sign in");
 
   return (
     <div className="card p-5 space-y-4 border border-white/10 rounded-lg bg-white/5">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">
@@ -74,88 +69,229 @@ function GoogleConnectCard() {
           </span>
           <h3 className="text-lg font-semibold text-white">Google</h3>
         </div>
-        <StatusBadge connected={status?.connected ?? false} />
+        <StatusBadge connected={Boolean(isConnected)} />
       </div>
-
-      {/* Details */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
         <div className="text-white/40">Status:</div>
-        <div className={status?.connected ? "text-green-300" : "text-red-300"}>
-          {status?.connected ? "Connected" : "Disconnected"}
+        <div className={isConnected ? "text-green-300" : status?.running ? "text-yellow-300" : "text-red-300"}>
+          {isConnected ? "Gmail Active" : status?.gmailOpen ? "Sign in needed" : status?.running ? "Browser ready" : "Not connected"}
         </div>
-        <div className="text-white/40">Account:</div>
-        <div className="text-white/70">
-          {status?.connected ? status.email || "Connected" : "None"}
-        </div>
-        <div className="text-white/40">Scopes:</div>
-        <div className="text-white/70">Gmail, Calendar, Drive, Contacts</div>
+        <div className="text-white/40">Method:</div>
+        <div className="text-white/70">Browser session (no API keys needed)</div>
       </div>
-
-      {/* Connect Button */}
-      {status?.connected ? (
+      {isConnected ? (
         <div className="w-full px-4 py-2 text-sm rounded border border-green-500/30 bg-green-500/10 text-green-300 text-center">
-          Google Connected
+          Gmail Connected — {status?.title?.slice(0, 40)}
         </div>
       ) : (
-        <a
-          href="/api/auth/google/start"
+        <button
+          onClick={handleConnect}
+          disabled={connecting}
           data-testid="connect-google-button"
-          className="block w-full px-4 py-2 text-sm rounded border border-blue-500/40 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 hover:text-white transition-colors text-center cursor-pointer"
+          className="block w-full px-4 py-2 text-sm rounded border border-blue-500/40 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 hover:text-white transition-colors text-center cursor-pointer disabled:opacity-50"
         >
-          Connect Google
-        </a>
+          {connecting ? "Opening Gmail..." : "Connect Google"}
+        </button>
       )}
     </div>
   );
 }
 
+// ── WhatsApp Card (DEC-032 direct-import lane) ──
+
+type WaStatus = {
+  state: "idle" | "awaiting_scan" | "linked" | "timed_out" | "cancelled";
+  qrDataUrl?: string | null;
+  message?: string | null;
+  startedAt?: number | null;
+};
+
+function WhatsAppConnectCard() {
+  const [status, setStatus] = useState<WaStatus>({ state: "idle" });
+  const [connecting, setConnecting] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const checkStatus = useCallback(() => {
+    fetch("/api/channels/whatsapp/status")
+      .then((r) => r.json())
+      .then((data: WaStatus) => {
+        setStatus(data);
+        // Stop polling on terminal states
+        if (data.state !== "awaiting_scan" && pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // On mount: check initial state
+  useEffect(() => {
+    checkStatus();
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [checkStatus]);
+
+  const startPolling = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(checkStatus, 2000);
+  };
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const res = await fetch("/api/channels/whatsapp/connect", { method: "POST" });
+      const data: WaStatus = await res.json();
+      setStatus(data);
+      if (data.state === "awaiting_scan") {
+        startPolling();
+      }
+    } catch {}
+    setConnecting(false);
+  };
+
+  const handleCancel = async () => {
+    try {
+      await fetch("/api/channels/whatsapp/cancel", { method: "POST" });
+    } catch {}
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    setStatus({ state: "cancelled", message: "Cancelled." });
+  };
+
+  const isLinked = status.state === "linked";
+
+  return (
+    <div className="card p-5 space-y-4 border border-white/10 rounded-lg bg-white/5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">💬</span>
+          <h3 className="text-lg font-semibold text-white">WhatsApp</h3>
+        </div>
+        <StatusBadge connected={isLinked} />
+      </div>
+
+      {/* Details */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        <div className="text-white/40">Status:</div>
+        <div className={
+          isLinked ? "text-green-300"
+          : status.state === "awaiting_scan" ? "text-yellow-300"
+          : status.state === "timed_out" ? "text-orange-300"
+          : "text-red-300"
+        }>
+          {isLinked ? "WhatsApp Active"
+            : status.state === "awaiting_scan" ? "Waiting for scan..."
+            : status.state === "timed_out" ? "Scan timed out"
+            : status.state === "cancelled" ? "Cancelled"
+            : "Not connected"}
+        </div>
+        <div className="text-white/40">Method:</div>
+        <div className="text-white/70">QR code scan (no API keys needed)</div>
+      </div>
+
+      {/* QR Display (awaiting_scan) */}
+      {status.state === "awaiting_scan" && status.qrDataUrl && (
+        <div className="space-y-3">
+          <div className="flex justify-center p-4 bg-white rounded-lg">
+            <img
+              src={status.qrDataUrl}
+              alt="WhatsApp QR code"
+              className="w-48 h-48"
+            />
+          </div>
+          <p className="text-xs text-white/60 text-center">
+            Open WhatsApp on your phone → Settings → Linked Devices → Link a Device → scan this code
+          </p>
+          <button
+            onClick={handleCancel}
+            className="w-full px-4 py-2 text-sm rounded border border-white/20 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-colors text-center cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Connected state */}
+      {isLinked && (
+        <div className="w-full px-4 py-2 text-sm rounded border border-green-500/30 bg-green-500/10 text-green-300 text-center">
+          WhatsApp Connected
+        </div>
+      )}
+
+      {/* Timed out state */}
+      {status.state === "timed_out" && (
+        <div className="space-y-2">
+          <div className="w-full px-3 py-2 text-xs rounded border border-orange-500/30 bg-orange-500/10 text-orange-300 text-center">
+            {status.message || "QR scan timed out."}
+          </div>
+          <button
+            onClick={handleConnect}
+            disabled={connecting}
+            className="block w-full px-4 py-2 text-sm rounded border border-blue-500/40 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 hover:text-white transition-colors text-center cursor-pointer disabled:opacity-50"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* Idle / Cancelled — show Connect button */}
+      {(status.state === "idle" || status.state === "cancelled") && (
+        <button
+          onClick={handleConnect}
+          disabled={connecting}
+          data-testid="connect-whatsapp-button"
+          className="block w-full px-4 py-2 text-sm rounded border border-blue-500/40 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 hover:text-white transition-colors text-center cursor-pointer disabled:opacity-50"
+        >
+          {connecting ? "Generating QR..." : "Connect WhatsApp"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── iMessage Card (placeholder) ──
+
+function IMessageCard() {
+  return (
+    <div className="card p-5 space-y-4 border border-white/10 rounded-lg bg-white/5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">📱</span>
+          <h3 className="text-lg font-semibold text-white">iMessage</h3>
+        </div>
+        <StatusBadge connected={false} />
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        <div className="text-white/40">Status:</div>
+        <div className="text-red-300">Disconnected</div>
+        <div className="text-white/40">Last Active:</div>
+        <div className="text-white/70">Never</div>
+      </div>
+      <button
+        type="button"
+        disabled
+        className="w-full px-4 py-2 text-sm rounded border border-white/20 bg-white/5 text-white/40 cursor-not-allowed"
+      >
+        Connect
+      </button>
+    </div>
+  );
+}
+
+// ── Page Layout ──
+
 export default function ChannelsPage() {
   return (
     <div className="space-y-6" data-testid="channels-page">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Channels</h1>
       </div>
-
-      {/* Channel Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Google OAuth Card */}
         <GoogleConnectCard />
-
-        {CHANNELS.map((channel) => (
-          <div
-            key={channel.id}
-            className="card p-5 space-y-4 border border-white/10 rounded-lg bg-white/5"
-          >
-            {/* Channel Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{channel.icon}</span>
-                <h3 className="text-lg font-semibold text-white">
-                  {channel.name}
-                </h3>
-              </div>
-              <StatusBadge connected={channel.connected} />
-            </div>
-
-            {/* Details */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <div className="text-white/40">Status:</div>
-              <div className="text-red-300">Disconnected</div>
-              <div className="text-white/40">Last Active:</div>
-              <div className="text-white/70">{channel.lastActive}</div>
-            </div>
-
-            {/* Connect Button */}
-            <button
-              type="button"
-              disabled
-              className="w-full px-4 py-2 text-sm rounded border border-white/20 bg-white/5 text-white/40 cursor-not-allowed"
-            >
-              Connect
-            </button>
-          </div>
-        ))}
+        <WhatsAppConnectCard />
+        <IMessageCard />
       </div>
     </div>
   );

@@ -406,6 +406,136 @@ if (!existsSync(DATA_DIR)) {
 }
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
+// ── Google credential + token helpers (module-level for visibility) ──
+const GOOGLE_TOKENS_FILE = path.join(DATA_DIR, "google-tokens.json");
+
+// ── OpenClaw Browser-Session Gmail helpers ──
+const OPENCLAW_BROWSER_PORT = 18791;
+const OPENCLAW_BROWSER_AUTH = (() => {
+  try {
+    const cfg = JSON.parse(readFileSync(path.join(process.env.HOME || "", ".openclaw", "openclaw.json"), "utf-8"));
+    return cfg?.gateway?.auth?.token || "";
+  } catch { return ""; }
+})();
+
+async function browserGmailStatus(): Promise<{ running: boolean; gmailOpen: boolean; title: string | null }> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${OPENCLAW_BROWSER_PORT}/tabs`, {
+      headers: { Authorization: `Bearer ${OPENCLAW_BROWSER_AUTH}` },
+    });
+    if (!res.ok) return { running: false, gmailOpen: false, title: null };
+    const data = await res.json() as any;
+    if (!data.running) return { running: false, gmailOpen: false, title: null };
+    const gmailTab = (data.tabs || []).find((t: any) =>
+      t.url?.includes("mail.google.com") || t.url?.includes("accounts.google.com")
+    );
+    return { running: true, gmailOpen: !!gmailTab, title: gmailTab?.title || null };
+  } catch { return { running: false, gmailOpen: false, title: null }; }
+}
+
+async function startBrowserGmail(): Promise<{ ok: boolean; message: string }> {
+  try {
+    // Start browser if not running
+    const statusRes = await fetch(`http://127.0.0.1:${OPENCLAW_BROWSER_PORT}/`, {
+      headers: { Authorization: `Bearer ${OPENCLAW_BROWSER_AUTH}` },
+    });
+    const statusData = await statusRes.json() as any;
+    if (!statusData.running) {
+      await fetch(`http://127.0.0.1:${OPENCLAW_BROWSER_PORT}/start`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENCLAW_BROWSER_AUTH}` },
+      });
+      // Wait for browser to initialize
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    // Open Gmail in a new tab via CDP
+    const cdpPort = statusData.cdpPort || 18800;
+    await fetch(`http://127.0.0.1:${cdpPort}/json/new?https://mail.google.com`, { method: "PUT" });
+    return { ok: true, message: "Gmail opened in AKIOR browser. Sign in if prompted." };
+  } catch (err) {
+    return { ok: false, message: "Failed to open browser. Is OpenClaw gateway running?" };
+  }
+}
+
+// ── WhatsApp DEC-032 Direct-Import Helpers ──
+type WaState = "idle" | "awaiting_scan" | "linked" | "timed_out" | "cancelled";
+interface WaSession {
+  state: WaState;
+  qrDataUrl: string | null;
+  message: string | null;
+  startedAt: number | null;
+  timeoutHandle: ReturnType<typeof setTimeout> | null;
+  waitPromise: Promise<any> | null;
+}
+
+const waSession: WaSession = {
+  state: "idle",
+  qrDataUrl: null,
+  message: null,
+  startedAt: null,
+  timeoutHandle: null,
+  waitPromise: null,
+};
+
+function resetWaSession() {
+  if (waSession.timeoutHandle) clearTimeout(waSession.timeoutHandle);
+  waSession.state = "idle";
+  waSession.qrDataUrl = null;
+  waSession.message = null;
+  waSession.startedAt = null;
+  waSession.timeoutHandle = null;
+  waSession.waitPromise = null;
+}
+
+let waModuleCache: { startWebLoginWithQr: Function; waitForWebLogin: Function } | null = null;
+
+async function resolveWaModule() {
+  if (waModuleCache) return waModuleCache;
+  const distDir = path.join(process.env.HOME || "", ".npm-global/lib/node_modules/openclaw/dist");
+  const candidates = readdirSync(distDir).filter(
+    (f: string) => f.startsWith("login-qr-") && f.endsWith(".js") && !f.startsWith("login-qr-api-")
+  );
+  if (candidates.length === 0) throw new Error("OpenClaw WhatsApp module not found (zero candidates in dist/)");
+  if (candidates.length > 1) throw new Error(`OpenClaw WhatsApp module ambiguous (${candidates.length} candidates: ${candidates.join(", ")})`);
+  const mod = await import(path.join(distDir, candidates[0]));
+  if (typeof mod.startWebLoginWithQr !== "function" || typeof mod.waitForWebLogin !== "function") {
+    throw new Error("OpenClaw WhatsApp module missing expected exports");
+  }
+  waModuleCache = { startWebLoginWithQr: mod.startWebLoginWithQr, waitForWebLogin: mod.waitForWebLogin };
+  return waModuleCache;
+}
+
+function loadGoogleTokens(): any {
+  try {
+    if (existsSync(GOOGLE_TOKENS_FILE)) {
+      return JSON.parse(readFileSync(GOOGLE_TOKENS_FILE, "utf-8"));
+    }
+  } catch {}
+  return null;
+}
+
+function loadGoogleCredentials(): { clientId: string; clientSecret: string; redirectUri: string } {
+  const credsPath = path.join(DATA_DIR, "google-credentials.json");
+  if (existsSync(credsPath)) {
+    try {
+      const creds = JSON.parse(readFileSync(credsPath, "utf-8"));
+      if (creds.clientId && creds.clientSecret) {
+        return {
+          clientId: creds.clientId,
+          clientSecret: creds.clientSecret,
+          redirectUri: creds.redirectUri || "http://localhost:3002/api/auth/google/callback",
+        };
+      }
+    } catch {}
+  }
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (clientId && clientSecret) {
+    return { clientId, clientSecret, redirectUri: "http://localhost:3002/api/auth/google/callback" };
+  }
+  throw new Error("Google credentials not configured on this server");
+}
+
 // Initialize conversation store
 await initConversationStore();
 logger.info("Conversation store initialized");
@@ -418,38 +548,29 @@ logger.info("Action store initialized");
 await notificationScheduler.initialize();
 logger.info("Notification scheduler initialized");
 
-// Initialize email notification system (if Gmail is configured)
+// Initialize email notification system (if Google credentials + tokens are available)
 try {
-  if (existsSync(SETTINGS_FILE)) {
-    const settingsContent = await readFile(SETTINGS_FILE, "utf-8");
-    const settings = JSON.parse(settingsContent);
-    const gmailConfig = settings?.integrations?.gmail;
-    const emailNotifConfig = settings?.email_notifications;
+  const googleTokens = (() => { try { const f = path.join(DATA_DIR, "google-tokens.json"); return existsSync(f) ? JSON.parse(readFileSync(f, "utf-8")) : null; } catch { return null; } })();
+  const googleCreds = (() => { try { const f = path.join(DATA_DIR, "google-credentials.json"); if (existsSync(f)) { const c = JSON.parse(readFileSync(f, "utf-8")); if (c.clientId && c.clientSecret) return c; } const cid = process.env.GOOGLE_CLIENT_ID; const cs = process.env.GOOGLE_CLIENT_SECRET; if (cid && cs) return { clientId: cid, clientSecret: cs }; return null; } catch { return null; } })();
 
-    if (
-      gmailConfig?.enabled &&
-      gmailConfig?.clientId &&
-      gmailConfig?.clientSecret &&
-      gmailConfig?.refreshToken &&
-      gmailConfig?.userEmail
-    ) {
-      const { initializeEmailNotifications } =
-        await import("./integrations/email-notifications.js");
-      await initializeEmailNotifications(
-        {
-          clientId: gmailConfig.clientId,
-          clientSecret: gmailConfig.clientSecret,
-          refreshToken: gmailConfig.refreshToken,
-          userEmail: gmailConfig.userEmail,
-        },
-        emailNotifConfig,
-      );
-      logger.info("Email notification system initialized");
-    } else {
-      logger.info(
-        "Email notification system not initialized (Gmail not configured)",
-      );
-    }
+  if (googleCreds && googleTokens?.refresh_token && googleTokens?.email) {
+    const emailNotifConfig = existsSync(SETTINGS_FILE) ? JSON.parse(readFileSync(SETTINGS_FILE, "utf-8"))?.email_notifications : undefined;
+    const { initializeEmailNotifications } =
+      await import("./integrations/email-notifications.js");
+    await initializeEmailNotifications(
+      {
+        clientId: googleCreds.clientId,
+        clientSecret: googleCreds.clientSecret,
+        refreshToken: googleTokens.refresh_token,
+        userEmail: googleTokens.email,
+      },
+      emailNotifConfig,
+    );
+    logger.info("Email notification system initialized");
+  } else {
+    logger.info(
+      "Email notification system not initialized (Gmail not configured)",
+    );
   }
 } catch (error) {
   logger.error({ error }, "Failed to initialize email notification system");
@@ -1366,19 +1487,11 @@ fastify.post("/api/integrations/gmail/test", async (req, reply) => {
       .send({ ok: false, error: "failed_to_load_settings" });
   }
 
-  const gmailConfig = settings?.integrations?.gmail;
-
-  // Check if configured
-  if (
-    !gmailConfig?.enabled ||
-    !gmailConfig?.clientId ||
-    !gmailConfig?.clientSecret ||
-    !gmailConfig?.refreshToken ||
-    !gmailConfig?.userEmail
-  ) {
-    logger.warn("Gmail not configured");
-    return reply.status(503).send({ ok: false, error: "gmail_not_configured" });
-  }
+  let googleCreds: { clientId: string; clientSecret: string };
+  try { googleCreds = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+  const googleTokens = loadGoogleTokens();
+  if (!googleTokens?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+  const gmailUserEmail = googleTokens.email || settings?.integrations?.gmail?.userEmail || "";
 
   try {
     // Import Gmail client dynamically
@@ -1386,10 +1499,10 @@ fastify.post("/api/integrations/gmail/test", async (req, reply) => {
 
     const result = await testGmailConnection(
       {
-        clientId: gmailConfig.clientId,
-        clientSecret: gmailConfig.clientSecret,
-        refreshToken: gmailConfig.refreshToken,
-        userEmail: gmailConfig.userEmail,
+        clientId: googleCreds.clientId,
+        clientSecret: googleCreds.clientSecret,
+        refreshToken: googleTokens.refresh_token,
+        userEmail: gmailUserEmail,
       },
       {
         maxMessages: 5,
@@ -1426,29 +1539,21 @@ fastify.get("/api/integrations/gmail/inbox", async (req, reply) => {
       .send({ ok: false, error: "failed_to_load_settings" });
   }
 
-  const gmailConfig = settings?.integrations?.gmail;
-
-  // Check if configured
-  if (
-    !gmailConfig?.enabled ||
-    !gmailConfig?.clientId ||
-    !gmailConfig?.clientSecret ||
-    !gmailConfig?.refreshToken ||
-    !gmailConfig?.userEmail
-  ) {
-    logger.warn("Gmail not configured");
-    return reply.status(503).send({ ok: false, error: "gmail_not_configured" });
-  }
+  let googleCreds2: { clientId: string; clientSecret: string };
+  try { googleCreds2 = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+  const googleTokens2 = loadGoogleTokens();
+  if (!googleTokens2?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+  const gmailUserEmail2 = googleTokens2.email || settings?.integrations?.gmail?.userEmail || "";
 
   try {
     const { fetchInboxMessages } = await import("./clients/gmailClient.js");
 
     const result = await fetchInboxMessages(
       {
-        clientId: gmailConfig.clientId,
-        clientSecret: gmailConfig.clientSecret,
-        refreshToken: gmailConfig.refreshToken,
-        userEmail: gmailConfig.userEmail,
+        clientId: googleCreds2.clientId,
+        clientSecret: googleCreds2.clientSecret,
+        refreshToken: googleTokens2.refresh_token,
+        userEmail: gmailUserEmail2,
       },
       {
         maxResults: query.maxResults ? parseInt(query.maxResults, 10) : 20,
@@ -1496,31 +1601,21 @@ fastify.get(
         .send({ ok: false, error: "failed_to_load_settings" });
     }
 
-    const gmailConfig = settings?.integrations?.gmail;
-
-    // Check if configured
-    if (
-      !gmailConfig?.enabled ||
-      !gmailConfig?.clientId ||
-      !gmailConfig?.clientSecret ||
-      !gmailConfig?.refreshToken ||
-      !gmailConfig?.userEmail
-    ) {
-      logger.warn("Gmail not configured");
-      return reply
-        .status(503)
-        .send({ ok: false, error: "gmail_not_configured" });
-    }
+    let googleCreds3: { clientId: string; clientSecret: string };
+    try { googleCreds3 = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+    const googleTokens3 = loadGoogleTokens();
+    if (!googleTokens3?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+    const gmailUserEmail3 = googleTokens3.email || settings?.integrations?.gmail?.userEmail || "";
 
     try {
       const { fetchFullMessage } = await import("./clients/gmailClient.js");
 
       const result = await fetchFullMessage(
         {
-          clientId: gmailConfig.clientId,
-          clientSecret: gmailConfig.clientSecret,
-          refreshToken: gmailConfig.refreshToken,
-          userEmail: gmailConfig.userEmail,
+          clientId: googleCreds3.clientId,
+          clientSecret: googleCreds3.clientSecret,
+          refreshToken: googleTokens3.refresh_token,
+          userEmail: gmailUserEmail3,
         },
         messageId,
         20000,
@@ -1571,29 +1666,21 @@ fastify.post("/api/integrations/gmail/send", async (req, reply) => {
       .send({ ok: false, error: "failed_to_load_settings" });
   }
 
-  const gmailConfig = settings?.integrations?.gmail;
-
-  // Check if configured
-  if (
-    !gmailConfig?.enabled ||
-    !gmailConfig?.clientId ||
-    !gmailConfig?.clientSecret ||
-    !gmailConfig?.refreshToken ||
-    !gmailConfig?.userEmail
-  ) {
-    logger.warn("Gmail not configured");
-    return reply.status(503).send({ ok: false, error: "gmail_not_configured" });
-  }
+  let googleCreds4: { clientId: string; clientSecret: string };
+  try { googleCreds4 = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+  const googleTokens4 = loadGoogleTokens();
+  if (!googleTokens4?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+  const gmailUserEmail4 = googleTokens4.email || settings?.integrations?.gmail?.userEmail || "";
 
   try {
     const { sendEmail } = await import("./clients/gmailClient.js");
 
     const result = await sendEmail(
       {
-        clientId: gmailConfig.clientId,
-        clientSecret: gmailConfig.clientSecret,
-        refreshToken: gmailConfig.refreshToken,
-        userEmail: gmailConfig.userEmail,
+        clientId: googleCreds4.clientId,
+        clientSecret: googleCreds4.clientSecret,
+        refreshToken: googleTokens4.refresh_token,
+        userEmail: gmailUserEmail4,
       },
       {
         to: body.to,
@@ -1641,21 +1728,11 @@ fastify.get(
         .send({ ok: false, error: "failed_to_load_settings" });
     }
 
-    const calendarConfig = settings?.integrations?.googleCalendar;
-
-    // Check if configured
-    if (
-      !calendarConfig?.enabled ||
-      !calendarConfig?.clientId ||
-      !calendarConfig?.clientSecret ||
-      !calendarConfig?.refreshToken ||
-      !calendarConfig?.calendarId
-    ) {
-      logger.warn("Google Calendar not configured");
-      return reply
-        .status(503)
-        .send({ ok: false, error: "google_calendar_not_configured" });
-    }
+    let calCreds1: { clientId: string; clientSecret: string };
+    try { calCreds1 = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+    const calTokens1 = loadGoogleTokens();
+    if (!calTokens1?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+    const calendarId1 = settings?.integrations?.googleCalendar?.calendarId || "primary";
 
     // Parse limit from query (default 10, max 50)
     const { limit } = (req.query as { limit?: string }) ?? {};
@@ -1670,10 +1747,10 @@ fastify.get(
         await import("./clients/googleCalendarClient.js");
 
       const result = await testGoogleCalendarConnection({
-        clientId: calendarConfig.clientId,
-        clientSecret: calendarConfig.clientSecret,
-        refreshToken: calendarConfig.refreshToken,
-        calendarId: calendarConfig.calendarId,
+        clientId: calCreds1.clientId,
+        clientSecret: calCreds1.clientSecret,
+        refreshToken: calTokens1.refresh_token,
+        calendarId: calendarId1,
       });
 
       if (!result.ok || !result.events) {
@@ -1716,31 +1793,21 @@ fastify.post(
         .send({ ok: false, error: "failed_to_load_settings" });
     }
 
-    const calendarConfig = settings?.integrations?.googleCalendar;
-
-    // Check if configured
-    if (
-      !calendarConfig?.enabled ||
-      !calendarConfig?.clientId ||
-      !calendarConfig?.clientSecret ||
-      !calendarConfig?.refreshToken ||
-      !calendarConfig?.calendarId
-    ) {
-      logger.warn("Google Calendar not configured");
-      return reply
-        .status(503)
-        .send({ ok: false, error: "google_calendar_not_configured" });
-    }
+    let calCreds2: { clientId: string; clientSecret: string };
+    try { calCreds2 = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+    const calTokens2 = loadGoogleTokens();
+    if (!calTokens2?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+    const calendarId2 = settings?.integrations?.googleCalendar?.calendarId || "primary";
 
     try {
       const { testGoogleCalendarConnection } =
         await import("./clients/googleCalendarClient.js");
 
       const result = await testGoogleCalendarConnection({
-        clientId: calendarConfig.clientId,
-        clientSecret: calendarConfig.clientSecret,
-        refreshToken: calendarConfig.refreshToken,
-        calendarId: calendarConfig.calendarId,
+        clientId: calCreds2.clientId,
+        clientSecret: calCreds2.clientSecret,
+        refreshToken: calTokens2.refresh_token,
+        calendarId: calendarId2,
       });
 
       if (!result.ok || !result.events) {
@@ -1823,21 +1890,11 @@ fastify.post("/api/integrations/google-calendar/test", async (req, reply) => {
       .send({ ok: false, error: "failed_to_load_settings" });
   }
 
-  const calendarConfig = settings?.integrations?.googleCalendar;
-
-  // Check if configured
-  if (
-    !calendarConfig?.enabled ||
-    !calendarConfig?.clientId ||
-    !calendarConfig?.clientSecret ||
-    !calendarConfig?.refreshToken ||
-    !calendarConfig?.calendarId
-  ) {
-    logger.warn("Google Calendar not configured");
-    return reply
-      .status(503)
-      .send({ ok: false, error: "google_calendar_not_configured" });
-  }
+  let calCreds3: { clientId: string; clientSecret: string };
+  try { calCreds3 = loadGoogleCredentials(); } catch { return reply.status(503).send({ ok: false, error: "Google credentials not configured on this server" }); }
+  const calTokens3 = loadGoogleTokens();
+  if (!calTokens3?.refresh_token) return reply.status(503).send({ ok: false, error: "Google not connected" });
+  const calendarId3 = settings?.integrations?.googleCalendar?.calendarId || "primary";
 
   try {
     // Import Google Calendar client dynamically
@@ -1845,10 +1902,10 @@ fastify.post("/api/integrations/google-calendar/test", async (req, reply) => {
       await import("./clients/googleCalendarClient.js");
 
     const result = await testGoogleCalendarConnection({
-      clientId: calendarConfig.clientId,
-      clientSecret: calendarConfig.clientSecret,
-      refreshToken: calendarConfig.refreshToken,
-      calendarId: calendarConfig.calendarId,
+      clientId: calCreds3.clientId,
+      clientSecret: calCreds3.clientSecret,
+      refreshToken: calTokens3.refresh_token,
+      calendarId: calendarId3,
     });
 
     if (result.ok) {
@@ -5254,17 +5311,135 @@ try {
     return { ok: true };
   });
 
-  // ── Google OAuth Flow (/api/auth/google) ──
-  const GOOGLE_TOKENS_FILE = path.join(DATA_DIR, "google-tokens.json");
+  // ── Browser-Session Gmail (Product 1 primary path) ──
 
-  function loadGoogleTokens(): any {
+  fastify.get("/api/browser/gmail/status", async () => {
+    const status = await browserGmailStatus();
+    return status;
+  });
+
+  fastify.post("/api/browser/gmail/connect", async (req, reply) => {
+    const result = await startBrowserGmail();
+    if (!result.ok) return reply.status(503).send(result);
+    return result;
+  });
+
+  // ── WhatsApp DEC-032 Direct-Import Routes ──
+
+  fastify.get("/api/channels/whatsapp/status", async () => {
+    return {
+      state: waSession.state,
+      qrDataUrl: waSession.state === "awaiting_scan" ? waSession.qrDataUrl : null,
+      message: waSession.message,
+      startedAt: waSession.startedAt,
+    };
+  });
+
+  fastify.post("/api/channels/whatsapp/connect", async (_req, reply) => {
+    // If fresh QR already active, return it
+    if (
+      waSession.state === "awaiting_scan" &&
+      waSession.qrDataUrl &&
+      waSession.startedAt &&
+      Date.now() - waSession.startedAt < 60_000
+    ) {
+      return {
+        state: waSession.state,
+        qrDataUrl: waSession.qrDataUrl,
+        message: waSession.message,
+        startedAt: waSession.startedAt,
+      };
+    }
+
+    // Resolve the OpenClaw module
+    let waMod: Awaited<ReturnType<typeof resolveWaModule>>;
     try {
-      if (existsSync(GOOGLE_TOKENS_FILE)) {
-        return JSON.parse(readFileSync(GOOGLE_TOKENS_FILE, "utf-8"));
+      waMod = await resolveWaModule();
+    } catch (err) {
+      return reply.status(500).send({ error: (err as Error).message });
+    }
+
+    // Start fresh attempt (force: true cleans up any prior socket via OpenClaw internal resetActiveLogin)
+    resetWaSession();
+    try {
+      const result = await waMod.startWebLoginWithQr({ force: true });
+      if (!result.qrDataUrl) {
+        // Already linked or other non-QR response
+        waSession.state = result.message?.includes("already linked") ? "linked" : "idle";
+        waSession.message = result.message || null;
+        return { state: waSession.state, message: waSession.message };
       }
-    } catch {}
-    return null;
-  }
+
+      waSession.state = "awaiting_scan";
+      waSession.qrDataUrl = result.qrDataUrl;
+      waSession.message = result.message || "Scan this QR in WhatsApp → Linked Devices.";
+      waSession.startedAt = Date.now();
+
+      // Background: wait for scan completion (120s timeout)
+      waSession.waitPromise = (async () => {
+        try {
+          const waitResult = await waMod.waitForWebLogin({ timeoutMs: 120_000 });
+          if (waitResult.connected) {
+            waSession.state = "linked";
+            waSession.message = waitResult.message || "WhatsApp connected.";
+            waSession.qrDataUrl = null;
+          } else {
+            if (waSession.state === "awaiting_scan") {
+              waSession.state = "timed_out";
+              waSession.message = waitResult.message || "QR scan timed out.";
+              waSession.qrDataUrl = null;
+            }
+          }
+        } catch (err) {
+          if (waSession.state === "awaiting_scan") {
+            waSession.state = "timed_out";
+            waSession.message = (err as Error).message || "WhatsApp login error.";
+            waSession.qrDataUrl = null;
+          }
+        }
+        if (waSession.timeoutHandle) {
+          clearTimeout(waSession.timeoutHandle);
+          waSession.timeoutHandle = null;
+        }
+      })();
+
+      // Safety timeout: if waitForWebLogin hangs beyond 130s, force transition
+      waSession.timeoutHandle = setTimeout(() => {
+        if (waSession.state === "awaiting_scan") {
+          waSession.state = "timed_out";
+          waSession.message = "QR scan timed out.";
+          waSession.qrDataUrl = null;
+        }
+        waSession.timeoutHandle = null;
+      }, 130_000);
+
+      return {
+        state: waSession.state,
+        qrDataUrl: waSession.qrDataUrl,
+        message: waSession.message,
+        startedAt: waSession.startedAt,
+      };
+    } catch (err) {
+      resetWaSession();
+      return reply.status(500).send({ error: (err as Error).message || "WhatsApp connect failed" });
+    }
+  });
+
+  fastify.post("/api/channels/whatsapp/cancel", async () => {
+    if (waSession.state === "awaiting_scan") {
+      // Trigger cleanup via force: true (OpenClaw's internal resetActiveLogin closes the socket)
+      try {
+        const waMod = await resolveWaModule();
+        waMod.startWebLoginWithQr({ force: true }).catch(() => {});
+      } catch {}
+      resetWaSession();
+      waSession.state = "cancelled";
+      waSession.message = "WhatsApp connect cancelled.";
+    }
+    return { state: waSession.state };
+  });
+
+  // ── Google OAuth Flow (/api/auth/google) — legacy API lane, kept for fallback ──
 
   fastify.get("/api/auth/google/status", async () => {
     const tokens = loadGoogleTokens();
@@ -5275,13 +5450,14 @@ try {
   });
 
   fastify.get("/api/auth/google/start", async (req, reply) => {
-    const settings = JSON.parse(readFileSync(path.join(DATA_DIR, "settings.json"), "utf-8"));
-    const gc = settings?.integrations?.googleCalendar;
-    const clientId = gc?.clientId || process.env.GOOGLE_CLIENT_ID;
-    const redirectUri = `http://localhost:3002/api/auth/google/callback`;
-
-    if (!clientId) {
-      return reply.status(400).send({ error: "Google Client ID not configured. Set it in Settings > Integrations > Google Calendar." });
+    let clientId: string;
+    let redirectUri: string;
+    try {
+      const creds = loadGoogleCredentials();
+      clientId = creds.clientId;
+      redirectUri = creds.redirectUri;
+    } catch {
+      return reply.status(503).send({ error: "Google credentials not configured on this server" });
     }
 
     const scopes = [
@@ -5302,11 +5478,17 @@ try {
     const { code } = req.query as { code?: string };
     if (!code) return reply.status(400).send({ error: "No authorization code received" });
 
-    const settings = JSON.parse(readFileSync(path.join(DATA_DIR, "settings.json"), "utf-8"));
-    const gc = settings?.integrations?.googleCalendar;
-    const clientId = gc?.clientId || process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = gc?.clientSecret || process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = `http://localhost:3002/api/auth/google/callback`;
+    let clientId: string;
+    let clientSecret: string;
+    let redirectUri: string;
+    try {
+      const creds = loadGoogleCredentials();
+      clientId = creds.clientId;
+      clientSecret = creds.clientSecret;
+      redirectUri = creds.redirectUri;
+    } catch {
+      return reply.status(503).send({ error: "Google credentials not configured on this server" });
+    }
 
     // Exchange code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -5347,24 +5529,6 @@ try {
       connectedAt: new Date().toISOString(),
     };
     writeFileSync(GOOGLE_TOKENS_FILE, JSON.stringify(tokens, null, 2));
-
-    // Also update settings.json with the refresh token for googleCalendar integration
-    if (tokenData.refresh_token) {
-      settings.integrations = settings.integrations || {};
-      settings.integrations.googleCalendar = {
-        ...settings.integrations.googleCalendar,
-        enabled: true,
-        refreshToken: tokenData.refresh_token,
-        userEmail: email,
-      };
-      settings.integrations.gmail = {
-        ...settings.integrations.gmail,
-        enabled: true,
-        refreshToken: tokenData.refresh_token,
-        userEmail: email,
-      };
-      writeFileSync(path.join(DATA_DIR, "settings.json"), JSON.stringify(settings, null, 2));
-    }
 
     // Redirect back to settings page with success message
     return reply.redirect("http://localhost:3000/settings?google=connected");
