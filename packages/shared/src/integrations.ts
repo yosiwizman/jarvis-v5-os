@@ -67,8 +67,6 @@ export interface SpotifyIntegrationConfig {
 
 export interface GmailIntegrationConfig {
   enabled: boolean;
-  clientId: string | null;
-  clientSecret: string | null;
   redirectUri: string | null;   // where Google will redirect after consent
   refreshToken: string | null;  // long-lived; obtained via manual flow
   userEmail: string | null;     // the Gmail account AKIOR is reading
@@ -76,8 +74,6 @@ export interface GmailIntegrationConfig {
 
 export interface GoogleCalendarIntegrationConfig {
   enabled: boolean;
-  clientId: string | null;
-  clientSecret: string | null;
   redirectUri: string | null;   // where Google will redirect after consent
   refreshToken: string | null;  // long-lived; obtained via manual flow
   calendarId: string | null;    // e.g. "primary" or a specific calendar ID
@@ -180,16 +176,12 @@ export const defaultIntegrationSettings: IntegrationSettings = {
   },
   gmail: {
     enabled: false,
-    clientId: null,
-    clientSecret: null,
     redirectUri: null,
     refreshToken: null,
     userEmail: null
   },
   googleCalendar: {
     enabled: false,
-    clientId: null,
-    clientSecret: null,
     redirectUri: null,
     refreshToken: null,
     calendarId: 'primary'
@@ -354,8 +346,6 @@ export function isIntegrationConnected(
     case 'gmail': {
       const gmailConfig = config as GmailIntegrationConfig;
       return !!(
-        gmailConfig.clientId &&
-        gmailConfig.clientSecret &&
         gmailConfig.refreshToken &&
         gmailConfig.userEmail
       );
@@ -363,8 +353,6 @@ export function isIntegrationConnected(
     case 'googleCalendar': {
       const calConfig = config as GoogleCalendarIntegrationConfig;
       return !!(
-        calConfig.clientId &&
-        calConfig.clientSecret &&
         calConfig.refreshToken &&
         calConfig.calendarId
       );

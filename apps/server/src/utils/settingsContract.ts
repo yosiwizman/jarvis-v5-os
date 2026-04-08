@@ -90,8 +90,6 @@ const SpotifyConfigSchema = z
 const GmailConfigSchema = z
   .object({
     enabled: z.boolean().optional(),
-    clientId: z.string().nullable().optional(),
-    clientSecret: z.string().nullable().optional(),
     redirectUri: z.string().nullable().optional(),
     refreshToken: z.string().nullable().optional(),
     userEmail: z.string().nullable().optional(),
@@ -102,8 +100,6 @@ const GmailConfigSchema = z
 const GoogleCalendarConfigSchema = z
   .object({
     enabled: z.boolean().optional(),
-    clientId: z.string().nullable().optional(),
-    clientSecret: z.string().nullable().optional(),
     redirectUri: z.string().nullable().optional(),
     refreshToken: z.string().nullable().optional(),
     calendarId: z.string().nullable().optional(),
@@ -330,16 +326,12 @@ const defaultIntegrations = {
   },
   gmail: {
     enabled: false,
-    clientId: null,
-    clientSecret: null,
     redirectUri: null,
     refreshToken: null,
     userEmail: null,
   },
   googleCalendar: {
     enabled: false,
-    clientId: null,
-    clientSecret: null,
     redirectUri: null,
     refreshToken: null,
     calendarId: "primary",

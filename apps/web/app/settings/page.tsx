@@ -2625,34 +2625,6 @@ export default function SettingsPage() {
             {settings?.integrations?.gmail?.enabled && (
               <div className="space-y-3 pt-2 border-t border-white/10">
                 <label className="space-y-1">
-                  <div className="text-xs text-white/60">Client ID</div>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.gmail?.clientId ?? ""}
-                    onChange={(e) => {
-                      updateIntegration("gmail", { clientId: e.target.value });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="your-google-client-id.apps.googleusercontent.com"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">Client Secret</div>
-                  <input
-                    type="password"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.gmail?.clientSecret ?? ""}
-                    onChange={(e) => {
-                      updateIntegration("gmail", {
-                        clientSecret: e.target.value,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="********"
-                  />
-                </label>
-                <label className="space-y-1">
                   <div className="text-xs text-white/60">
                     Redirect URI (optional)
                   </div>
@@ -2760,40 +2732,6 @@ export default function SettingsPage() {
             </label>
             {settings?.integrations?.googleCalendar?.enabled && (
               <div className="space-y-3 pt-2 border-t border-white/10">
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">Client ID</div>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={
-                      settings?.integrations?.googleCalendar?.clientId ?? ""
-                    }
-                    onChange={(e) => {
-                      updateIntegration("googleCalendar", {
-                        clientId: e.target.value,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="your-google-client-id.apps.googleusercontent.com"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">Client Secret</div>
-                  <input
-                    type="password"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={
-                      settings?.integrations?.googleCalendar?.clientSecret ?? ""
-                    }
-                    onChange={(e) => {
-                      updateIntegration("googleCalendar", {
-                        clientSecret: e.target.value,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="********"
-                  />
-                </label>
                 <label className="space-y-1">
                   <div className="text-xs text-white/60">
                     Redirect URI (optional)
