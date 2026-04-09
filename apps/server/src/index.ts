@@ -72,6 +72,13 @@ import {
   type Action,
   type ActionQuery,
 } from "./storage/actionStore.js";
+import {
+  initWhatsAppGatewayClient,
+  sendWhatsAppMessage,
+  closeWhatsAppGatewayClient,
+  validateSendInput,
+  type GatewayClientHandle,
+} from "./whatsapp-send.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -467,6 +474,9 @@ interface WaSession {
   timeoutHandle: ReturnType<typeof setTimeout> | null;
   waitPromise: Promise<any> | null;
 }
+
+// ── WhatsApp Send via OpenClaw Gateway RPC (Direction A, W-T05) ──
+let whatsappGatewayHandle: GatewayClientHandle | null = null;
 
 const waSession: WaSession = {
   state: "idle",
@@ -5439,6 +5449,72 @@ try {
     return { state: waSession.state };
   });
 
+  // ── WhatsApp Send Route (W-T05, Direction A: OpenClaw Gateway RPC) ──
+
+  fastify.post("/api/channels/whatsapp/send", async (request, reply) => {
+    const contentType = request.headers["content-type"] || "";
+    if (!contentType.includes("application/json")) {
+      const validation = validateSendInput("__UNSUPPORTED_MEDIA_TYPE__");
+      if (!validation.ok) {
+        return reply.status(validation.status).send({ ok: false, error: validation.error });
+      }
+    }
+
+    const validation = validateSendInput(request.body);
+    if (!validation.ok) {
+      return reply.status(validation.status).send({
+        ok: false,
+        error: validation.error,
+        ...(validation.detail ? { detail: validation.detail } : {}),
+      });
+    }
+
+    const { to, message } = validation.value;
+    const requestId = randomUUID();
+    const startTime = Date.now();
+
+    logger.info(
+      { toSuffix: "***" + to.slice(-4), messageLength: message.length, requestId },
+      "whatsapp.send.request.start",
+    );
+
+    const result = await sendWhatsAppMessage(whatsappGatewayHandle, { to, message });
+    const durationMs = Date.now() - startTime;
+
+    if (result.ok) {
+      logger.info(
+        { messageId: result.messageId, durationMs, requestId },
+        "whatsapp.send.request.success",
+      );
+      return reply.status(200).send({
+        ok: true,
+        messageId: result.messageId,
+        toJid: result.toJid,
+      });
+    }
+
+    const statusMap: Record<string, number> = {
+      whatsapp_send_unavailable: 503,
+      gateway_unreachable: 503,
+      gateway_auth_failed: 502,
+      gateway_rpc_error: 502,
+      gateway_timeout: 504,
+      internal_error: 500,
+    };
+    const status = statusMap[result.errorCode] ?? 500;
+
+    logger.error(
+      { errorCode: result.errorCode, detail: result.detail, durationMs, requestId },
+      "whatsapp.send.request.failure",
+    );
+
+    return reply.status(status).send({
+      ok: false,
+      error: result.errorCode,
+      ...(result.detail ? { detail: result.detail } : {}),
+    });
+  });
+
   // ── Google OAuth Flow (/api/auth/google) — legacy API lane, kept for fallback ──
 
   fastify.get("/api/auth/google/status", async () => {
@@ -5542,6 +5618,13 @@ try {
   const PUBLIC_HOST =
     publicHostEnv?.trim() ||
     (HOST === "0.0.0.0" ? process.env.HOSTNAME || "localhost" : HOST);
+
+  // ── WhatsApp Send — init gateway client (W-T05, non-blocking) ──
+  whatsappGatewayHandle = await initWhatsAppGatewayClient();
+
+  fastify.addHook("onClose", async () => {
+    await closeWhatsAppGatewayClient(whatsappGatewayHandle);
+  });
 
   await fastify.listen({ port: PORT, host: HOST });
   const protocol = hasCertificates ? "https" : "http";
