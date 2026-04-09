@@ -151,7 +151,7 @@ export async function initWhatsAppGatewayClient(): Promise<GatewayClientHandle |
     clientDisplayName: "akior-server",
     mode: "cli",
     role: "operator",
-    scopes: ["operator:send"],
+    scopes: ["operator.write"],
     minProtocol: 3,
     maxProtocol: 3,
     instanceId: randomUUID(),
