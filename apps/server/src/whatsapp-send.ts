@@ -155,7 +155,6 @@ export async function initWhatsAppGatewayClient(): Promise<GatewayClientHandle |
     minProtocol: 3,
     maxProtocol: 3,
     instanceId: randomUUID(),
-    deviceIdentity: null,
   };
 
   logger.info({ gatewayUrl, modulePath: "openclaw/plugin-sdk/gateway-runtime" }, "whatsapp.send.init.success");
