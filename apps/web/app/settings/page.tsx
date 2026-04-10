@@ -2582,221 +2582,40 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {/* Gmail Card */}
-          <div
-            className={`border rounded-xl p-4 space-y-3 ${
-              isIntegrationConnected("gmail", settings?.integrations?.gmail)
-                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
-                : "border-white/10"
-            }`}
-          >
+          {/* Gmail Card — browser-only shell */}
+          <div className="border rounded-xl p-4 space-y-3 border-white/10">
             <div className="flex items-start justify-between">
               <div>
-                <div className="font-medium">
-                  {integrationMetadata.gmail.name}
-                </div>
+                <div className="font-medium">Gmail</div>
                 <div className="text-xs text-white/50 mt-1">
-                  {integrationMetadata.gmail.description}
+                  Connect Gmail via browser sign-in
                 </div>
               </div>
-              <div
-                className={`px-2 py-1 rounded text-xs ${
-                  isIntegrationConnected("gmail", settings?.integrations?.gmail)
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-white/5 text-white/40"
-                }`}
-              >
-                {isIntegrationConnected("gmail", settings?.integrations?.gmail)
-                  ? "Connected"
-                  : "Not connected"}
+              <div className="px-2 py-1 rounded text-xs bg-white/5 text-white/40">
+                Coming soon
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={!!settings?.integrations?.gmail?.enabled}
-                onChange={(e) => {
-                  updateIntegration("gmail", { enabled: e.target.checked });
-                  setSettings(readSettings());
-                }}
-              />
-              Enable
-            </label>
-            {settings?.integrations?.gmail?.enabled && (
-              <div className="space-y-3 pt-2 border-t border-white/10">
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">
-                    Redirect URI (optional)
-                  </div>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.gmail?.redirectUri ?? ""}
-                    onChange={(e) => {
-                      updateIntegration("gmail", {
-                        redirectUri: e.target.value || null,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="http://localhost:3000/oauth/callback"
-                  />
-                  <div className="text-xs text-white/40">
-                    Where Google redirects after OAuth consent
-                  </div>
-                </label>
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">User Email</div>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.gmail?.userEmail ?? ""}
-                    onChange={(e) => {
-                      updateIntegration("gmail", { userEmail: e.target.value });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="yourname@gmail.com"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">Refresh Token</div>
-                  <input
-                    type="password"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={settings?.integrations?.gmail?.refreshToken ?? ""}
-                    onChange={(e) => {
-                      updateIntegration("gmail", {
-                        refreshToken: e.target.value,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="Paste refresh token from OAuth flow"
-                  />
-                  <div className="text-xs text-white/40">
-                    Obtain via manual OAuth2 consent flow (see docs)
-                  </div>
-                </label>
-              </div>
-            )}
+            <div className="text-xs text-white/40">
+              Gmail will connect through browser-based sign-in. No setup needed.
+            </div>
           </div>
 
-          {/* Google Calendar Card */}
-          <div
-            className={`border rounded-xl p-4 space-y-3 ${
-              isIntegrationConnected(
-                "googleCalendar",
-                settings?.integrations?.googleCalendar,
-              )
-                ? "border-[color:rgb(var(--akior-accent)_/_0.5)] bg-[color:rgb(var(--akior-accent)_/_0.05)]"
-                : "border-white/10"
-            }`}
-          >
+          {/* Google Calendar Card — browser-only shell */}
+          <div className="border rounded-xl p-4 space-y-3 border-white/10">
             <div className="flex items-start justify-between">
               <div>
-                <div className="font-medium">
-                  {integrationMetadata.googleCalendar.name}
-                </div>
+                <div className="font-medium">Google Calendar</div>
                 <div className="text-xs text-white/50 mt-1">
-                  {integrationMetadata.googleCalendar.description}
+                  Connect Google Calendar via browser sign-in
                 </div>
               </div>
-              <div
-                className={`px-2 py-1 rounded text-xs ${
-                  isIntegrationConnected(
-                    "googleCalendar",
-                    settings?.integrations?.googleCalendar,
-                  )
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-white/5 text-white/40"
-                }`}
-              >
-                {isIntegrationConnected(
-                  "googleCalendar",
-                  settings?.integrations?.googleCalendar,
-                )
-                  ? "Connected"
-                  : "Not connected"}
+              <div className="px-2 py-1 rounded text-xs bg-white/5 text-white/40">
+                Coming soon
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={!!settings?.integrations?.googleCalendar?.enabled}
-                onChange={(e) => {
-                  updateIntegration("googleCalendar", {
-                    enabled: e.target.checked,
-                  });
-                  setSettings(readSettings());
-                }}
-              />
-              Enable
-            </label>
-            {settings?.integrations?.googleCalendar?.enabled && (
-              <div className="space-y-3 pt-2 border-t border-white/10">
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">
-                    Redirect URI (optional)
-                  </div>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={
-                      settings?.integrations?.googleCalendar?.redirectUri ?? ""
-                    }
-                    onChange={(e) => {
-                      updateIntegration("googleCalendar", {
-                        redirectUri: e.target.value || null,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="http://localhost:3000/oauth/callback"
-                  />
-                  <div className="text-xs text-white/40">
-                    Used during OAuth consent flow
-                  </div>
-                </label>
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">Calendar ID</div>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={
-                      settings?.integrations?.googleCalendar?.calendarId ?? ""
-                    }
-                    onChange={(e) => {
-                      updateIntegration("googleCalendar", {
-                        calendarId: e.target.value,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="primary"
-                  />
-                  <div className="text-xs text-white/40">
-                    Use 'primary' for your main calendar or a specific calendar
-                    ID
-                  </div>
-                </label>
-                <label className="space-y-1">
-                  <div className="text-xs text-white/60">Refresh Token</div>
-                  <input
-                    type="password"
-                    className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-sm"
-                    value={
-                      settings?.integrations?.googleCalendar?.refreshToken ?? ""
-                    }
-                    onChange={(e) => {
-                      updateIntegration("googleCalendar", {
-                        refreshToken: e.target.value,
-                      });
-                      setSettings(readSettings());
-                    }}
-                    placeholder="Paste refresh token from OAuth flow"
-                  />
-                  <div className="text-xs text-white/40">
-                    Obtain via manual OAuth2 consent flow (see docs)
-                  </div>
-                </label>
-              </div>
-            )}
+            <div className="text-xs text-white/40">
+              Google Calendar will connect through browser-based sign-in. No setup needed.
+            </div>
           </div>
 
           {/* Amazon Alexa Card */}

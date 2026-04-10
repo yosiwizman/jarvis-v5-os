@@ -53,12 +53,11 @@ These rules apply to all Google-related work (Gmail, Calendar, Drive, Contacts):
 - **No end-user secrets.** The user never sees, handles, types, or pastes a clientId, clientSecret, API key, or OAuth credential of any kind.
 - **No Google Cloud Console instructions for the CEO or end user.** The user does not create projects, enable APIs, configure consent screens, or create OAuth clients. That is AKIOR internal operations.
 - **No terminal instructions for the CEO or end user** as part of product acceptance. The user's only interaction is clicking buttons in the AKIOR UI browser.
-- **No client_secret files at user level.** `data/google-credentials.json` is a server-side file managed by AKIOR operations, invisible to the user.
-- **Browser auth only.** The user clicks "Connect Google" → browser → signs in → done.
-- **Server-side managed credentials only.** clientId and clientSecret are provisioned by AKIOR operations and stored in gitignored server-side files.
+- **No credential files.** No `google-credentials.json`, no `client_secret.json`, no JSON key files of any kind. Google access uses the DEC-033 managed-browser session lane only.
+- **Browser auth only.** The user clicks "Connect Google" → browser → signs in → done. No clientId/clientSecret, no Developer Console, no credential provisioning.
 
-Active decisions: DEC-028 (AKIOR-managed credentials), DEC-029 (Option A for Product 1).
-Superseded: DEC-027 (OpenClaw-first — rejected, no Workspace auth capability).
+Active decisions: DEC-033 (credential-model purge, browser-only inside-system auth posture), DEC-031 (Gmail browser-session lane).
+Superseded: DEC-028 credential model, DEC-029 credential provisioning, DEC-027 (OpenClaw-first — rejected).
 
 ---
 

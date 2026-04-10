@@ -6,8 +6,6 @@ export type IntegrationId =
   | 'elevenLabs'
   | 'azureTTS'
   | 'spotify'
-  | 'gmail'
-  | 'googleCalendar'
   | 'alexa'
   | 'irobot'
   | 'nest'
@@ -65,19 +63,6 @@ export interface SpotifyIntegrationConfig {
   defaultMarket: string | null;  // e.g. "US", "GB", "DE"
 }
 
-export interface GmailIntegrationConfig {
-  enabled: boolean;
-  redirectUri: string | null;   // where Google will redirect after consent
-  refreshToken: string | null;  // long-lived; obtained via manual flow
-  userEmail: string | null;     // the Gmail account AKIOR is reading
-}
-
-export interface GoogleCalendarIntegrationConfig {
-  enabled: boolean;
-  redirectUri: string | null;   // where Google will redirect after consent
-  refreshToken: string | null;  // long-lived; obtained via manual flow
-  calendarId: string | null;    // e.g. "primary" or a specific calendar ID
-}
 
 export interface AlexaIntegrationConfig {
   enabled: boolean;
@@ -119,8 +104,6 @@ export interface IntegrationSettings {
   elevenLabs: ElevenLabsIntegrationConfig;
   azureTTS: AzureTTSIntegrationConfig;
   spotify: SpotifyIntegrationConfig;
-  gmail: GmailIntegrationConfig;
-  googleCalendar: GoogleCalendarIntegrationConfig;
   alexa: AlexaIntegrationConfig;
   irobot: IRobotIntegrationConfig;
   nest: NestIntegrationConfig;
@@ -173,18 +156,6 @@ export const defaultIntegrationSettings: IntegrationSettings = {
     clientId: null,
     clientSecret: null,
     defaultMarket: 'US'
-  },
-  gmail: {
-    enabled: false,
-    redirectUri: null,
-    refreshToken: null,
-    userEmail: null
-  },
-  googleCalendar: {
-    enabled: false,
-    redirectUri: null,
-    refreshToken: null,
-    calendarId: 'primary'
   },
   alexa: {
     enabled: false,
@@ -268,20 +239,6 @@ export const integrationMetadata: Record<IntegrationId, IntegrationMetadata> = {
     requiresApiKey: true,
     comingSoon: false
   },
-  gmail: {
-    id: 'gmail',
-    name: 'Gmail',
-    description: 'Connect Gmail account using OAuth2 refresh token',
-    requiresApiKey: true,
-    comingSoon: false
-  },
-  googleCalendar: {
-    id: 'googleCalendar',
-    name: 'Google Calendar',
-    description: 'Connect Google Calendar via OAuth2 (refresh token). Backend test endpoint available; calendar UI coming later.',
-    requiresApiKey: true,
-    comingSoon: false
-  },
   alexa: {
     id: 'alexa',
     name: 'Amazon Alexa',
@@ -342,20 +299,6 @@ export function isIntegrationConnected(
     case 'spotify': {
       const spotifyConfig = config as SpotifyIntegrationConfig;
       return !!(spotifyConfig.clientId && spotifyConfig.clientSecret);
-    }
-    case 'gmail': {
-      const gmailConfig = config as GmailIntegrationConfig;
-      return !!(
-        gmailConfig.refreshToken &&
-        gmailConfig.userEmail
-      );
-    }
-    case 'googleCalendar': {
-      const calConfig = config as GoogleCalendarIntegrationConfig;
-      return !!(
-        calConfig.refreshToken &&
-        calConfig.calendarId
-      );
     }
     case 'alexa': {
       const alexaConfig = config as AlexaIntegrationConfig;

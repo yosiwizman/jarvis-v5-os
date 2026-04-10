@@ -87,25 +87,6 @@ const SpotifyConfigSchema = z
   .passthrough()
   .optional();
 
-const GmailConfigSchema = z
-  .object({
-    enabled: z.boolean().optional(),
-    redirectUri: z.string().nullable().optional(),
-    refreshToken: z.string().nullable().optional(),
-    userEmail: z.string().nullable().optional(),
-  })
-  .passthrough()
-  .optional();
-
-const GoogleCalendarConfigSchema = z
-  .object({
-    enabled: z.boolean().optional(),
-    redirectUri: z.string().nullable().optional(),
-    refreshToken: z.string().nullable().optional(),
-    calendarId: z.string().nullable().optional(),
-  })
-  .passthrough()
-  .optional();
 
 const AlexaConfigSchema = z
   .object({
@@ -158,8 +139,6 @@ const IntegrationsSchema = z
     elevenLabs: ElevenLabsConfigSchema,
     azureTTS: AzureTTSConfigSchema,
     spotify: SpotifyConfigSchema,
-    gmail: GmailConfigSchema,
-    googleCalendar: GoogleCalendarConfigSchema,
     alexa: AlexaConfigSchema,
     irobot: IRobotConfigSchema,
     nest: NestConfigSchema,
@@ -324,18 +303,6 @@ const defaultIntegrations = {
     clientSecret: null,
     defaultMarket: "US",
   },
-  gmail: {
-    enabled: false,
-    redirectUri: null,
-    refreshToken: null,
-    userEmail: null,
-  },
-  googleCalendar: {
-    enabled: false,
-    redirectUri: null,
-    refreshToken: null,
-    calendarId: "primary",
-  },
   alexa: {
     enabled: false,
     clientId: null,
@@ -443,11 +410,6 @@ function normalizeIntegrations(input: any): typeof defaultIntegrations {
     },
     azureTTS: { ...defaultIntegrations.azureTTS, ...(input.azureTTS ?? {}) },
     spotify: { ...defaultIntegrations.spotify, ...(input.spotify ?? {}) },
-    gmail: { ...defaultIntegrations.gmail, ...(input.gmail ?? {}) },
-    googleCalendar: {
-      ...defaultIntegrations.googleCalendar,
-      ...(input.googleCalendar ?? {}),
-    },
     alexa: { ...defaultIntegrations.alexa, ...(input.alexa ?? {}) },
     irobot: { ...defaultIntegrations.irobot, ...(input.irobot ?? {}) },
     nest: { ...defaultIntegrations.nest, ...(input.nest ?? {}) },
