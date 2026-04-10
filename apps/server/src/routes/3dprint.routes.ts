@@ -395,10 +395,41 @@ export function register3DPrintRoutes(fastify: FastifyInstance) {
 
   // Token status endpoint
   fastify.get('/api/3dprint/token-status', async (req, reply) => {
-    if (bambuToken && bambuToken.accessToken && bambuToken.tokenExpiration > Date.now()) {
-      reply.send({ loggedIn: true });
-    } else {
-      reply.send({ loggedIn: false });
+    const loggedIn = !!(bambuToken && bambuToken.accessToken && bambuToken.tokenExpiration > Date.now());
+    reply.send({ loggedIn, printerCount: cloudPrinters.length });
+  });
+
+  // Disconnect / reset endpoint — clears token, MQTT client, printer cache, and persisted token file
+  fastify.post('/api/3dprint/disconnect', async (req, reply) => {
+    try {
+      if (cloudClient) {
+        try { cloudClient.end(true); } catch {}
+        cloudClient = null;
+      }
+      cloudPrinters = [];
+      telemetryCacheMap = {};
+      bambuToken = null;
+      try { await fsp.unlink(bambuTokenPath); } catch {}
+      try { await fsp.unlink(bambuConfigPath); } catch {}
+      logger.info('Bambu session disconnected: token cleared, MQTT closed, caches reset');
+      reply.send({ success: true });
+    } catch (err) {
+      logger.error({ err }, 'Error during Bambu disconnect');
+      reply.status(500).send({ error: 'Disconnect failed' });
+    }
+  });
+
+  // Refresh discovery endpoint — re-runs cloud MQTT + printer discovery against current token
+  fastify.post('/api/3dprint/refresh-discovery', async (req, reply) => {
+    if (!bambuToken || !bambuToken.accessToken || bambuToken.tokenExpiration <= Date.now()) {
+      return reply.status(401).send({ error: 'Not logged in' });
+    }
+    try {
+      await connectMqttCloudClients(fastify.log);
+      reply.send({ success: true, printerCount: cloudPrinters.length });
+    } catch (err) {
+      logger.error({ err }, 'Error during refresh-discovery');
+      reply.status(500).send({ error: 'Refresh failed' });
     }
   });
 

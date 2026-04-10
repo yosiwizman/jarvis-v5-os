@@ -73,6 +73,9 @@ export default function SettingsPage() {
   const [bambuAuthStatus, setBambuAuthStatus] = useState<
     "success" | "error" | ""
   >("");
+  const [bambuPrinterCount, setBambuPrinterCount] = useState<number>(0);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [isRefreshingDiscovery, setIsRefreshingDiscovery] = useState(false);
 
   // Memory & Logs active tab state
   const [activeMemoryTab, setActiveMemoryTab] = useState<
@@ -151,9 +154,68 @@ export default function SettingsPage() {
   useEffect(() => {
     fetch(buildServerUrl("/api/3dprint/token-status"))
       .then((res) => res.json())
-      .then((data) => setBambuAuthStatus(data.loggedIn ? "success" : ""))
+      .then((data) => {
+        setBambuAuthStatus(data.loggedIn ? "success" : "");
+        setBambuPrinterCount(typeof data.printerCount === "number" ? data.printerCount : 0);
+      })
       .catch(() => setBambuAuthStatus(""));
   }, []);
+
+  // Bambu Labs disconnect handler — clears token, closes MQTT, resets caches, returns to login form
+  const handleBambuDisconnect = async () => {
+    setIsDisconnecting(true);
+    setBambuAuthMessage("");
+    try {
+      const res = await apiFetch(buildServerUrl("/api/3dprint/disconnect"), {
+        method: "POST",
+      });
+      if (res.ok) {
+        setBambuAuthStatus("");
+        setBambuAuthMessage("Disconnected. You can now log in again to refresh printer discovery.");
+        setBambuEmail("");
+        setBambuPassword("");
+        setBambuCode("");
+        setShowVerifyForm(false);
+        setBambuPrinterCount(0);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setBambuAuthStatus("error");
+        setBambuAuthMessage(data.error || "Disconnect failed");
+      }
+    } catch (err) {
+      setBambuAuthStatus("error");
+      setBambuAuthMessage(err instanceof Error ? err.message : "Disconnect error");
+    }
+    setIsDisconnecting(false);
+  };
+
+  // Bambu Labs refresh-discovery handler — re-runs printer discovery without clearing the token
+  const handleBambuRefreshDiscovery = async () => {
+    setIsRefreshingDiscovery(true);
+    setBambuAuthMessage("");
+    try {
+      const res = await apiFetch(buildServerUrl("/api/3dprint/refresh-discovery"), {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const count = typeof data.printerCount === "number" ? data.printerCount : 0;
+        setBambuPrinterCount(count);
+        setBambuAuthMessage(
+          count > 0
+            ? `Discovery refreshed — ${count} printer(s) found.`
+            : "Discovery refreshed — still 0 printers on this Bambu account. Verify binding in Bambu Handy app.",
+        );
+      } else {
+        setBambuAuthStatus("error");
+        setBambuAuthMessage(data.error || "Refresh failed");
+      }
+    } catch (err) {
+      setBambuAuthStatus("error");
+      setBambuAuthMessage(err instanceof Error ? err.message : "Refresh error");
+    }
+    setIsRefreshingDiscovery(false);
+  };
 
   const refreshMeta = useCallback(async () => {
     try {
@@ -1783,24 +1845,47 @@ export default function SettingsPage() {
         )}
 
         {bambuAuthStatus === "success" && (
-          <div className="flex items-center gap-2 text-sm text-emerald-400">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <span>
-              Connected - Your printers are available in the 3D Printers
-              dashboard
-            </span>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span>
+                {bambuPrinterCount > 0
+                  ? `Connected — ${bambuPrinterCount} printer(s) discovered. See the 3D Printers dashboard.`
+                  : "Logged in, but 0 printers discovered on this account. Use Refresh Discovery, or Disconnect and log in with the correct Bambu account."}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBambuRefreshDiscovery}
+                disabled={isRefreshingDiscovery || isDisconnecting}
+                className="btn"
+                type="button"
+                data-testid="bambu-refresh-discovery-button"
+              >
+                {isRefreshingDiscovery ? "Refreshing..." : "Refresh Discovery"}
+              </button>
+              <button
+                onClick={handleBambuDisconnect}
+                disabled={isDisconnecting || isRefreshingDiscovery}
+                className="btn"
+                type="button"
+                data-testid="bambu-disconnect-button"
+              >
+                {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
           </div>
         )}
       </section>
