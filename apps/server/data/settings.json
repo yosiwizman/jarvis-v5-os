@@ -42,77 +42,34 @@
     },
     "webSearch": {
       "enabled": false,
-      "baseUrl": null,
-      "apiKey": "",
-      "defaultRegion": null,
-      "provider": "serpapi"
+      "provider": "serpapi",
+      "apiKey": ""
     },
     "localLLM": {
       "enabled": true,
       "provider": "ollama",
       "baseUrl": "http://127.0.0.1:11434",
+      "model": "qwen2.5-coder:7b",
       "apiKey": null,
-      "model": "qwen2.5:72b",
       "temperature": 0.7,
       "maxTokens": null
     },
     "elevenLabs": {
       "enabled": false,
       "apiKey": "",
-      "voiceId": null,
-      "modelId": "eleven_multilingual_v2",
-      "stability": null,
-      "similarityBoost": null,
-      "style": null,
       "defaultVoiceId": ""
     },
     "azureTTS": {
       "enabled": false,
       "apiKey": "",
       "region": "",
-      "voiceName": "",
-      "style": null,
-      "rate": null,
-      "pitch": null
+      "voiceName": ""
     },
     "spotify": {
       "enabled": false,
       "clientId": "",
-      "clientSecret": "",
-      "defaultMarket": "US"
-    },
-    "alexa": {
-      "enabled": false,
-      "clientId": null,
-      "clientSecret": null,
-      "refreshToken": null,
-      "region": "NA"
-    },
-    "irobot": {
-      "enabled": false,
-      "username": null,
-      "password": null,
-      "robotId": null
-    },
-    "nest": {
-      "enabled": false,
-      "projectId": null,
-      "clientId": null,
-      "clientSecret": null,
-      "refreshToken": null,
-      "deviceId": null
-    },
-    "smartLights": {
-      "enabled": false,
-      "provider": "hue",
-      "apiKey": null,
-      "bridgeIp": null
+      "clientSecret": ""
     }
-  },
-  "avatar": {
-    "selectedAvatar": "orion.vrm",
-    "avatarsDir": "/Users/yosiwizman/akior/avatars",
-    "vcamEnabled": false
   },
   "notificationPreferences": {
     "calendar_reminder": true,
