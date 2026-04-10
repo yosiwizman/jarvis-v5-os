@@ -1,0 +1,76 @@
+{
+  "tasks": [
+    {
+      "id": "5b4493a5-f875-4eb1-988b-949782ae36cf",
+      "name": "Every Monday at 9am, send me a morning briefing",
+      "schedule": "",
+      "scheduleHuman": "manual",
+      "command": "Every Monday at 9am, send me a morning briefing",
+      "enabled": true,
+      "lastRun": null,
+      "nextRun": null,
+      "status": "idle",
+      "createdAt": "2026-04-06T18:55:22.082Z"
+    },
+    {
+      "id": "0dc07bee-4bd1-4d31-bc98-4caf6a48442b",
+      "name": "Every Monday at 9am send briefing",
+      "schedule": "",
+      "scheduleHuman": "Every Monday at 9:00 AM",
+      "command": "Every Monday at 9am send briefing",
+      "enabled": true,
+      "lastRun": null,
+      "nextRun": null,
+      "status": "idle",
+      "createdAt": "2026-04-06T18:59:43.302Z"
+    },
+    {
+      "id": "30b26ee2-a903-4a0d-84f0-2c11dddc5a7d",
+      "name": "every day at 9am check email",
+      "schedule": "",
+      "scheduleHuman": "Daily at 9:00 AM",
+      "command": "every day at 9am check email",
+      "enabled": true,
+      "lastRun": null,
+      "nextRun": null,
+      "status": "idle",
+      "createdAt": "2026-04-06T18:59:50.437Z"
+    },
+    {
+      "id": "250e0161-98c3-4b79-8046-7783f6bbd6db",
+      "name": "every hour ping server",
+      "schedule": "",
+      "scheduleHuman": "Every hour",
+      "command": "every hour ping server",
+      "enabled": true,
+      "lastRun": null,
+      "nextRun": null,
+      "status": "idle",
+      "createdAt": "2026-04-06T18:59:50.452Z"
+    },
+    {
+      "id": "bc6ab860-84ca-4ecc-a126-e5608288349e",
+      "name": "do something random",
+      "schedule": "",
+      "scheduleHuman": "manual",
+      "command": "do something random",
+      "enabled": true,
+      "lastRun": null,
+      "nextRun": null,
+      "status": "idle",
+      "createdAt": "2026-04-06T18:59:50.463Z"
+    },
+    {
+      "id": "d562119c-43c1-49d2-9f46-8c539fadf934",
+      "name": "Every Tuesday at 3pm check email",
+      "schedule": "",
+      "scheduleHuman": "Every Tuesday at 3:00 PM",
+      "command": "Every Tuesday at 3pm check email",
+      "enabled": true,
+      "lastRun": null,
+      "nextRun": null,
+      "status": "idle",
+      "createdAt": "2026-04-06T19:01:52.031Z"
+    }
+  ]
+}

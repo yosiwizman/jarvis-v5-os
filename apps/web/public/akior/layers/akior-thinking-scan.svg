@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+<defs>
+
+<filter id="scanGlow" x="-20%" y="-200%" width="140%" height="500%">
+  <feGaussianBlur stdDeviation="4.5" result="blur"/>
+  <feComposite in="blur" in2="SourceGraphic" operator="over"/>
+</filter>
+<linearGradient id="scanLineGrad" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+  <stop offset="0%" stop-color="#00e5ff" stop-opacity="0"/>
+  <stop offset="15%" stop-color="#63f6ff" stop-opacity="0.28"/>
+  <stop offset="50%" stop-color="#e9ffff" stop-opacity="0.95"/>
+  <stop offset="85%" stop-color="#63f6ff" stop-opacity="0.28"/>
+  <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+</linearGradient>
+
+</defs>
+
+<g id="akior-thinking-scan">
+  <line x1="0" y1="450" x2="1600" y2="450" stroke="url(#scanLineGrad)" stroke-width="1.4" opacity="0.82" filter="url(#scanGlow)"/>
+  <g filter="url(#scanGlow)">
+    <circle cx="180" cy="450" r="4" fill="#e9ffff">
+      <animateMotion dur="8s" repeatCount="indefinite" path="M 0 450 L 1600 450"/>
+    </circle>
+  </g>
+  <path d="M 540 450 A 260 260 0 0 1 983.85 266.15" stroke="#7afbff" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.75" stroke-dasharray="32 14" fill="none" filter="url(#scanGlow)">
+    <animateTransform attributeName="transform" type="rotate" from="0 800 450" to="360 800 450" dur="18s" repeatCount="indefinite"/>
+  </path>
+</g>
+
+</svg>

@@ -1,0 +1,146 @@
+.akiorv3 {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  user-select: none;
+  transform: translateZ(0);
+  aspect-ratio: 1 / 1;
+}
+
+.akiorv3__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  background: transparent !important;
+  will-change: transform, opacity, filter;
+}
+
+.akiorv3__particles {
+  opacity: 0.35;
+  filter: blur(1px);
+}
+.akiorv3__rings { opacity: 0.96; }
+.akiorv3__geometry { opacity: 0.98; }
+.akiorv3__core { opacity: 1; }
+.akiorv3__thinking,
+.akiorv3__wave-listening,
+.akiorv3__wave-speaking { opacity: 0; }
+
+.akiorv3:not(.akiorv3--reduced) .akiorv3__rings {
+  animation: akiorv3-spin 24s linear infinite;
+}
+.akiorv3:not(.akiorv3--reduced) .akiorv3__geometry {
+  animation: akiorv3-breathe 4.5s ease-in-out infinite;
+}
+.akiorv3:not(.akiorv3--reduced) .akiorv3__core {
+  animation: akiorv3-core 3.2s ease-in-out infinite;
+}
+.akiorv3:not(.akiorv3--reduced) .akiorv3__particles {
+  animation: akiorv3-fade 10s ease-in-out infinite;
+}
+
+.akiorv3--idle .akiorv3__wave-listening,
+.akiorv3--idle .akiorv3__wave-speaking,
+.akiorv3--idle .akiorv3__thinking { opacity: 0; }
+
+.akiorv3--listening .akiorv3__wave-listening { opacity: 0.92; }
+.akiorv3--listening .akiorv3__core {
+  filter: drop-shadow(0 0 calc(8px + (var(--akior-audio-level) * 4px)) rgba(99,246,255,0.55));
+  transform: scale(calc(1 + (var(--akior-audio-level) * 0.05)));
+}
+.akiorv3--listening:not(.akiorv3--reduced) .akiorv3__rings {
+  animation-duration: 14s;
+}
+
+.akiorv3--speaking .akiorv3__wave-speaking { opacity: 1; }
+.akiorv3--speaking .akiorv3__core {
+  filter: drop-shadow(0 0 calc(12px + (var(--akior-audio-level) * 8px)) rgba(99,246,255,0.7));
+  transform: scale(calc(1.04 + (var(--akior-audio-level) * 0.09)));
+}
+.akiorv3--speaking:not(.akiorv3--reduced) .akiorv3__rings {
+  animation-duration: 10s;
+}
+.akiorv3--speaking:not(.akiorv3--reduced) .akiorv3__geometry {
+  animation-duration: 2.6s;
+}
+
+.akiorv3--thinking .akiorv3__thinking { opacity: 0.82; }
+.akiorv3--thinking .akiorv3__core {
+  filter: drop-shadow(0 0 10px rgba(99,246,255,0.55));
+}
+.akiorv3--thinking:not(.akiorv3--reduced) .akiorv3__thinking {
+  animation: akiorv3-counter 8s linear infinite;
+}
+
+.akiorv3--reduced .akiorv3__layer {
+  animation: none !important;
+}
+
+/* Fullscreen modifier — fills entire viewport on /jarvis */
+.akiorv3--fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  aspect-ratio: unset;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.akiorv3--fullscreen .akiorv3__layer {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.akiorv3--fullscreen .akiorv3__wave-listening,
+.akiorv3--fullscreen .akiorv3__wave-speaking {
+  object-fit: fill;
+}
+
+@keyframes akiorv3-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes akiorv3-counter {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes akiorv3-breathe {
+  0%,100% { transform: scale(0.97); opacity: 0.96; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+@keyframes akiorv3-core {
+  0%,100% { transform: scale(0.95); opacity: 0.96; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes akiorv3-fade {
+  0%,100% { opacity: 0.4; }
+  50% { opacity: 0.88; }
+}
+
+/* ChatGPT Production Layer Pack keyframes.
+ * Ring rotation is pure rotate() (no translateY nudge). The canonical -6px
+ * was baked for the 1462x1172 panel where it was ~0.5% of height. On other
+ * aspect ratios it showed as a visible 3-4% vertical offset, detaching the
+ * rings from the emblem. Removing the translate re-couples them. */
+@keyframes akiorSpinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes akiorBreathe {
+  0%,100% { transform: scale(1); opacity: .92; }
+  50%      { transform: scale(1.008); opacity: 1; }
+}
+@keyframes akiorCorePulse {
+  0%,100% { transform: scale(1); opacity: .88; }
+  50%      { transform: scale(1.04); opacity: 1; }
+}
+@keyframes akiorTextPulse {
+  0%,100% { opacity: .84; }
+  50%      { opacity: .98; }
+}

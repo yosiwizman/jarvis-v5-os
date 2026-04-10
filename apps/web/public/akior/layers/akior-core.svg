@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+<defs>
+
+<radialGradient id="coreBurst" cx="50%" cy="50%" r="50%">
+  <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+  <stop offset="16%" stop-color="#d9ffff" stop-opacity="0.96"/>
+  <stop offset="34%" stop-color="#7efcff" stop-opacity="0.72"/>
+  <stop offset="62%" stop-color="#00e5ff" stop-opacity="0.28"/>
+  <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+</radialGradient>
+<filter id="coreGlow" x="-200%" y="-200%" width="500%" height="500%">
+  <feGaussianBlur stdDeviation="16" result="blur"/>
+  <feComposite in="blur" in2="SourceGraphic" operator="over"/>
+</filter>
+<filter id="coreTightGlow" x="-100%" y="-100%" width="300%" height="300%">
+  <feGaussianBlur stdDeviation="4" result="blur"/>
+  <feComposite in="blur" in2="SourceGraphic" operator="over"/>
+</filter>
+
+</defs>
+
+<g id="akior-core">
+  <circle cx="800" cy="450" r="108" fill="url(#coreBurst)" opacity="0.55" filter="url(#coreGlow)"/>
+  <circle cx="800" cy="450" r="80" stroke="#63f6ff" stroke-width="1.2" stroke-opacity="0.28"/>
+  <circle cx="800" cy="450" r="40" stroke="#9efdff" stroke-width="1.35" stroke-opacity="0.50"/>
+  <circle cx="800" cy="450" r="20" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.88"/>
+  <circle cx="800" cy="450" r="18" fill="#89fcff" fill-opacity="0.22" filter="url(#coreTightGlow)"/>
+  <circle cx="800" cy="450" r="8" fill="#ffffff" filter="url(#coreTightGlow)"/>
+</g>
+
+</svg>

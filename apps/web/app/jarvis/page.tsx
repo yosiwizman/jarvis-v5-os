@@ -46,6 +46,8 @@ export default function JarvisPage() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [fftData, setFftData] = useState<number[]>(new Array(FFT_BARS).fill(0));
   const [micError, setMicError] = useState<string | null>(null);
+  const [hasActiveResponse, setHasActiveResponse] = useState(false);
+  const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const statusRef = useRef(status);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const settings = useMemo(() => readSettings(), []);
@@ -813,9 +815,13 @@ export default function JarvisPage() {
           micErr?.message,
         );
         const msg =
-          micErr?.name === "NotFoundError" || micErr?.name === "NotAllowedError"
-            ? "No microphone detected"
-            : "Microphone unavailable";
+          micErr?.name === "NotFoundError"
+            ? "No microphone detected. AKIOR is in standby."
+            : micErr?.name === "NotAllowedError" ||
+                micErr?.name === "PermissionDeniedError" ||
+                micErr?.name === "SecurityError"
+              ? "Microphone access denied. Allow mic access to talk to AKIOR."
+              : "Microphone unavailable. Check your audio device and browser settings.";
         setMicError(msg);
         setStatus("idle");
         isConnectingRef.current = false;
@@ -925,6 +931,8 @@ export default function JarvisPage() {
           // Track response lifecycle
           if (data.type === "response.created") {
             hasActiveResponseRef.current = true;
+            setHasActiveResponse(true);
+            setIsAssistantSpeaking(false);
             console.log("🎤 Response started:", {
               response_id: data.response?.id,
               status: data.response?.status,
@@ -933,6 +941,8 @@ export default function JarvisPage() {
 
           if (data.type === "response.done") {
             hasActiveResponseRef.current = false;
+            setHasActiveResponse(false);
+            setIsAssistantSpeaking(false);
             console.log("✅ Response completed:", {
               response_id: data.response?.id,
               status: data.response?.status,
@@ -970,10 +980,12 @@ export default function JarvisPage() {
 
           // Log audio deltas
           if (data.type === "response.audio.delta") {
+            setIsAssistantSpeaking(true);
             console.log("🔊 Receiving audio chunk");
           }
 
           if (data.type === "response.audio.done") {
+            setIsAssistantSpeaking(false);
             console.log("🔊 Audio response completed");
           }
 
@@ -1073,6 +1085,8 @@ export default function JarvisPage() {
         processedCallIdsRef.current.clear();
         activeCallsRef.current.clear();
         hasActiveResponseRef.current = false;
+        setHasActiveResponse(false);
+        setIsAssistantSpeaking(false);
 
         // Reset connection guards
         isConnectingRef.current = false;
@@ -1100,13 +1114,36 @@ export default function JarvisPage() {
 
   // Map internal status to AkiorCore state
   const akiorState: AkiorState =
-    status === "active"
-      ? isProcessing
+    status === "active" && (isAssistantSpeaking || audioLevel > 0.035)
+      ? "speaking"
+      : status === "active" && (isProcessing || hasActiveResponse)
         ? "thinking"
-        : "speaking"
-      : status === "listening"
-        ? "listening"
-        : "idle";
+        : status === "listening" || (status === "active" && !micError)
+          ? "listening"
+          : "idle";
+
+  const statusLabel =
+    akiorState === "speaking"
+      ? "speaking"
+      : akiorState === "thinking"
+        ? "processing"
+        : akiorState === "listening"
+          ? "listening"
+          : "standby";
+
+  const statusMessage = micError
+    ? micError
+    : akiorState === "speaking"
+      ? "AKIOR is responding."
+      : akiorState === "thinking"
+        ? "AKIOR is processing your request."
+        : akiorState === "listening"
+          ? status === "listening"
+            ? "Opening microphone and session..."
+            : "AKIOR is listening."
+          : status === "error"
+            ? "Connection error. Refresh to retry."
+            : "AKIOR is in standby.";
 
   // Show setup banner if setup is incomplete
   if (!setupLoading && !setupComplete) {
@@ -1119,9 +1156,33 @@ export default function JarvisPage() {
 
   return (
     <div
-      className="fixed inset-0 left-0 bg-transparent"
-      style={{ display: "grid", placeItems: "center", minHeight: "70vh" }}
+      className="relative w-full h-[100dvh] overflow-hidden"
+      style={{ background: "#020d1a" }}
     >
+      {/* Back to Dashboard - Top Left */}
+      <button
+        onClick={() => router.push("/menu" as any)}
+        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 h-10 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-300/80 hover:text-cyan-200 transition-all"
+        title="Back to Dashboard"
+        aria-label="Back to Dashboard"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        <span className="text-xs uppercase tracking-widest">Dashboard</span>
+      </button>
+
       {/* Fullscreen Button - Top Right */}
       <button
         onClick={toggleFullscreen}
@@ -1161,16 +1222,15 @@ export default function JarvisPage() {
         )}
       </button>
 
-      {/* Orb + Controls Column */}
-      <div className="flex flex-col items-center gap-8">
-        {/* Display Content Overlay (image / 3D) */}
-        {displayContent ? (
-          <div className="relative w-[480px] h-[480px] bg-black/50 backdrop-blur-sm rounded-2xl border border-cyan-500/30 flex items-center justify-center overflow-hidden">
+      {/* Fullscreen AKIOR Orb — background layer */}
+      {displayContent ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <div className="relative flex h-[480px] w-[480px] items-center justify-center">
             <button
               onClick={() => setDisplayContent(null)}
-              className="absolute top-2 right-2 w-10 h-10 rounded-full bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-500/50 flex items-center justify-center transition-all z-20"
+              className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-cyan-500/50 bg-cyan-500/20 transition-all hover:bg-cyan-500/40"
             >
-              <span className="text-cyan-400 text-2xl font-bold leading-none">
+              <span className="text-2xl font-bold leading-none text-cyan-400">
                 &times;
               </span>
             </button>
@@ -1178,10 +1238,10 @@ export default function JarvisPage() {
               <img
                 src={displayContent.url}
                 alt="Displayed content"
-                className="max-w-full max-h-full object-contain rounded-lg p-4"
+                className="max-h-full max-w-full object-contain"
               />
             ) : displayContent.type === "3d" ? (
-              <div className="w-full h-full">
+              <div className="h-full w-full">
                 <JarvisModelViewer
                   modelUrl={displayContent.url}
                   onError={(error) => {
@@ -1192,71 +1252,63 @@ export default function JarvisPage() {
               </div>
             ) : null}
           </div>
-        ) : modelProgress !== null ? (
-          /* Model generation progress overlay */
-          <div
-            className="relative flex flex-col items-center justify-center"
-            style={{ width: 480, height: 480 }}
-          >
-            <AkiorCore state="thinking" size={480} audioLevel={0} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <div className="text-white text-[100px] font-bold leading-none tracking-wider drop-shadow-[0_0_30px_rgba(34,211,238,0.8)]">
-                {Math.round(modelProgress)}%
-              </div>
-              <div className="text-cyan-400/70 text-base mt-3 tracking-wide">
-                {progressMessage}
-              </div>
+        </div>
+      ) : modelProgress !== null ? (
+        <div className="absolute inset-0 z-0">
+          <AkiorCore
+            state="thinking"
+            className="akiorv3--fullscreen"
+            size="100vw"
+            audioLevel={0}
+          />
+          <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center">
+            <div className="text-[100px] font-bold leading-none tracking-wider text-white drop-shadow-[0_0_30px_rgba(34,211,238,0.8)]">
+              {Math.round(modelProgress)}%
+            </div>
+            <div className="mt-3 text-base tracking-wide text-cyan-400/70">
+              {progressMessage}
             </div>
           </div>
-        ) : (
-          /* Production AKIOR Orb - the living intelligence core */
-          <AkiorCore state={akiorState} size={480} audioLevel={audioLevel} />
-        )}
-
-        {/* Minimal controls below the orb */}
-        <div className="flex flex-col items-center gap-3">
-          {/* Status indicator */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                status === "idle"
-                  ? "bg-white/30"
-                  : status === "listening"
-                    ? "bg-cyan-400/70 animate-pulse"
-                    : status === "active"
-                      ? "bg-cyan-400 animate-pulse"
-                      : "bg-red-400/70"
-              }`}
-            />
-            <span className="text-xs font-medium text-white/40 uppercase tracking-widest">
-              {status === "active" ? "online" : status}
-            </span>
-          </div>
-
-          {/* Status message */}
-          <p className="text-xs text-white/30 max-w-sm text-center">
-            {micError
-              ? micError
-              : status === "listening"
-                ? "Establishing connection..."
-                : status === "active"
-                  ? "AKIOR is listening"
-                  : status === "error"
-                    ? "Connection error. Refresh to retry."
-                    : null}
-          </p>
-
-          {/* Disconnect button */}
-          {status === "active" && (
-            <button
-              className="mt-1 px-5 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/50 hover:text-white/70 transition-all duration-200"
-              onClick={endRealtime}
-              type="button"
-            >
-              Disconnect
-            </button>
-          )}
         </div>
+      ) : (
+        <AkiorCore
+          state={akiorState}
+          className="akiorv3--fullscreen"
+          size="100vw"
+          audioLevel={audioLevel}
+        />
+      )}
+
+      {/* Status UI — overlay at bottom center */}
+      <div className="pointer-events-none absolute bottom-12 left-0 right-0 z-10 flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div
+            className={`h-2 w-2 rounded-full transition-all duration-300 ${
+              akiorState === "idle"
+                ? "bg-white/30"
+                : akiorState === "listening"
+                  ? "bg-cyan-400/70 animate-pulse"
+                  : akiorState === "speaking" || akiorState === "thinking"
+                    ? "bg-cyan-400 animate-pulse"
+                    : "bg-red-400/70"
+            }`}
+          />
+          <span className="text-xs font-medium uppercase tracking-widest text-white/40">
+            {statusLabel}
+          </span>
+        </div>
+        <p className="max-w-sm text-center text-xs text-white/30">
+          {statusMessage}
+        </p>
+        {status === "active" && (
+          <button
+            className="pointer-events-auto mt-1 rounded-lg border border-white/10 bg-white/5 px-5 py-1.5 text-xs text-white/50 transition-all duration-200 hover:bg-white/10 hover:text-white/70"
+            onClick={endRealtime}
+            type="button"
+          >
+            Disconnect
+          </button>
+        )}
       </div>
 
       {/* Hidden audio element */}

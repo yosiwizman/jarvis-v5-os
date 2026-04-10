@@ -377,7 +377,85 @@
       "createdAt": "2025-12-07T18:18:02.871Z",
       "fired": true,
       "firedAt": "2026-02-01T21:48:17.748Z"
+    },
+    {
+      "id": "883fe088-0996-4632-9967-f7de92b988aa",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-03A8\" connected",
+        "cameraId": "03a88925-ffa5-4e83-8ab9-f729d5b9b5e3",
+        "action": "connected"
+      },
+      "triggerAt": "2026-04-07T02:27:04.811Z",
+      "createdAt": "2026-04-07T02:27:03.811Z",
+      "fired": true,
+      "firedAt": "2026-04-07T02:27:46.867Z"
+    },
+    {
+      "id": "56374b97-7002-4587-bba7-27a7dac4fbb1",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-03A8\" connected",
+        "cameraId": "03a88925-ffa5-4e83-8ab9-f729d5b9b5e3",
+        "action": "connected"
+      },
+      "triggerAt": "2026-04-07T02:27:04.811Z",
+      "createdAt": "2026-04-07T02:27:03.811Z",
+      "fired": true,
+      "firedAt": "2026-04-07T02:27:46.867Z"
+    },
+    {
+      "id": "3f35b59b-8637-4295-a742-64729870f95e",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-03A8\" disconnected",
+        "cameraId": "03a88925-ffa5-4e83-8ab9-f729d5b9b5e3",
+        "action": "disconnected"
+      },
+      "triggerAt": "2026-04-07T02:27:06.418Z",
+      "createdAt": "2026-04-07T02:27:05.418Z",
+      "fired": true,
+      "firedAt": "2026-04-07T02:27:46.868Z"
+    },
+    {
+      "id": "726b59b3-7681-4f1d-a6f6-6d02d9c740ed",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-03A8\" connected",
+        "cameraId": "03a88925-ffa5-4e83-8ab9-f729d5b9b5e3",
+        "action": "connected"
+      },
+      "triggerAt": "2026-04-09T01:36:04.150Z",
+      "createdAt": "2026-04-09T01:36:03.150Z",
+      "fired": true,
+      "firedAt": "2026-04-09T01:36:19.636Z"
+    },
+    {
+      "id": "5fe3f688-0157-43d9-8562-5073c601a89b",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-03A8\" connected",
+        "cameraId": "03a88925-ffa5-4e83-8ab9-f729d5b9b5e3",
+        "action": "connected"
+      },
+      "triggerAt": "2026-04-09T01:36:04.150Z",
+      "createdAt": "2026-04-09T01:36:03.150Z",
+      "fired": true,
+      "firedAt": "2026-04-09T01:36:19.637Z"
+    },
+    {
+      "id": "cf6e84cc-5530-48fb-be4f-25c092f48977",
+      "type": "camera_alert",
+      "payload": {
+        "message": "Camera \"Cam-03A8\" disconnected",
+        "cameraId": "03a88925-ffa5-4e83-8ab9-f729d5b9b5e3",
+        "action": "disconnected"
+      },
+      "triggerAt": "2026-04-09T01:36:11.200Z",
+      "createdAt": "2026-04-09T01:36:10.200Z",
+      "fired": true,
+      "firedAt": "2026-04-09T01:36:19.637Z"
     }
   ],
-  "lastUpdated": "2026-02-01T21:48:17.749Z"
+  "lastUpdated": "2026-04-09T01:36:19.637Z"
 }

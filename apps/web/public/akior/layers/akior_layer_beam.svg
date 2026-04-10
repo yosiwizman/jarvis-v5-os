@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200">
+  <defs>
+    <linearGradient id="beamGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#63f6ff" stop-opacity="0"/>
+      <stop offset="14%" stop-color="#63f6ff" stop-opacity="0.55"/>
+      <stop offset="50%" stop-color="#eaffff" stop-opacity="1"/>
+      <stop offset="86%" stop-color="#63f6ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#63f6ff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="beamGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="0" y="428" width="1600" height="4" fill="url(#beamGrad)" opacity="0.95" filter="url(#beamGlow)"/>
+  <line x1="0" y1="430" x2="1600" y2="430" stroke="#8efbff" stroke-width="1.35" opacity="0.95"/>
+  <circle cx="800" cy="430" r="3.8" fill="#eaffff" opacity="1"/>
+  <circle cx="180" cy="430" r="2.7" fill="#eaffff" opacity="0.85"/>
+  <circle cx="1420" cy="430" r="2.7" fill="#eaffff" opacity="0.85"/>
+  <circle cx="1240" cy="430" r="1.6" fill="#eaffff" opacity="0.75"/>
+  <circle cx="360" cy="430" r="1.6" fill="#eaffff" opacity="0.75"/>
+</svg>

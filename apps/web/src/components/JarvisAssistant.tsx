@@ -5,10 +5,10 @@ import { readSettings } from "@shared/settings";
 import { buildServerUrl } from "@/lib/api";
 import { getFunctionTools } from "@/lib/jarvis-functions";
 import { handleCameraAnalysis } from "@/lib/camera-handler";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { isFunctionEnabledSync } from "@/hooks/useFunctionSettings";
 import AkiorCore from "./akior/AkiorCore";
+import type { AkiorState } from "./akior/AkiorCore";
 
 const FFT_BARS = 64;
 
@@ -23,6 +23,10 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
   >("idle");
   const [audioLevel, setAudioLevel] = useState(0);
   const [fftData, setFftData] = useState<number[]>(new Array(FFT_BARS).fill(0));
+  const [micError, setMicError] = useState<string | null>(null);
+  const [setupRequired, setSetupRequired] = useState<string | null>(null);
+  const [hasActiveResponse, setHasActiveResponse] = useState(false);
+  const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const statusRef = useRef(status);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const settings = useMemo(() => readSettings(), []);
@@ -31,10 +35,6 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
   const animationFrameRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
-  const [ring1Rotation, setRing1Rotation] = useState(0);
-  const [ring2Rotation, setRing2Rotation] = useState(0);
-  const rotationFrameRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(Date.now());
   const router = useRouter();
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const processedCallIdsRef = useRef<Set<string>>(new Set());
@@ -555,30 +555,11 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
     }
   }
 
-  // Continuous rotation for rings
+  // Auto-start connection when opened, cleanup when closed.
+  // Do NOT auto-retry if setupRequired is set (missing OpenAI key etc) —
+  // that would spam the server with 428s and never resolve until config changes.
   useEffect(() => {
-    const rotate = () => {
-      const now = Date.now();
-      const delta = (now - lastTimeRef.current) / 1000;
-      lastTimeRef.current = now;
-
-      setRing1Rotation((prev) => (prev + 40 * delta) % 360);
-      setRing2Rotation((prev) => (prev - 20 * delta) % 360);
-
-      rotationFrameRef.current = requestAnimationFrame(rotate);
-    };
-    rotate();
-
-    return () => {
-      if (rotationFrameRef.current) {
-        cancelAnimationFrame(rotationFrameRef.current);
-      }
-    };
-  }, []);
-
-  // Auto-start connection when opened, cleanup when closed
-  useEffect(() => {
-    if (isOpen && status === "idle") {
+    if (isOpen && status === "idle" && !micError && !setupRequired) {
       console.log("📡 Auto-starting WebRTC connection...");
       startRealtime();
     } else if (!isOpen && status !== "idle") {
@@ -588,7 +569,13 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
         cleanup();
       }
     }
-  }, [isOpen, status]);
+  }, [isOpen, status, micError, setupRequired]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMicError(null);
+    }
+  }, [isOpen]);
 
   // Audio level monitoring with FFT
   useEffect(() => {
@@ -688,17 +675,103 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
   }, [status]);
 
   async function startRealtime() {
+    // Hoisted to function scope so the outer catch can clean them up on any
+    // thrown error, preventing abandoned RTCPeerConnection / ICE noise that
+    // produces the downstream WebSocket close errors the user sees.
+    let pcOuter: RTCPeerConnection | null = null;
+    let streamOuter: MediaStream | null = null;
     try {
       setStatus("listening");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: false, // Disabled for better volume detection
+      setSetupRequired(null);
+      let stream: MediaStream | null = null;
+      // Retry cascade: preferred constraints → wildcard → explicit deviceId
+      // from enumerateDevices. Fixes NotFoundError cases where macOS default
+      // input doesn't match specific constraints even though a mic is present.
+      const constraintCascade: MediaStreamConstraints[] = [
+        {
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: false,
+          },
         },
-      });
+        { audio: true }, // wildcard — matches any available input
+      ];
+      let lastErr: any = null;
+      for (const constraints of constraintCascade) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          console.log(
+            "[AKIOR mic] acquired stream via constraints:",
+            JSON.stringify(constraints),
+            "tracks:",
+            stream.getAudioTracks().map((t) => ({
+              label: t.label,
+              id: t.id,
+              enabled: t.enabled,
+              muted: t.muted,
+              state: t.readyState,
+            })),
+          );
+          break;
+        } catch (err: any) {
+          console.warn(
+            "[AKIOR mic] constraint attempt failed:",
+            err?.name,
+            err?.message,
+          );
+          lastErr = err;
+        }
+      }
+      // Fallback: enumerate devices and retry with explicit first audioinput
+      if (!stream) {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioInputs = devices.filter((d) => d.kind === "audioinput");
+          console.log(
+            "[AKIOR mic] enumerateDevices audioinputs:",
+            audioInputs.map((d) => ({
+              deviceId: d.deviceId,
+              label: d.label,
+            })),
+          );
+          if (audioInputs.length > 0) {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: { deviceId: { exact: audioInputs[0].deviceId } },
+            });
+            console.log(
+              "[AKIOR mic] recovered via explicit deviceId:",
+              audioInputs[0].label,
+            );
+          }
+        } catch (err: any) {
+          console.warn(
+            "[AKIOR mic] enumerate/explicit deviceId retry failed:",
+            err?.name,
+            err?.message,
+          );
+          lastErr = err;
+        }
+      }
+      if (!stream) {
+        const micErr = lastErr;
+        const msg =
+          micErr?.name === "NotFoundError"
+            ? "No microphone detected. Check macOS Sound → Input and browser mic settings."
+            : micErr?.name === "NotAllowedError" ||
+                micErr?.name === "PermissionDeniedError" ||
+                micErr?.name === "SecurityError"
+              ? "Microphone access denied. Allow mic access to talk to AKIOR."
+              : "Microphone unavailable. Check your audio device and browser settings.";
+        setMicError(msg);
+        setStatus("idle");
+        return;
+      }
+      setMicError(null);
       const pc = new RTCPeerConnection();
+      pcOuter = pc;
+      streamOuter = stream;
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
       const dc = pc.createDataChannel("oai-events");
       dataChannelRef.current = dc;
@@ -735,10 +808,36 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
         }
 
         if (!response.ok) {
-          const message =
-            payload?.error ||
-            "Failed to create realtime session via server proxy";
-          throw new Error(message);
+          // Server returns { ok:false, error:{code,message}, setup:{} } for 428 SETUP_REQUIRED,
+          // or { error: "<string>" } for other failures. Handle both shapes correctly.
+          const errField = payload?.error;
+          const extractedMessage =
+            typeof errField === "string"
+              ? errField
+              : errField?.message ||
+                payload?.message ||
+                "Failed to create realtime session via server proxy";
+          const errCode =
+            typeof errField === "object" ? errField?.code : undefined;
+
+          if (response.status === 428 || errCode === "SETUP_REQUIRED") {
+            // Voice setup (OpenAI Realtime API key) is missing on the server.
+            // Surface as a dedicated setup-required state, not a generic error.
+            setSetupRequired(
+              extractedMessage ||
+                "Voice setup required: missing OpenAI API key.",
+            );
+            setStatus("idle");
+            try {
+              pc.close();
+            } catch {}
+            try {
+              stream.getTracks().forEach((t) => t.stop());
+            } catch {}
+            dataChannelRef.current = null;
+            return;
+          }
+          throw new Error(extractedMessage);
         }
 
         answerSdp = payload?.sdp;
@@ -860,6 +959,8 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
 
           // Track response lifecycle
           if (data.type === "response.created") {
+            setHasActiveResponse(true);
+            setIsAssistantSpeaking(false);
             console.log("🎤 Response started:", {
               response_id: data.response?.id,
               status: data.response?.status,
@@ -867,6 +968,8 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
           }
 
           if (data.type === "response.done") {
+            setHasActiveResponse(false);
+            setIsAssistantSpeaking(false);
             console.log("✅ Response completed:", {
               response_id: data.response?.id,
               status: data.response?.status,
@@ -904,10 +1007,12 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
 
           // Log audio deltas
           if (data.type === "response.audio.delta") {
+            setIsAssistantSpeaking(true);
             console.log("🔊 Receiving audio chunk");
           }
 
           if (data.type === "response.audio.done") {
+            setIsAssistantSpeaking(false);
             console.log("🔊 Audio response completed");
           }
 
@@ -987,12 +1092,28 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
         dataChannelRef.current = null;
         processedCallIdsRef.current.clear();
         activeCallsRef.current.clear(); // Clear active call tracking
+        setHasActiveResponse(false);
+        setIsAssistantSpeaking(false);
         setStatus("idle");
       }
 
       endRealtimeRef.current = cleanup;
     } catch (error) {
-      console.error(error);
+      console.error("[AKIOR voice] startRealtime failed:", error);
+      // Clean up hoisted resources to prevent abandoned peer connections /
+      // ICE noise / leaked media tracks on any failure path.
+      if (pcOuter) {
+        try {
+          pcOuter.close();
+        } catch {}
+      }
+      if (streamOuter) {
+        try {
+          streamOuter.getTracks().forEach((t) => t.stop());
+        } catch {}
+      }
+      dataChannelRef.current = null;
+      remoteStreamRef.current = null;
       setStatus("error");
     }
   }
@@ -1004,14 +1125,55 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
 
   function closeAssistant() {
     endRealtime();
+    setSetupRequired(null);
+    setMicError(null);
     onClose();
   }
 
-  const ring1Scale = 1 + audioLevel * 0.08;
-  const ring2Scale = 1 + audioLevel * 0.05;
-  // Logo is now static - no volume-based animation
-  const logoScale = 1;
-  const glowIntensity = 0;
+  const assistantOrbState: AkiorState =
+    status === "active" && (isAssistantSpeaking || audioLevel > 0.035)
+      ? "speaking"
+      : status === "active" && (isProcessing || hasActiveResponse)
+        ? "thinking"
+        : status === "listening" || (status === "active" && !micError)
+          ? "listening"
+          : "idle";
+
+  // Drive surface recipe from orb state: any active voice state → active recipe.
+  const assistantSurface: "assistant-standby" | "assistant-active" =
+    assistantOrbState === "speaking" ||
+    assistantOrbState === "listening" ||
+    assistantOrbState === "thinking"
+      ? "assistant-active"
+      : "assistant-standby";
+
+  const statusLabel = setupRequired
+    ? "setup required"
+    : status === "error"
+      ? "error"
+      : assistantOrbState === "speaking"
+        ? "speaking"
+        : assistantOrbState === "thinking"
+          ? "processing"
+          : assistantOrbState === "listening"
+            ? "listening"
+            : "standby";
+
+  const statusMessage = setupRequired
+    ? setupRequired
+    : micError
+      ? micError
+      : assistantOrbState === "speaking"
+        ? "AKIOR is responding."
+        : assistantOrbState === "thinking"
+          ? "AKIOR is processing your request."
+          : assistantOrbState === "listening"
+            ? status === "listening"
+              ? "Opening microphone and session..."
+              : "AKIOR is listening."
+            : status === "error"
+              ? "Connection error. Click outside to close."
+              : "AKIOR is in standby.";
 
   if (!isOpen) return null;
 
@@ -1019,33 +1181,18 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity duration-300"
+        className="fixed inset-0 bg-[#020c1f]/80 backdrop-blur-sm z-40 transition-opacity duration-300"
         onClick={closeAssistant}
       />
 
-      {/* AKIOR Visualizer */}
+      {/* AKIOR Visualizer — AKIOR owns the full viewport as ambient presence */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-        <div className="relative flex items-center justify-center w-full max-w-3xl aspect-square pointer-events-auto animate-[scale-up_0.3s_ease-out]">
-          {/* Ring 2 - Outer */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              transform: `rotate(${ring2Rotation}deg) scale(${ring2Scale})`,
-              opacity: status === "active" ? 1 : 0.3,
-              transition: "opacity 300ms",
-            }}
-          >
-            <Image
-              src="/assets/ring2.png"
-              alt=""
-              width={700}
-              height={700}
-              className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(34,211,238,0.6)]"
-            />
-          </div>
-
-          {/* FFT Visualizer with Wave Loading and 3D Model Progress */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div
+          className="relative w-full h-full flex flex-col items-center justify-center pointer-events-auto animate-[scale-up_0.3s_ease-out]"
+          onClick={closeAssistant}
+        >
+          {/* Legacy FFT radial visualizer removed — compact AkiorCore is now the canonical embedded visual */}
+          <div className="hidden">
             <svg
               className="w-2/3 h-2/3"
               viewBox="0 0 400 400"
@@ -1117,24 +1264,6 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
             </svg>
           </div>
 
-          {/* Ring 1 - Middle */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              transform: `rotate(${ring1Rotation}deg) scale(${ring1Scale})`,
-              opacity: status === "active" ? 1 : 0.5,
-              transition: "opacity 200ms",
-            }}
-          >
-            <Image
-              src="/assets/ring1.png"
-              alt=""
-              width={600}
-              height={600}
-              className="w-4/5 h-4/5 object-contain drop-shadow-[0_0_25px_rgba(34,211,238,0.8)]"
-            />
-          </div>
-
           {/* Logo or Display Content or Progress - Center */}
           {displayContent ? (
             <div className="relative z-10 w-96 h-96 bg-black/50 backdrop-blur-sm rounded-2xl border border-cyan-500/30 p-4 flex items-center justify-center">
@@ -1186,84 +1315,51 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
             </div>
           ) : (
             <div
-              className="relative z-10 flex flex-col items-center justify-center"
-              style={{
-                transform: `scale(${logoScale})`,
-                filter: `drop-shadow(0 0 ${glowIntensity}px rgba(34,211,238,0.9))`,
-              }}
+              className="relative z-10 flex items-center justify-center w-[min(1400px,92vw)]"
               data-testid="brand-mark"
             >
-              <div
-                className="text-5xl font-bold tracking-[0.3em] text-cyan-400"
-                style={{
-                  textShadow:
-                    "0 0 30px rgba(34, 211, 238, 0.8), 0 0 60px rgba(34, 211, 238, 0.4)",
-                  fontFamily: "system-ui, -apple-system, sans-serif",
-                }}
-              >
-                AKIOR
-              </div>
-              <div
-                className="text-sm tracking-[0.2em] text-cyan-400/70 uppercase text-center leading-relaxed mt-2"
-                style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-              >
-                Advanced Knowledge Intelligence
-                <br />
-                Operating Resource
-              </div>
+              <AkiorCore
+                state={assistantOrbState}
+                size="100%"
+                audioLevel={audioLevel}
+                surface={assistantSurface}
+              />
             </div>
           )}
 
-          {/* Status Ring Glow */}
-          {status === "active" && (
-            <div
-              className="absolute inset-0 rounded-full transition-opacity duration-300"
-              style={{
-                background: `radial-gradient(circle, rgba(34,211,238,${audioLevel * 0.3}) 0%, transparent 70%)`,
-                transform: `scale(${1 + audioLevel * 0.5})`,
-              }}
-            />
-          )}
+          {/* Legacy status ring glow removed — compact AkiorCore carries its own audio-reactive glow */}
 
-          {/* Status Info */}
-          <div className="absolute bottom-[-120px] left-1/2 -translate-x-1/2 text-center space-y-4 w-full">
+          {/* Status Info — pinned to bottom so the orb owns the center */}
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 text-center space-y-3 w-full max-w-md px-4">
             <div className="flex items-center justify-center gap-3">
               <div
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  status === "idle"
+                  assistantOrbState === "idle"
                     ? "bg-gray-500"
-                    : status === "listening"
-                      ? "bg-yellow-400 animate-pulse"
-                      : status === "active"
+                    : assistantOrbState === "listening"
+                      ? "bg-cyan-400/70 animate-pulse"
+                      : assistantOrbState === "speaking" ||
+                          assistantOrbState === "thinking"
                         ? "bg-cyan-400 animate-pulse"
                         : "bg-red-500"
                 }`}
               />
               <span className="text-xl font-semibold text-cyan-400 uppercase tracking-wider">
-                {status}
+                {statusLabel}
               </span>
             </div>
 
             <p className="text-sm text-white/60 max-w-md px-4 mx-auto">
-              {status === "listening" ? (
-                "Establishing secure connection..."
-              ) : status === "active" ? (
-                <>
-                  AKIOR is online. Say{" "}
-                  <span className="text-cyan-400 font-semibold">
-                    "thank you"
-                  </span>{" "}
-                  to disconnect
-                </>
-              ) : status === "error" ? (
-                "Connection error. Click outside to close."
-              ) : null}
+              {statusMessage}
             </p>
 
             {status === "active" && (
               <button
                 className="px-6 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 transition-all duration-200 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-                onClick={endRealtime}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  endRealtime();
+                }}
                 type="button"
               >
                 Disconnect
@@ -1300,12 +1396,105 @@ export function JarvisIcon({ onClick }: JarvisIconProps) {
   return (
     <button
       onClick={onClick}
-      className="group fixed bottom-5 right-5 z-10 hover:scale-110 transition-transform duration-200 opacity-50 hover:opacity-90"
+      className="group fixed bottom-6 right-6 z-10 transition-transform duration-200 hover:scale-105"
       aria-label="Open AKIOR Assistant"
       data-testid="brand-float"
-      style={{ pointerEvents: "auto" }}
+      style={{
+        pointerEvents: "auto",
+        width: 120,
+        height: 120,
+        borderRadius: "9999px",
+        background:
+          "radial-gradient(circle at 50% 50%, rgba(27,210,255,0.26) 0%, rgba(0,170,255,0.12) 42%, rgba(2,12,31,0) 74%)",
+        border: "none",
+        padding: 0,
+        position: "fixed",
+      }}
     >
-      <AkiorCore state="idle" size={72} />
+      {/* Mini-AKIOR living launcher: rings (counter-rotating) + core pulse + emblem breath */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+        }}
+      >
+        {/* Rings copy A — slow forward rotation */}
+        <img
+          src="/akior/layers/akior_layer_rings.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            opacity: 0.55,
+            mixBlendMode: "screen",
+            animation: "akiorSpinSlow 28s linear infinite",
+            transformOrigin: "50% 36%",
+            filter:
+              "drop-shadow(0 0 6px rgba(99,246,255,0.55)) drop-shadow(0 0 14px rgba(99,246,255,0.3))",
+          }}
+        />
+        {/* Rings copy B — reverse counter-rotation */}
+        <img
+          src="/akior/layers/akior_layer_rings.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            opacity: 0.32,
+            mixBlendMode: "screen",
+            animation: "akiorSpinSlow 44s linear infinite reverse",
+            transformOrigin: "50% 36%",
+          }}
+        />
+        {/* Core — pulsing bright center */}
+        <img
+          src="/akior/layers/akior_layer_core.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            opacity: 0.9,
+            mixBlendMode: "screen",
+            filter:
+              "drop-shadow(0 0 8px rgba(99,246,255,0.7)) drop-shadow(0 0 18px rgba(99,246,255,0.4))",
+            animation: "akiorCorePulse 2.4s ease-in-out infinite",
+            transformOrigin: "50% 36%",
+          }}
+        />
+        {/* Emblem — sacred geometry (breathe) */}
+        <img
+          src="/akior/layers/akior_layer_emblem.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            opacity: 0.98,
+            mixBlendMode: "screen",
+            filter:
+              "drop-shadow(0 0 6px rgba(99,246,255,0.9)) drop-shadow(0 0 16px rgba(99,246,255,0.5)) drop-shadow(0 0 34px rgba(99,246,255,0.32))",
+            animation: "akiorBreathe 5.2s ease-in-out infinite",
+            transformOrigin: "50% 36%",
+          }}
+        />
+      </div>
     </button>
   );
 }
