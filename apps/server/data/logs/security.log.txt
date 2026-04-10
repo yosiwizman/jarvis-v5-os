@@ -1,4 +1,0 @@
-/home/ai-desktop/projects/akior/forge/jarvis-v5-os/apps/server/data/logs/20260407-0000-01-security.log.gz
-/home/ai-desktop/projects/akior/forge/jarvis-v5-os/apps/server/data/logs/20260408-0000-01-security.log.gz
-/home/ai-desktop/projects/akior/forge/jarvis-v5-os/apps/server/data/logs/20260409-0000-01-security.log.gz
-/home/ai-desktop/projects/akior/forge/jarvis-v5-os/apps/server/data/logs/20260410-0000-01-security.log.gz

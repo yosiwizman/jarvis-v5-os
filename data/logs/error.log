@@ -1,2 +1,0 @@
-{"level":"error","time":"2026-04-09T15:22:12.586Z","node_version":"v22.22.2","err":"missing scope: operator.write","msg":"whatsapp.send.request.failure"}
-{"level":"error","time":"2026-04-09T15:22:12.586Z","node_version":"v22.22.2","errorCode":"gateway_rpc_error","detail":"missing scope: operator.write","durationMs":22,"requestId":"0b7105d8-bcd9-455a-9ca4-97a5ee4f2751","msg":"whatsapp.send.request.failure"}
