@@ -45,10 +45,10 @@
 | `ELEVENLABS_API_KEY` | No | ElevenLabs TTS API key |
 | `OPENWEATHER_API_KEY` | No | OpenWeatherMap API key |
 | `SERPAPI_API_KEY` | No | SerpAPI key for web search |
-| `GOOGLE_CLIENT_ID` | No | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
 | `SPOTIFY_CLIENT_ID` | No | Spotify client ID |
 | `SPOTIFY_CLIENT_SECRET` | No | Spotify client secret |
+
+**Google auth (DEC-033):** Google access uses the AKIOR managed-browser session lane. No `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` env vars are required or honored. No `google-credentials.json` or `client_secret.json` files exist or are accepted. The CEO connects Google by clicking **Connect Google** in the AKIOR Channels UI; the managed browser handles sign-in. Setting any Google OAuth env var has no effect.
 
 **Note on API Key Configuration:**
 - API keys (OpenAI, Meshy) can be configured via environment variables OR through the web UI at /settings
