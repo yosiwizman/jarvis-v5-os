@@ -8,6 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -46,7 +47,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/admin.json' },
     },
     {
       name: 'firefox',

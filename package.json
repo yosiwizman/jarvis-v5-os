@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "start": "node apps/web/scripts/mkcert-dev.mjs && concurrently -n server,next,tls \"npm -w @akior/server run dev\" \"cd apps/web && npx next dev -p 3001 -H localhost\" \"cd apps/web && node dev-proxy.mjs\"",
-    "start:ci": "concurrently -k -s first -n server,next \"npm -w @jarvis/server run dev\" \"cd apps/web && npx next dev -p 3000 -H 0.0.0.0\"",
+    "start:ci": "concurrently -k -s first -n server,next \"cross-env DISABLE_HTTPS=true PLAYWRIGHT_E2E_AUTH=1 npm -w @akior/server run dev\" \"cd apps/web && npx next dev -p 3000 -H 0.0.0.0\"",
     "web": "node apps/web/scripts/mkcert-dev.mjs && concurrently -n next,tls \"cd apps/web && npx next dev -p 3001 -H localhost\" \"cd apps/web && node dev-proxy.mjs\"",
     "dev": "npm start",
     "build": "npm run build -ws --if-present",

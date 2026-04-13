@@ -56,3 +56,5 @@ apps/web/certs/
 apps/web/*.pem
 
 *.tar.gz
+e2e/.auth/
+test-results/
