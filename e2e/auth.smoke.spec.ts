@@ -140,6 +140,13 @@ test.describe('Setup Page Access', () => {
 });
 
 test.describe('Login Page', () => {
+  // The chromium project loads `storageState: 'e2e/.auth/admin.json'` per
+  // playwright.config.ts (test-only admin auth bootstrap via DEC-034). But
+  // `/login` in that authenticated context auto-redirects to `/menu`, so the
+  // login-page CTAs are never rendered. Clear storageState at the describe
+  // level to exercise the genuine unauthenticated login surface.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('/login page loads', async ({ page }) => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
