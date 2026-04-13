@@ -68,6 +68,7 @@ function StatusBadge({ level }: { level: StatusLevel }) {
     error: "Error",
     offline: "Offline",
     loading: "Checking...",
+    standalone: "Standalone Mode",
   };
 
   return (

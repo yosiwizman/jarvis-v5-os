@@ -1087,7 +1087,7 @@ export function JarvisAssistant({ isOpen, onClose }: JarvisAssistantProps) {
       function cleanup() {
         dc.close();
         pc.close();
-        stream.getTracks().forEach((track) => track.stop());
+        stream?.getTracks().forEach((track) => track.stop());
         remoteStreamRef.current = null;
         dataChannelRef.current = null;
         processedCallIdsRef.current.clear();

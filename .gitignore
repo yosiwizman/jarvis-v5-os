@@ -25,6 +25,29 @@ apps/server/certs/*.pem
 apps/server/data/secrets.json
 apps/server/data/files/
 
+# Session / token / runtime state (never track — live server owns these)
+apps/server/data/bambu-token.json
+apps/server/data/bambu-config.json
+apps/server/data/channels/
+apps/server/data/dnd.json
+apps/server/data/tasks.json
+apps/server/data/scheduled-events.json
+apps/server/data/actions/
+apps/server/data/audit.log
+apps/server/data/logs/
+
+# OMC HUD runtime state
+.omc/state/
+
+# Stray top-level runtime directory (generated — real data lives under apps/server/data/)
+/data/
+
+# Accidental file from redirected git command output
+/h origin main
+
+# Editor / refactor backup files
+*.bak
+
 # Infrastructure certificates
 apps/server/infra/
 
@@ -33,3 +56,5 @@ apps/web/certs/
 apps/web/*.pem
 
 *.tar.gz
+e2e/.auth/
+test-results/

@@ -18,7 +18,7 @@ COPY packages/shared ./packages/shared/
 COPY apps/server/package.json ./apps/server/
 
 # Install all dependencies
-RUN npm ci --workspace=@jarvis/server
+RUN npm ci --workspace=@akior/server
 
 # Build the shared package and server
 FROM base AS builder

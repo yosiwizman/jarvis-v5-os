@@ -107,16 +107,30 @@ test('getDefaultSettings returns valid object', () => {
   assertDefined(defaults.integrations, 'integrations');
 });
 
-test('default integrations has all required keys', () => {
+test('default integrations has all required keys (DEC-033 channels-era shape)', () => {
+  // DEC-033 purged the Google credential-model. Gmail and Google Calendar are
+  // now first-class channel providers (packages/shared/src/channels.ts,
+  // ChannelProviderDescriptor) with their own lifecycle and API surface
+  // (/api/channels/gmail/*), not IntegrationSettings entries. See also DEC-031
+  // (Gmail browser-session lane) and DEC-034 (E2E auth bootstrap).
   const defaults = getDefaultSettings();
   const requiredKeys = [
     'weather', 'webSearch', 'localLLM', 'elevenLabs', 'azureTTS',
-    'spotify', 'gmail', 'googleCalendar', 'alexa', 'irobot', 'nest', 'smartLights'
+    'spotify', 'alexa', 'irobot', 'nest', 'smartLights',
   ];
-  
+
   for (const key of requiredKeys) {
     assertDefined(defaults.integrations[key as keyof typeof defaults.integrations], `integrations.${key}`);
   }
+
+  // Negative assertions: the purged legacy keys must NOT reappear in the
+  // integrations shape. If they do, something is reviving DEC-033-forbidden
+  // pathways and the contract must fail loudly.
+  const integrationKeys = Object.keys(defaults.integrations);
+  assert(!integrationKeys.includes('gmail'),
+    "integrations.gmail must NOT exist (DEC-033: Gmail is a channel, not an integration)");
+  assert(!integrationKeys.includes('googleCalendar'),
+    "integrations.googleCalendar must NOT exist (DEC-033: moved out of the integration model)");
 });
 
 test('default integrations.weather has required fields', () => {

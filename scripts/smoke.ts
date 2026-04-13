@@ -163,24 +163,19 @@ async function runSmokeTests(): Promise<void> {
       validateJson: true,
       useApiBase: true,
     }),
-    check("Gmail API (unconfigured)", "/api/integrations/gmail/test", {
-      method: "POST",
-      body: {},
-      expectedStatus: 503, // Expected: not configured
+    // DEC-033: Gmail and Google Calendar are no longer "integrations". They
+    // are first-class channel providers (packages/shared/src/channels.ts) with
+    // their own API surface under /api/channels/*. The legacy endpoints
+    // /api/integrations/gmail/test and /api/integrations/google-calendar/test
+    // were purged by DEC-033. Smoke now probes the channels-era surface via
+    // the counts endpoint, which is a pure synchronous aggregator and does
+    // not depend on any live managed-browser session.
+    check("Channels counts API", "/api/channels/counts", {
+      method: "GET",
+      expectedStatus: 200,
       validateJson: true,
       useApiBase: true,
     }),
-    check(
-      "Google Calendar API (unconfigured)",
-      "/api/integrations/google-calendar/test",
-      {
-        method: "POST",
-        body: {},
-        expectedStatus: 503, // Expected: not configured
-        validateJson: true,
-        useApiBase: true,
-      },
-    ),
 
     // Notification system endpoints - backend routes have /api prefix
     check("Notification schedule API", "/api/notifications/schedule", {

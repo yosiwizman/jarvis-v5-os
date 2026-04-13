@@ -17,8 +17,7 @@ export function InsecureBanner() {
 
     const host = window.location.hostname;
     const isIpHost = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
-    const isHttps = window.location.protocol === 'https:';
-    const secure = window.isSecureContext && isHttps;
+    const secure = window.isSecureContext;
 
     setIsInsecure(!secure || isIpHost);
 

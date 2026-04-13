@@ -69,7 +69,7 @@ const testCases: TestCase[] = [
 
 const REQUIRED_INTEGRATION_KEYS = [
   'weather', 'webSearch', 'localLLM', 'elevenLabs', 'azureTTS',
-  'spotify', 'gmail', 'googleCalendar', 'alexa', 'irobot', 'nest', 'smartLights'
+  'spotify', 'alexa', 'irobot', 'nest', 'smartLights'
 ] as const;
 
 function validateNormalizedSettings(settings: any): { valid: boolean; errors: string[] } {

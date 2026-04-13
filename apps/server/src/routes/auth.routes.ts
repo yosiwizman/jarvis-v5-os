@@ -250,6 +250,45 @@ export function registerAuthRoutes(fastify: FastifyInstance) {
   });
 
   /**
+   * POST /api/auth/e2e/bootstrap
+   *
+   * TEST-ONLY admin session bootstrap for Playwright E2E.
+   *
+   * SAFETY:
+   * - Returns 404 unless process.env.PLAYWRIGHT_E2E_AUTH === "1"
+   * - The env var is intentionally NOT set in production (Docker/Fly.io) —
+   *   only in the local `start:ci` / Playwright harness.
+   * - Normal auth wall (PIN + middleware redirect) is untouched for real users.
+   * - Uses the same session-cookie plumbing as /api/auth/pin/login, so the
+   *   issued session is a real admin session — no middleware changes needed.
+   */
+  fastify.post("/api/auth/e2e/bootstrap", async (req, reply) => {
+    if (process.env["PLAYWRIGHT_E2E_AUTH"] !== "1") {
+      return reply.status(404).send({ ok: false, error: "Not found" });
+    }
+
+    const token = rotateSessionToken();
+
+    reply.setCookie(SESSION_COOKIE_NAME, token, {
+      httpOnly: SESSION_COOKIE_OPTIONS.httpOnly,
+      secure: SESSION_COOKIE_OPTIONS.secure,
+      sameSite: SESSION_COOKIE_OPTIONS.sameSite,
+      path: SESSION_COOKIE_OPTIONS.path,
+      maxAge: SESSION_COOKIE_OPTIONS.maxAge / 1000,
+    });
+
+    rotateCsrfToken(reply);
+    reply.header("Cache-Control", "no-store");
+
+    logger.info(
+      { type: "security", event: "e2e_auth_bootstrap" },
+      "E2E auth bootstrap issued (test-only)",
+    );
+
+    return reply.send({ ok: true, mode: "e2e-test" });
+  });
+
+  /**
    * GET /api/auth/me
    *
    * Returns current auth state (no sensitive data).
