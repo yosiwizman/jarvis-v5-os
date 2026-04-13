@@ -97,7 +97,7 @@ jobs:
       - name: Lint (web)
         env:
           NODE_PATH: ${{ github.workspace }}/apps/web/node_modules
-        run: npm run lint -w @jarvis/web
+        run: npm run lint -w @akior/web
 
   typecheck:
     name: Typecheck
