@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("AKIOR Branding Consistency", () => {
+  // Login-page branding asserts against the genuine unauthenticated
+  // surface; the chromium admin-storageState context auto-redirects
+  // /login → /menu and the login brand-mark is never rendered. Clear the
+  // state for this suite so /login + /menu render their real anonymous
+  // branding surfaces.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test("health build exposes git_sha and matches client env if set", async ({
     page,
   }) => {
@@ -65,10 +72,15 @@ test.describe("AKIOR Branding Consistency", () => {
     // Wait for hydration
     await page.waitForTimeout(500);
 
-    // Assert floating badge exists and contains AKIOR
+    // Assert floating badge exists. The badge element itself is a button
+    // hosting an animated SVG (no direct text node); the AKIOR brand
+    // contract is expressed via its accessible label `aria-label="Open
+    // AKIOR Assistant"` on JarvisAssistant.tsx:1401. Assert the a11y
+    // branding contract rather than a visual text node the element
+    // deliberately does not contain.
     const brandFloat = page.locator('[data-testid="brand-float"]');
     await expect(brandFloat).toBeVisible({ timeout: 5000 });
-    await expect(brandFloat).toContainText("AKIOR");
+    await expect(brandFloat).toHaveAttribute("aria-label", /AKIOR/i);
 
     // Assert NO J.A.R.V.I.S. text anywhere on page (excluding internal identifiers)
     const visibleText = await page.evaluate(() => {

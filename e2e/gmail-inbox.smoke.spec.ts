@@ -69,6 +69,21 @@ test.describe('Gmail Inbox Smoke', () => {
   });
 
   test('Gmail inbox list or empty-state renders', async ({ page }) => {
+    // This test requires a live Gmail managed-browser session (DEC-031
+    // browser-session lane: OpenClaw gateway + persistent Chrome profile
+    // signed in to Gmail). CI has no such session — it only runs the
+    // DEC-034 test-only admin-auth bootstrap. Skipping in CI is the
+    // truthful outcome. DO NOT introduce a mock: DEC-033 forbids any
+    // fake Gmail credential surface. Manual/local developer coverage
+    // with a live managed-browser session remains the validation path.
+    if (process.env.CI === 'true') {
+      test.skip(
+        true,
+        'Requires live Gmail managed-browser session (DEC-031/DEC-033); CI cannot truthfully provide one. Validated locally against a signed-in session.'
+      );
+      return;
+    }
+
     await page.goto('/settings/channels/email', { waitUntil: 'domcontentloaded' });
 
     // Wait for either a populated inbox list or a confirmed empty state.

@@ -140,6 +140,13 @@ test.describe('Setup Page Access', () => {
 });
 
 test.describe('Login Page', () => {
+  // The chromium project loads `storageState: 'e2e/.auth/admin.json'` per
+  // playwright.config.ts (test-only admin auth bootstrap via DEC-034). But
+  // `/login` in that authenticated context auto-redirects to `/menu`, so the
+  // login-page CTAs are never rendered. Clear storageState at the describe
+  // level to exercise the genuine unauthenticated login surface.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('/login page loads', async ({ page }) => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
@@ -157,11 +164,15 @@ test.describe('Login Page', () => {
     await page.waitForTimeout(1000);
     
     if (meData.pinConfigured) {
-      // Should see Admin Login button when PIN is configured
-      await expect(page.getByText('Admin Login (PIN)')).toBeVisible();
+      // Should see Admin Login button when PIN is configured. Use .first()
+      // because the login page contains both the button text "Admin Login
+      // (PIN)" and a help-line substring "Admin Login to access Setup &",
+      // and Playwright strict-mode rejects ambiguous matches. The first
+      // visible occurrence is the actual CTA button.
+      await expect(page.getByText('Admin Login (PIN)').first()).toBeVisible();
     } else {
-      // Should see setup prompt when PIN is not configured
-      await expect(page.getByText('Go to Setup Wizard')).toBeVisible();
+      // Should see setup prompt when PIN is not configured.
+      await expect(page.getByText('Go to Setup Wizard').first()).toBeVisible();
     }
   });
 

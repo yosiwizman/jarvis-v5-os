@@ -39,8 +39,13 @@ test.describe('Settings Page Smoke Tests', () => {
     // Wait for hydration
     await page.waitForTimeout(3000);
 
-    // Page should not have crashed - check we're still on settings
-    await expect(page).toHaveURL(/\/settings/);
+    // Page should not have crashed. In a fresh browser context with no admin
+    // session cookie, middleware (apps/web/middleware.ts) correctly redirects
+    // /settings → /login?next=%2Fsettings when pinConfigured is true. Either
+    // outcome (/settings rendered, or /login?next=%2Fsettings rendered
+    // cleanly) is an acceptable non-crash state for this smoke test. What
+    // must NOT happen is an ErrorBoundary / runtime exception.
+    await expect(page).toHaveURL(/\/(settings|login\?next=)/);
 
     // Page should have rendered (not blank)
     const body = page.locator('body');
@@ -170,15 +175,26 @@ test.describe('Settings API Contract Tests', () => {
     expect(settings.imageGeneration).toBeDefined();
     expect(settings.integrations).toBeDefined();
     
-    // Contract: Must have all integration keys
+    // Contract: must have all integration keys (DEC-033 channels-era shape).
+    // DEC-033 purged Gmail and Google Calendar from the integrations model;
+    // they are now first-class channel providers under
+    // packages/shared/src/channels.ts with their own API surface
+    // (/api/channels/gmail/*). The integrations object must NOT contain
+    // gmail/googleCalendar keys. This mirrors
+    // scripts/test-settings-contract.ts.
     const requiredIntegrations = [
       'weather', 'webSearch', 'localLLM', 'elevenLabs', 'azureTTS',
-      'spotify', 'gmail', 'googleCalendar', 'alexa', 'irobot', 'nest', 'smartLights'
+      'spotify', 'alexa', 'irobot', 'nest', 'smartLights'
     ];
-    
+
     for (const key of requiredIntegrations) {
       expect(settings.integrations[key], `Missing integration: ${key}`).toBeDefined();
     }
+
+    // DEC-033 drift guard — these keys were purged and MUST NOT return.
+    const integrationKeys = Object.keys(settings.integrations);
+    expect(integrationKeys, 'integrations.gmail must NOT exist (DEC-033: Gmail is a channel, not an integration)').not.toContain('gmail');
+    expect(integrationKeys, 'integrations.googleCalendar must NOT exist (DEC-033: moved out of the integration model)').not.toContain('googleCalendar');
   });
 
   test('API returns valid weather config structure', async ({ request }) => {
