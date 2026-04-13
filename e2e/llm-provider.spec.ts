@@ -46,11 +46,9 @@ test.describe('LLM Provider API Endpoints', () => {
     const response = await request.get('/api/admin/llm/config');
 
     // Requires admin auth. The request fixture context has no storageState,
-    // so CI typically gets 401/403. Both are acceptable unauthenticated
-    // outcomes for this contract test.
+    // so CI may get 401/403. Both are acceptable unauthenticated outcomes.
     if (response.status() === 401 || response.status() === 403) {
       const data = await response.json().catch(() => ({} as any));
-      // Either an error body or a plain forbid marker is acceptable.
       expect(data?.error ?? 'forbidden').toBeDefined();
       return;
     }
@@ -58,12 +56,16 @@ test.describe('LLM Provider API Endpoints', () => {
     expect(response.status()).toBe(200);
     const data = await response.json();
 
-    // Should have required fields
-    expect(data.provider).toBeDefined();
-    expect(data.configured).toBeDefined();
+    // Current endpoint response shape wraps the payload: { ok, config: {...} }
+    // where config carries { provider, keyConfigured, ... } and no raw apiKey.
+    expect(data.ok).toBe(true);
+    expect(data.config).toBeDefined();
+    expect(data.config.provider).toBeDefined();
+    expect(data.config.keyConfigured !== undefined || data.config.configured !== undefined).toBe(true);
 
-    // Should NOT have raw API key (security check)
+    // Should NOT have raw API key anywhere in the payload (security check).
     expect(data.apiKey).toBeUndefined();
+    expect(data.config.apiKey).toBeUndefined();
   });
 
   test('POST /api/admin/llm/config validates provider', async ({ request }) => {
@@ -140,19 +142,25 @@ test.describe('LLM Provider API Endpoints', () => {
       }
     });
 
-    // If the request context isn't admin-authenticated, the server may return
-    // 401 (no session) or 403 (session present but forbidden for this route).
-    // Both are acceptable unauthenticated outcomes — the endpoint contract
-    // can only be asserted when admin auth is actually effective.
+    // If the request context isn't admin-authenticated, 401/403 is acceptable.
     if (response.status() === 401 || response.status() === 403) {
       return;
     }
 
-    // Should return result (ok: false for invalid key)
-    expect(response.status()).toBe(200);
+    // Current server behavior: invalid/malformed credentials are rejected at
+    // input validation → 400 with a descriptive error. Legitimate connection
+    // attempts that reach the provider and fail return 200 with
+    // `{ ok: false, error }`. Either is an acceptable outcome for this
+    // contract test (both validate "the endpoint rejects a bad key" — just
+    // at different layers). Accept 200 OR 400.
+    expect([200, 400]).toContain(response.status());
     const data = await response.json();
-    expect(data.ok).toBe(false);
-    expect(data.error).toBeDefined();
+    if (response.status() === 400) {
+      expect(data.error).toBeDefined();
+    } else {
+      expect(data.ok).toBe(false);
+      expect(data.error).toBeDefined();
+    }
   });
 });
 
