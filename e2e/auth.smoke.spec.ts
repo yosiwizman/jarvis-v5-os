@@ -157,11 +157,15 @@ test.describe('Login Page', () => {
     await page.waitForTimeout(1000);
     
     if (meData.pinConfigured) {
-      // Should see Admin Login button when PIN is configured
-      await expect(page.getByText('Admin Login (PIN)')).toBeVisible();
+      // Should see Admin Login button when PIN is configured. Use .first()
+      // because the login page contains both the button text "Admin Login
+      // (PIN)" and a help-line substring "Admin Login to access Setup &",
+      // and Playwright strict-mode rejects ambiguous matches. The first
+      // visible occurrence is the actual CTA button.
+      await expect(page.getByText('Admin Login (PIN)').first()).toBeVisible();
     } else {
-      // Should see setup prompt when PIN is not configured
-      await expect(page.getByText('Go to Setup Wizard')).toBeVisible();
+      // Should see setup prompt when PIN is not configured.
+      await expect(page.getByText('Go to Setup Wizard').first()).toBeVisible();
     }
   });
 
