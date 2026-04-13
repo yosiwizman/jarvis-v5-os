@@ -28,6 +28,7 @@ apps/server/data/files/
 # Session / token / runtime state (never track — live server owns these)
 apps/server/data/bambu-token.json
 apps/server/data/bambu-config.json
+apps/server/data/channels/
 apps/server/data/dnd.json
 apps/server/data/tasks.json
 apps/server/data/scheduled-events.json

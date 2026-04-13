@@ -4,10 +4,11 @@ import fastifyCors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
 import { Server as IOServer } from "socket.io";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, rmSync } from "fs";
 import crypto from "crypto";
 import { readFile, writeFile, rm } from "fs/promises";
 import path from "path";
+import { spawn, type ChildProcess } from "child_process";
 import { setTimeout as delay } from "timers/promises";
 import { z } from "zod";
 import type { ModelJob, ModelJobOutputs } from "@shared/core";
@@ -413,53 +414,62 @@ if (!existsSync(DATA_DIR)) {
 }
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
-// ── OpenClaw Browser-Session Gmail helpers ──
-const OPENCLAW_BROWSER_PORT = 18791;
-const OPENCLAW_BROWSER_AUTH = (() => {
-  try {
-    const cfg = JSON.parse(readFileSync(path.join(process.env.HOME || "", ".openclaw", "openclaw.json"), "utf-8"));
-    return cfg?.gateway?.auth?.token || "";
-  } catch { return ""; }
-})();
+// ── G-T06.D9: browser-session provider lane entry point ──
+// Unified per-provider logic lives in apps/server/src/channels/. The route
+// handlers below only read route-bound providerId values and delegate to the
+// shared adapter; D6/D7/D8 helper duplication has been removed.
+import {
+  loadGatewayConfigFromDisk,
+  providerStatus,
+  providerConnect,
+  providerDisconnect,
+  killSpawnedProcess,
+  readGmailInboxSummary,
+  readGmailInbox,
+} from "./channels/providers/browserSession.js";
+import {
+  CHANNEL_PROVIDERS,
+  getProviderDescriptor,
+  listBrowserSessionProviders,
+  listProvidersByCategory,
+} from "./channels/registry.js";
+import {
+  ensureGatewayDefaultAccount,
+  getAccountById as getChannelAccountById,
+  listAccountsByProvider,
+  mintAccount as mintChannelAccount,
+  removeAccount as removeChannelAccount,
+  loadUnifiedAccountsIndex,
+  BROWSER_PROFILE_ROOT,
+} from "./channels/accountsIndex.js";
 
-async function browserGmailStatus(): Promise<{ running: boolean; gmailOpen: boolean; title: string | null }> {
-  try {
-    const res = await fetch(`http://127.0.0.1:${OPENCLAW_BROWSER_PORT}/tabs`, {
-      headers: { Authorization: `Bearer ${OPENCLAW_BROWSER_AUTH}` },
-    });
-    if (!res.ok) return { running: false, gmailOpen: false, title: null };
-    const data = await res.json() as any;
-    if (!data.running) return { running: false, gmailOpen: false, title: null };
-    const gmailTab = (data.tabs || []).find((t: any) =>
-      t.url?.includes("mail.google.com") || t.url?.includes("accounts.google.com")
-    );
-    return { running: true, gmailOpen: !!gmailTab, title: gmailTab?.title || null };
-  } catch { return { running: false, gmailOpen: false, title: null }; }
-}
+const GATEWAY_CONFIG = loadGatewayConfigFromDisk();
 
-async function startBrowserGmail(): Promise<{ ok: boolean; message: string }> {
+// G-T06.D11: OpenClaw gateway keep-alive. The gateway auto-idles its
+// managed Chrome after inactivity, which surfaces as a spurious Gmail
+// "Not Connected" state in the Channels UI (caught by the D10 operator
+// false alarm). This ping runs every 30s, checks if the gateway is
+// already up, and if so pings the CDP port's /json/version to keep
+// Chrome awake. If the gateway is down it does nothing — we do NOT
+// auto-start Chrome; that's still a user-initiated action via the UI.
+// Errors are swallowed silently so this background tick never escalates.
+const GATEWAY_KEEPALIVE_INTERVAL_MS = 30_000;
+setInterval(async () => {
   try {
-    // Start browser if not running
-    const statusRes = await fetch(`http://127.0.0.1:${OPENCLAW_BROWSER_PORT}/`, {
-      headers: { Authorization: `Bearer ${OPENCLAW_BROWSER_AUTH}` },
+    const res = await fetch(`http://127.0.0.1:${GATEWAY_CONFIG.port}/`, {
+      headers: { Authorization: `Bearer ${GATEWAY_CONFIG.authToken}` },
+      signal: AbortSignal.timeout(2000),
     });
-    const statusData = await statusRes.json() as any;
-    if (!statusData.running) {
-      await fetch(`http://127.0.0.1:${OPENCLAW_BROWSER_PORT}/start`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${OPENCLAW_BROWSER_AUTH}` },
-      });
-      // Wait for browser to initialize
-      await new Promise(r => setTimeout(r, 2000));
-    }
-    // Open Gmail in a new tab via CDP
-    const cdpPort = statusData.cdpPort || 18800;
-    await fetch(`http://127.0.0.1:${cdpPort}/json/new?https://mail.google.com`, { method: "PUT" });
-    return { ok: true, message: "Gmail opened in AKIOR browser. Sign in if prompted." };
-  } catch (err) {
-    return { ok: false, message: "Failed to open browser. Is OpenClaw gateway running?" };
+    if (!res.ok) return;
+    const data = (await res.json()) as any;
+    if (!data?.running || !data?.cdpPort) return;
+    await fetch(`http://127.0.0.1:${data.cdpPort}/json/version`, {
+      signal: AbortSignal.timeout(2000),
+    }).catch(() => {});
+  } catch {
+    /* swallow — keep-alive must never throw */
   }
-}
+}, GATEWAY_KEEPALIVE_INTERVAL_MS).unref();
 
 // ── WhatsApp DEC-032 Direct-Import Helpers ──
 type WaState = "idle" | "awaiting_scan" | "linked" | "timed_out" | "cancelled";
@@ -492,6 +502,19 @@ function resetWaSession() {
   waSession.startedAt = null;
   waSession.timeoutHandle = null;
   waSession.waitPromise = null;
+}
+
+// G-T06.D6: unified channel-state mapping for WhatsApp.
+type ChannelStateLite = "disconnected" | "connecting" | "connected" | "error" | "reconnect_needed";
+function deriveWhatsAppChannelState(s: WaState): ChannelStateLite {
+  switch (s) {
+    case "linked": return "connected";
+    case "awaiting_scan": return "connecting";
+    case "timed_out": return "error";
+    case "cancelled":
+    case "idle":
+    default: return "disconnected";
+  }
 }
 
 let waModuleCache: { startWebLoginWithQr: Function; waitForWebLogin: Function } | null = null;
@@ -4709,22 +4732,316 @@ try {
 
   // ── Browser-Session Gmail (Product 1 primary path) ──
 
-  fastify.get("/api/browser/gmail/status", async () => {
-    const status = await browserGmailStatus();
-    return status;
+  // ─────────────────────────────────────────────────────────────────────
+  // G-T06.D9: unified browser-session routes.
+  //
+  // One handler tree per HTTP verb dispatches by providerId. Legacy paths
+  // (/api/browser/gmail/*) remain as aliases that call into the same unified
+  // adapter under providerId="gmail" so existing callers keep working.
+  // ─────────────────────────────────────────────────────────────────────
+
+  // Provider guards: ensure the URL providerId exists in the registry AND has
+  // a browser-session lane. Anything else (whatsapp/imessage) is routed to
+  // its own legacy handler tree elsewhere in this file.
+  function resolveBrowserSessionProvider(providerId: string) {
+    const descriptor = getProviderDescriptor(providerId);
+    if (!descriptor) return null;
+    if (
+      descriptor.authStrategy !== "browser-session-gateway" &&
+      descriptor.authStrategy !== "browser-session-spawn"
+    ) {
+      return null;
+    }
+    return descriptor;
+  }
+
+  async function accountsListForProvider(providerId: string) {
+    const descriptor = resolveBrowserSessionProvider(providerId);
+    if (!descriptor) return null;
+    if (descriptor.hasGatewayDefault) ensureGatewayDefaultAccount();
+    const records = listAccountsByProvider(providerId);
+    const accounts = await Promise.all(
+      records.map((r) => providerStatus(GATEWAY_CONFIG, descriptor, r)),
+    );
+    return {
+      providerId,
+      accounts,
+      defaultAccountId: accounts.find((a) => a.isDefault)?.accountId ?? null,
+    };
+  }
+
+  // G-T06.D4: Gmail inbox-summary read capability.
+  //
+  // Per docs/plans/G-T06.D1-google-refactor-plan.md line 308 (scope:
+  // "GMAIL-READ-CAPABILITY-MIN"). The D1 plan literally names the path
+  // `/api/browser/google/gmail/inbox-summary` — that was pre-unification
+  // wording. Post-D11 the legacy `/api/browser/*` namespace has been
+  // consolidated under `/api/channels/:providerId/*`, and the D12 recon
+  // task explicitly preserves that consolidation. The route below is the
+  // unified-namespace equivalent, with the same single-purpose contract:
+  // return `{ unread: N }` (plus a small amount of read-only metadata)
+  // from the already-open Gmail tab via a single CDP Runtime.evaluate
+  // that reads ONLY row counts and document.title/location.href —
+  // deliberately no scraping past metadata per the D1 plan text.
+  fastify.get("/api/channels/gmail/inbox-summary", async (req, reply) => {
+    const descriptor = resolveBrowserSessionProvider("gmail");
+    if (!descriptor) return reply.status(404).send({ error: "gmail not registered" });
+    const accountId = (req.query as any)?.accountId as string | undefined;
+    let record = accountId ? getChannelAccountById("gmail", accountId) : null;
+    if (!record) record = ensureGatewayDefaultAccount();
+    if (!record) return reply.status(404).send({ error: "account not found" });
+    const summary = await readGmailInboxSummary(GATEWAY_CONFIG, record);
+    if (!summary.ok) {
+      return reply.status(503).send({
+        error: summary.error || "read failed",
+        providerId: "gmail",
+        accountId: record.accountId,
+      });
+    }
+    return {
+      providerId: "gmail",
+      accountId: record.accountId,
+      unread: summary.unread,
+      rowCount: summary.rowCount,
+      url: summary.url,
+      title: summary.title,
+    };
   });
 
-  fastify.post("/api/browser/gmail/connect", async (req, reply) => {
-    const result = await startBrowserGmail();
-    if (!result.ok) return reply.status(503).send(result);
+  // G-T06.D-GMAIL-READ-INBOX-01: structured inbox rows (read-only).
+  // Sibling of /inbox-summary. Returns sender/subject/snippet/timestamp/unread
+  // for the first N rows of the already-rendered Gmail tab. No credential
+  // operations, no mutations, no /send, no /archive, no /markRead.
+  fastify.get("/api/channels/gmail/inbox", async (req, reply) => {
+    const descriptor = resolveBrowserSessionProvider("gmail");
+    if (!descriptor) return reply.status(404).send({ ok: false, error: "gmail not registered", messages: [] });
+    const q = (req.query as any) || {};
+    const accountId = q.accountId as string | undefined;
+    const limitRaw = Number(q.limit ?? 10);
+    const limit = Math.max(1, Math.min(50, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 10));
+    let record = accountId ? getChannelAccountById("gmail", accountId) : null;
+    if (!record) record = ensureGatewayDefaultAccount();
+    if (!record) return reply.status(404).send({ ok: false, error: "account not found", messages: [] });
+    const env = await providerStatus(GATEWAY_CONFIG, descriptor, record);
+    if (env.channelState !== "connected") {
+      return reply.status(409).send({
+        ok: false,
+        reason: "not_connected",
+        providerId: "gmail",
+        accountId: record.accountId,
+        channelState: env.channelState,
+        messages: [],
+      });
+    }
+    const result = await readGmailInbox(GATEWAY_CONFIG, record, limit);
+    if (!result.ok) {
+      return reply.status(503).send({
+        ok: false,
+        reason: "read_failed",
+        error: result.error || "read failed",
+        providerId: "gmail",
+        accountId: record.accountId,
+        messages: [],
+      });
+    }
+    return {
+      ok: true,
+      providerId: "gmail",
+      accountId: record.accountId,
+      messages: result.messages,
+    };
+  });
+
+  // G-T06.D14: category counts endpoint. Drives the /settings/channels
+  // category landing page badges. Iterates every descriptor in each
+  // category, pulls live account status via the shared adapter, and
+  // returns per-category totals. Only aggregates already-live providers
+  // — qr-scan/placeholder providers (WhatsApp, iMessage) are counted in
+  // `providers` but contribute 0 to `connectedAccounts`/`totalAccounts`
+  // because they don't go through the browser-session account model.
+  fastify.get("/api/channels/counts", async () => {
+    const categories: Array<"email" | "messages" | "phone"> = ["email", "messages", "phone"];
+    const result: Record<string, { providers: number; connectedAccounts: number; totalAccounts: number }> = {};
+
+    for (const category of categories) {
+      const descriptors = listProvidersByCategory(category);
+      let connectedAccounts = 0;
+      let totalAccounts = 0;
+
+      for (const descriptor of descriptors) {
+        // Only browser-session providers contribute live account rows; qr-scan
+        // and placeholder providers are counted as descriptors but contribute
+        // zero accounts because they don't use the unified accounts index.
+        if (
+          descriptor.authStrategy !== "browser-session-gateway" &&
+          descriptor.authStrategy !== "browser-session-spawn"
+        ) {
+          continue;
+        }
+        if (descriptor.hasGatewayDefault) ensureGatewayDefaultAccount();
+        const records = listAccountsByProvider(descriptor.providerId);
+        totalAccounts += records.length;
+        for (const record of records) {
+          const env = await providerStatus(GATEWAY_CONFIG, descriptor, record);
+          if (env.channelState === "connected") connectedAccounts++;
+        }
+      }
+
+      result[category] = {
+        providers: descriptors.length,
+        connectedAccounts,
+        totalAccounts,
+      };
+    }
+
     return result;
   });
+
+  // List endpoint — providerId-parameterized.
+  fastify.get("/api/channels/:providerId/accounts", async (req, reply) => {
+    const { providerId } = req.params as { providerId: string };
+    const payload = await accountsListForProvider(providerId);
+    if (!payload) return reply.status(404).send({ error: "unknown provider" });
+    return payload;
+  });
+
+  // Mint a new account for a browser-session-spawn provider (or promote a
+  // default for gmail — mint-default is not supported; the default is
+  // auto-ensured on list).
+  fastify.post("/api/channels/:providerId/accounts", async (req, reply) => {
+    const { providerId } = req.params as { providerId: string };
+    const descriptor = resolveBrowserSessionProvider(providerId);
+    if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
+    if (descriptor.authStrategy !== "browser-session-spawn") {
+      return reply.status(409).send({ error: "this provider cannot mint additional accounts" });
+    }
+    const record = mintChannelAccount(providerId);
+    const result = await providerConnect(GATEWAY_CONFIG, descriptor, record);
+    if (!result.ok) {
+      removeChannelAccount(providerId, record.accountId);
+      return reply.status(503).send({ error: result.message, accountId: record.accountId });
+    }
+    return {
+      accountId: record.accountId,
+      providerId,
+      profileDir: record.profileDir,
+      cdpPort: record.cdpPort,
+      message: `New ${descriptor.displayName} account Chrome started. Sign in in the opened window.`,
+    };
+  });
+
+  // Remove (non-default) account. G-T06.D11 adds a bounded destructive
+  // `?purge=true` variant that also deletes the profile directory on disk.
+  // Purge is gated behind an explicit `X-AKIOR-Confirm-Purge: true` header
+  // so a stray DELETE with the query string alone can never wipe a profile.
+  // The default account is still hard-blocked — its profile dir is the
+  // OpenClaw gateway's shared store and deleting it would take the gateway
+  // offline for Gmail and any future gateway-backed provider.
+  fastify.delete("/api/channels/:providerId/accounts/:accountId", async (req, reply) => {
+    const { providerId, accountId } = req.params as { providerId: string; accountId: string };
+    const descriptor = resolveBrowserSessionProvider(providerId);
+    if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
+    const record = getChannelAccountById(providerId, accountId);
+    if (!record) return reply.status(404).send({ error: "account not found" });
+    if (record.isDefault) {
+      return reply.status(409).send({ error: "cannot remove default account" });
+    }
+    const purgeRequested = (req.query as any)?.purge === "true";
+    const purgeConfirmed =
+      String(req.headers["x-akior-confirm-purge"] || "").toLowerCase() === "true";
+    if (purgeRequested && !purgeConfirmed) {
+      return reply.status(428).send({
+        error: "purge requires X-AKIOR-Confirm-Purge: true header",
+      });
+    }
+
+    killSpawnedProcess(providerId, accountId, record.pid);
+    removeChannelAccount(providerId, accountId);
+
+    let profileDirPurged = false;
+    if (purgeRequested && purgeConfirmed) {
+      // Give the Chrome subprocess a moment to release file locks before rm.
+      await new Promise((r) => setTimeout(r, 500));
+      try {
+        // Hard-guard the path: only rm paths that live under our profile root.
+        if (record.profileDir.startsWith(BROWSER_PROFILE_ROOT) && !record.isDefault) {
+          rmSync(record.profileDir, { recursive: true, force: true });
+          profileDirPurged = true;
+        }
+      } catch (err) {
+        logger.warn(
+          { err: String(err), profileDir: record.profileDir },
+          "channels.account.purge.error",
+        );
+      }
+    }
+
+    return {
+      providerId,
+      accountId,
+      removed: true,
+      profileDirPurged,
+      profileDir: record.profileDir,
+    };
+  });
+
+  // Per-account status.
+  fastify.get("/api/channels/:providerId/status", async (req, reply) => {
+    const { providerId } = req.params as { providerId: string };
+    const descriptor = resolveBrowserSessionProvider(providerId);
+    if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
+    const accountId = (req.query as any)?.accountId as string | undefined;
+    let record = accountId ? getChannelAccountById(providerId, accountId) : null;
+    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount();
+    if (!record) return reply.status(404).send({ error: "account not found" });
+    return providerStatus(GATEWAY_CONFIG, descriptor, record);
+  });
+
+  // Per-account connect.
+  fastify.post("/api/channels/:providerId/connect", async (req, reply) => {
+    const { providerId } = req.params as { providerId: string };
+    const descriptor = resolveBrowserSessionProvider(providerId);
+    if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
+    const accountId = (req.query as any)?.accountId as string | undefined;
+    let record = accountId ? getChannelAccountById(providerId, accountId) : null;
+    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount();
+    if (!record) return reply.status(404).send({ error: "account not found" });
+    const result = await providerConnect(GATEWAY_CONFIG, descriptor, record);
+    if (!result.ok) return reply.status(503).send(result);
+    return { ...result, providerId, accountId: record.accountId, isDefault: record.isDefault };
+  });
+
+  // Per-account disconnect.
+  fastify.post("/api/channels/:providerId/disconnect", async (req, reply) => {
+    const { providerId } = req.params as { providerId: string };
+    const descriptor = resolveBrowserSessionProvider(providerId);
+    if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
+    const accountId = (req.query as any)?.accountId as string | undefined;
+    let record = accountId ? getChannelAccountById(providerId, accountId) : null;
+    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount();
+    if (!record) return reply.status(404).send({ error: "account not found" });
+    const result = await providerDisconnect(GATEWAY_CONFIG, descriptor, record);
+    if (result.closed) await new Promise((r) => setTimeout(r, 600));
+    const envelope = await providerStatus(GATEWAY_CONFIG, descriptor, record);
+    return { ...envelope, message: result.message, closed: result.closed };
+  });
+
+  // G-T06.D11: the legacy /api/browser/gmail/{status,connect,disconnect}
+  // aliases (kept as compatibility shims through D9) and the D7/D8 per-
+  // provider static aliases are both gone. A full-tree grep of *.ts/*.tsx/
+  // *.js/*.jsx/*.mjs/*.cjs across the whole repo (see D11 Phase B audit)
+  // returned zero callers outside of this file, so removal is safe. Every
+  // browser-session provider — Gmail default, Gmail secondary, Yahoo,
+  // Outlook — is served by the parameterized /api/channels/:providerId/*
+  // handlers above via the unified adapter.
 
   // ── WhatsApp DEC-032 Direct-Import Routes ──
 
   fastify.get("/api/channels/whatsapp/status", async () => {
     return {
       state: waSession.state,
+      channelState: deriveWhatsAppChannelState(waSession.state),
+      identity: null,
       qrDataUrl: waSession.state === "awaiting_scan" ? waSession.qrDataUrl : null,
       message: waSession.message,
       startedAt: waSession.startedAt,
@@ -4833,6 +5150,31 @@ try {
       waSession.message = "WhatsApp connect cancelled.";
     }
     return { state: waSession.state };
+  });
+
+  // G-T06.D6: disconnect wipes the local pairing/login session and returns the
+  // card to "disconnected". Per D5 §3.4 this is the user-visible "end session"
+  // action. It does NOT touch the separate `whatsappGatewayHandle` used by the
+  // send route — that is a distinct long-lived surface whose teardown belongs
+  // to server shutdown, not to the user's Channels UI.
+  fastify.post("/api/channels/whatsapp/disconnect", async () => {
+    if (waSession.state === "awaiting_scan") {
+      // Best-effort close of a pending QR login before resetting state.
+      try {
+        const waMod = await resolveWaModule();
+        waMod.startWebLoginWithQr({ force: true }).catch(() => {});
+      } catch {}
+    }
+    resetWaSession();
+    waSession.message = "WhatsApp session cleared.";
+    return {
+      state: waSession.state,
+      channelState: deriveWhatsAppChannelState(waSession.state),
+      identity: null,
+      qrDataUrl: null,
+      message: waSession.message,
+      startedAt: null,
+    };
   });
 
   // ── WhatsApp Send Route (W-T05, Direction A: OpenClaw Gateway RPC) ──
