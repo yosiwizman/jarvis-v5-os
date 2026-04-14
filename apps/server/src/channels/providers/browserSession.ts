@@ -202,23 +202,19 @@ async function spawnModeStart(
     }
   } catch {}
 
-  // CodeQL js/path-injection closure (alerts #6 and #7): canonical
-  // containment check at the filesystem sink. resolve() normalizes any
-  // traversal segments; the result must sit inside BROWSER_PROFILE_ROOT
-  // (or equal it). This is the standard sanitizer pattern CodeQL's taint
-  // model recognizes; complements (not replaces) the upstream regex in
-  // accountsIndex.ts::mintAccount.
-  const resolvedProfileDir = path.resolve(record.profileDir);
-  const resolvedProfileRoot = path.resolve(BROWSER_PROFILE_ROOT);
-  if (
-    resolvedProfileDir !== resolvedProfileRoot &&
-    !resolvedProfileDir.startsWith(resolvedProfileRoot + path.sep)
-  ) {
-    return {
-      ok: false,
-      message: `profile dir escapes allowed root: ${record.profileDir}`,
-    };
-  }
+  // CodeQL js/path-injection closure (alerts #6 and #7): rebuild the
+  // filesystem target from the known-safe BROWSER_PROFILE_ROOT plus the
+  // basename of record.profileDir. path.basename() is the canonical
+  // CodeQL-recognized path-injection sanitizer — it strips ALL directory
+  // components (including "..", "/", "\\"), so any traversal that may
+  // have leaked through the upstream PROVIDER_ID_REGEX guard in
+  // accountsIndex.ts::mintAccount cannot reach the fs sink.
+  //
+  // Defence-in-depth layers are:
+  //   layer 1: PROVIDER_ID_REGEX in mintAccount (source)
+  //   layer 2: path.basename() at sink (this block) ← CodeQL-recognized
+  const safeDirName = path.basename(record.profileDir);
+  const resolvedProfileDir = path.join(BROWSER_PROFILE_ROOT, safeDirName);
 
   try {
     if (!existsSync(resolvedProfileDir)) mkdirSync(resolvedProfileDir, { recursive: true });
