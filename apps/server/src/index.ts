@@ -1136,7 +1136,7 @@ fastify.get("/api/memory", async (req, reply) => {
   // CodeQL js/missing-rate-limiting (#59): per-IP throttle before filesystem
   // reads of cerebrum/memory markdown.
   const rateCheck = checkRateLimit(
-    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "memory-get" },
+    { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "memory-get" },
     getClientIp(req),
   );
   if (!rateCheck.allowed && rateCheck.response) {
@@ -1523,7 +1523,7 @@ fastify.get("/api/settings", async (req, reply) => {
   // CodeQL js/missing-rate-limiting (#63): per-IP throttle before reading
   // settings from the filesystem.
   const rateCheck = checkRateLimit(
-    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "settings-get" },
+    { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "settings-get" },
     getClientIp(req),
   );
   if (!rateCheck.allowed && rateCheck.response) {
@@ -3028,7 +3028,7 @@ try {
     // CodeQL js/missing-rate-limiting (#67): per-IP throttle before listing
     // stored files from the filesystem.
     const rateCheck = checkRateLimit(
-      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "file-library-list" },
+      { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "file-library-list" },
       getClientIp(req),
     );
     if (!rateCheck.allowed && rateCheck.response) {
@@ -3616,7 +3616,7 @@ try {
     // CodeQL js/missing-rate-limiting (#69): per-IP throttle before scanning
     // the FILES_DIR for image files.
     const rateCheck = checkRateLimit(
-      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "images-list" },
+      { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "images-list" },
       getClientIp(req),
     );
     if (!rateCheck.allowed && rateCheck.response) {
@@ -4734,7 +4734,7 @@ try {
     // CodeQL js/missing-rate-limiting (#70): per-IP throttle before reading
     // scheduled tasks from the filesystem.
     const rateCheck = checkRateLimit(
-      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "tasks-list" },
+      { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "tasks-list" },
       getClientIp(req),
     );
     if (!rateCheck.allowed && rateCheck.response) {
@@ -4767,7 +4767,7 @@ try {
     // CodeQL js/missing-rate-limiting (#71): per-IP throttle before reading
     // DND state from the filesystem.
     const rateCheck = checkRateLimit(
-      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "dnd-get" },
+      { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "dnd-get" },
       getClientIp(req),
     );
     if (!rateCheck.allowed && rateCheck.response) {
@@ -4879,7 +4879,7 @@ try {
     // CodeQL js/missing-rate-limiting (#72): per-IP throttle before reading
     // contacts from the filesystem.
     const rateCheck = checkRateLimit(
-      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "contacts-list" },
+      { maxAttempts: 600, windowMs: 60_000, lockoutMs: 60_000, routeKey: "contacts-list" },
       getClientIp(req),
     );
     if (!rateCheck.allowed && rateCheck.response) {
