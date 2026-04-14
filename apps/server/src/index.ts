@@ -1062,6 +1062,20 @@ fastify.get("/api/system/metrics", async () => {
 // ========================================
 
 fastify.get("/api/integrations/ollama/models", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#58): per-IP throttle before any outbound
+  // fetch to the local Ollama daemon so enumeration bursts are bounded.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "integrations-ollama-models" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   const settingsPath = path.join(DATA_DIR, "settings.json");
   let baseUrl = "http://127.0.0.1:11434";
   try {
@@ -1261,6 +1275,20 @@ fastify.post("/api/integrations/web-search", async (req, reply) => {
 
 // ElevenLabs TTS integration endpoint (note: /api prefix is stripped by dev-proxy)
 fastify.post("/api/integrations/elevenlabs/tts", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#60): moderate per-IP throttle on a paid
+  // external API (ElevenLabs TTS) to bound cost-burst risk.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "integrations-elevenlabs-tts" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   const body = req.body as { text?: string };
 
   if (!body.text || typeof body.text !== "string" || !body.text.trim()) {
@@ -1324,6 +1352,20 @@ fastify.post("/api/integrations/elevenlabs/tts", async (req, reply) => {
 
 // Azure TTS integration endpoint (note: /api prefix is stripped by dev-proxy)
 fastify.post("/api/integrations/azure-tts/tts", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#61): moderate per-IP throttle on a paid
+  // external API (Azure TTS) to bound cost-burst risk.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "integrations-azure-tts" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   const body = req.body as { text?: string };
 
   if (!body.text || typeof body.text !== "string" || !body.text.trim()) {
@@ -1387,6 +1429,20 @@ fastify.post("/api/integrations/azure-tts/tts", async (req, reply) => {
 
 // Spotify integration endpoint (note: /api prefix is stripped by dev-proxy)
 fastify.post("/api/integrations/spotify/search", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#62): per-IP throttle before an outbound
+  // fetch to Spotify's API so caller enumeration is bounded.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "integrations-spotify-search" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   const body = req.body as { query?: string; limit?: number };
 
   if (!body.query || typeof body.query !== "string" || !body.query.trim()) {
@@ -1510,6 +1566,20 @@ fastify.post("/api/settings", async (req, reply) => {
 
 // Weather API
 fastify.post("/api/integrations/weather/query", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#65): per-IP throttle before an outbound
+  // fetch to OpenWeather so caller enumeration is bounded.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "integrations-weather-query" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   const body = req.body as { location?: string };
 
   // Load settings for default location
@@ -2167,6 +2237,20 @@ try {
   });
 
   fastify.post("/api/openai/text-chat", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#66): moderate per-IP throttle on a paid
+    // external API (OpenAI text chat) to bound cost-burst risk.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "openai-text-chat" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
+
     const parsed = ChatRequestSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0];
