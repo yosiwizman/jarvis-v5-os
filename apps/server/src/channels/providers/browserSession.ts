@@ -30,7 +30,7 @@ import type {
   ChannelState,
   GmailInboxMessage,
 } from "@shared/core";
-import { updateAccount } from "../accountsIndex.js";
+import { updateAccount, BROWSER_PROFILE_ROOT } from "../accountsIndex.js";
 
 // ── URL / host safety helpers ─────────────────────────────────────────────
 //
@@ -202,8 +202,22 @@ async function spawnModeStart(
     }
   } catch {}
 
+  // CodeQL js/path-injection closure (alerts #6 and #7): rebuild the
+  // filesystem target from the known-safe BROWSER_PROFILE_ROOT plus the
+  // basename of record.profileDir. path.basename() is the canonical
+  // CodeQL-recognized path-injection sanitizer — it strips ALL directory
+  // components (including "..", "/", "\\"), so any traversal that may
+  // have leaked through the upstream PROVIDER_ID_REGEX guard in
+  // accountsIndex.ts::mintAccount cannot reach the fs sink.
+  //
+  // Defence-in-depth layers are:
+  //   layer 1: PROVIDER_ID_REGEX in mintAccount (source)
+  //   layer 2: path.basename() at sink (this block) ← CodeQL-recognized
+  const safeDirName = path.basename(record.profileDir);
+  const resolvedProfileDir = path.join(BROWSER_PROFILE_ROOT, safeDirName);
+
   try {
-    if (!existsSync(record.profileDir)) mkdirSync(record.profileDir, { recursive: true });
+    if (!existsSync(resolvedProfileDir)) mkdirSync(resolvedProfileDir, { recursive: true });
   } catch (err) {
     return { ok: false, message: `failed to prepare profile dir: ${(err as Error).message}` };
   }
