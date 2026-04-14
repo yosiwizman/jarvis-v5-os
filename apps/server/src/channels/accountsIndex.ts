@@ -13,6 +13,7 @@
 // reclaim them once cross-instance confidence is established.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { randomBytes } from "crypto";
 import path from "path";
 import type { BrowserSessionAccountRecord, UnifiedAccountsIndex } from "@shared/core";
 import { getProviderDescriptor } from "./registry.js";
@@ -176,7 +177,7 @@ export function mintAccount(providerId: string): BrowserSessionAccountRecord {
   let cdpPort = portBase;
   while (usedPorts.has(cdpPort)) cdpPort++;
 
-  const accountId = `${providerId.slice(0, 4)}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const accountId = `${providerId.slice(0, 4)}_${Date.now().toString(36)}_${randomBytes(4).toString("hex").slice(0, 6)}`;
   const profileDir = path.join(BROWSER_PROFILE_ROOT, `${prefix}-${accountId}`);
   const now = new Date().toISOString();
   const record: BrowserSessionAccountRecord = {
