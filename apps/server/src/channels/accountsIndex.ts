@@ -137,7 +137,23 @@ export function getAccountById(
   return idx.accounts.find((a) => a.providerId === providerId && a.accountId === accountId) || null;
 }
 
+// CodeQL js/path-injection hardening (browserSession.ts:188 sink via
+// record.profileDir). The profileDir path is constructed from:
+//   providerId          — URL param `/api/channels/:providerId/...`
+//   profileDirPrefix    — from the static registry descriptor
+//   accountId           — generated below (locally scoped, no user input)
+// The only externally-tainted input is `providerId`. Even though
+// `getProviderDescriptor()` below will throw on unknown ids, we apply
+// defence-in-depth and reject anything that could alter the path shape
+// (traversal, slashes, NUL, whitespace). Strict allowlist: lowercase
+// alphanumeric + `_` / `-`, 1-32 chars — same shape used by the
+// registry's concrete providerIds (gmail / yahoo / outlook / ...).
+const PROVIDER_ID_REGEX = /^[a-z0-9_-]{1,32}$/;
+
 export function mintAccount(providerId: string): BrowserSessionAccountRecord {
+  if (typeof providerId !== "string" || !PROVIDER_ID_REGEX.test(providerId)) {
+    throw new Error(`invalid providerId shape: ${JSON.stringify(providerId)}`);
+  }
   const descriptor = getProviderDescriptor(providerId);
   if (!descriptor) throw new Error(`unknown providerId: ${providerId}`);
   if (descriptor.authStrategy !== "browser-session-spawn") {
@@ -145,6 +161,13 @@ export function mintAccount(providerId: string): BrowserSessionAccountRecord {
   }
   const portBase = descriptor.cdpPortBase ?? 19000;
   const prefix = descriptor.profileDirPrefix ?? `user-data-${providerId}`;
+  // The prefix comes from the static registry descriptor (safe), with a
+  // fallback concatenation of providerId which is now regex-validated.
+  // Reject any prefix that contains path separators or traversal segments
+  // so that a future registry mistake cannot bypass this guard.
+  if (/[\/\\]|\.\./.test(prefix)) {
+    throw new Error(`unsafe profileDirPrefix for provider ${providerId}`);
+  }
 
   const idx = loadUnifiedAccountsIndex();
   const usedPorts = new Set<number>(
