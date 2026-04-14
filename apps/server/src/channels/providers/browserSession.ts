@@ -30,7 +30,7 @@ import type {
   ChannelState,
   GmailInboxMessage,
 } from "@shared/core";
-import { updateAccount } from "../accountsIndex.js";
+import { updateAccount, BROWSER_PROFILE_ROOT } from "../accountsIndex.js";
 
 // ── URL / host safety helpers ─────────────────────────────────────────────
 //
@@ -202,8 +202,26 @@ async function spawnModeStart(
     }
   } catch {}
 
+  // CodeQL js/path-injection closure (alerts #6 and #7): canonical
+  // containment check at the filesystem sink. resolve() normalizes any
+  // traversal segments; the result must sit inside BROWSER_PROFILE_ROOT
+  // (or equal it). This is the standard sanitizer pattern CodeQL's taint
+  // model recognizes; complements (not replaces) the upstream regex in
+  // accountsIndex.ts::mintAccount.
+  const resolvedProfileDir = path.resolve(record.profileDir);
+  const resolvedProfileRoot = path.resolve(BROWSER_PROFILE_ROOT);
+  if (
+    resolvedProfileDir !== resolvedProfileRoot &&
+    !resolvedProfileDir.startsWith(resolvedProfileRoot + path.sep)
+  ) {
+    return {
+      ok: false,
+      message: `profile dir escapes allowed root: ${record.profileDir}`,
+    };
+  }
+
   try {
-    if (!existsSync(record.profileDir)) mkdirSync(record.profileDir, { recursive: true });
+    if (!existsSync(resolvedProfileDir)) mkdirSync(resolvedProfileDir, { recursive: true });
   } catch (err) {
     return { ok: false, message: `failed to prepare profile dir: ${(err as Error).message}` };
   }
