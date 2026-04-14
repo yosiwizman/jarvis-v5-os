@@ -1133,6 +1133,20 @@ fastify.get("/api/integrations/ollama/models", async (req, reply) => {
 // ========================================
 
 fastify.get("/api/memory", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#59): per-IP throttle before filesystem
+  // reads of cerebrum/memory markdown.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "memory-get" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   const homedir = process.env.HOME || process.env.USERPROFILE || "";
   const cerebrumPath = path.join(homedir, "akior", ".wolf", "cerebrum.md");
   const memoryPath = path.join(homedir, "akior", ".wolf", "memory.md");
@@ -1506,6 +1520,20 @@ fastify.post("/api/integrations/spotify/search", async (req, reply) => {
 // GET /settings
 // CONTRACT: Always returns normalized, valid AppSettings (never partial/corrupt)
 fastify.get("/api/settings", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#63): per-IP throttle before reading
+  // settings from the filesystem.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "settings-get" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   try {
     if (!existsSync(SETTINGS_FILE)) {
       // No settings file - return normalized defaults
@@ -1548,6 +1576,20 @@ fastify.get("/api/settings", async (req, reply) => {
 
 // POST /settings - Save settings to server
 fastify.post("/api/settings", async (req, reply) => {
+  // CodeQL js/missing-rate-limiting (#64): moderate per-IP throttle before
+  // filesystem write of settings.
+  const rateCheck = checkRateLimit(
+    { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "settings-post" },
+    getClientIp(req),
+  );
+  if (!rateCheck.allowed && rateCheck.response) {
+    return reply
+      .status(429)
+      .header("Retry-After", String(rateCheck.response.retryAfterSec))
+      .header("Cache-Control", "no-store")
+      .send(rateCheck.response);
+  }
+
   try {
     const settings = req.body;
     await writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
@@ -2982,9 +3024,38 @@ try {
     return reply.send({ sdp: text });
   });
 
-  fastify.get("/api/file-library", async () => ({ files: listStoredFiles() }));
+  fastify.get("/api/file-library", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#67): per-IP throttle before listing
+    // stored files from the filesystem.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "file-library-list" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
+    return { files: listStoredFiles() };
+  });
 
   fastify.delete("/api/file-library/:name", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#68): moderate per-IP throttle before
+    // destructive filesystem deletion of a stored file.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "file-library-delete" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
+
     const { name } = req.params as { name?: string };
     if (!name) {
       return reply.status(400).send({ error: "File name is required" });
@@ -3542,6 +3613,20 @@ try {
 
   // List all images
   fastify.get("/api/images", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#69): per-IP throttle before scanning
+    // the FILES_DIR for image files.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "images-list" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
+
     try {
       const files = readdirSync(FILES_DIR);
       const images = files
@@ -4645,7 +4730,20 @@ try {
     writeFileSync(TASKS_FILE, JSON.stringify({ tasks }, null, 2));
   }
 
-  fastify.get("/api/tasks", async () => {
+  fastify.get("/api/tasks", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#70): per-IP throttle before reading
+    // scheduled tasks from the filesystem.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "tasks-list" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
     return { tasks: loadTasks() };
   });
 
@@ -4665,7 +4763,20 @@ try {
     writeFileSync(DND_FILE, JSON.stringify(state, null, 2));
   }
 
-  fastify.get("/api/dnd", async () => {
+  fastify.get("/api/dnd", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#71): per-IP throttle before reading
+    // DND state from the filesystem.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "dnd-get" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
     return loadDnd();
   });
 
@@ -4764,7 +4875,20 @@ try {
     writeFileSync(CONTACTS_FILE, JSON.stringify({ contacts }, null, 2));
   }
 
-  fastify.get("/api/contacts", async () => {
+  fastify.get("/api/contacts", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting (#72): per-IP throttle before reading
+    // contacts from the filesystem.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "contacts-list" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
     return { contacts: loadContacts() };
   });
 
