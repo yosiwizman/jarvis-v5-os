@@ -13,7 +13,7 @@ import { setTimeout as delay } from "timers/promises";
 import { z } from "zod";
 import type { ModelJob, ModelJobOutputs } from "@shared/core";
 import { registerKeyRoutes } from "./routes/keys.routes.js";
-import { registerAuthRoutes } from "./routes/auth.routes.js";
+import { registerAuthRoutes, requireAdmin } from "./routes/auth.routes.js";
 import { register3DPrintRoutes } from "./routes/3dprint.routes.js";
 import { registerSmartHomeRoutes } from "./routes/smarthome.routes.js";
 import { registerLockdownRoutes } from "./routes/lockdown.routes.js";
@@ -4992,6 +4992,7 @@ try {
   // that reads ONLY row counts and document.title/location.href —
   // deliberately no scraping past metadata per the D1 plan text.
   fastify.get("/api/channels/gmail/inbox-summary", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const descriptor = resolveBrowserSessionProvider("gmail");
     if (!descriptor) return reply.status(404).send({ error: "gmail not registered" });
     const accountId = (req.query as any)?.accountId as string | undefined;
@@ -5021,6 +5022,7 @@ try {
   // for the first N rows of the already-rendered Gmail tab. No credential
   // operations, no mutations, no /send, no /archive, no /markRead.
   fastify.get("/api/channels/gmail/inbox", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const descriptor = resolveBrowserSessionProvider("gmail");
     if (!descriptor) return reply.status(404).send({ ok: false, error: "gmail not registered", messages: [] });
     const q = (req.query as any) || {};
