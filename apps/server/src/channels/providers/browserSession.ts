@@ -32,6 +32,24 @@ import type {
 } from "@shared/core";
 import { updateAccount } from "../accountsIndex.js";
 
+// ── URL / host safety helpers ─────────────────────────────────────────────
+//
+// CodeQL js/incomplete-url-substring-sanitization hardening. The legacy
+// `.includes("mail.google.com")` substring check incorrectly accepts
+// URLs like `https://evil.com/?x=mail.google.com` or
+// `https://mail.google.com.phishing.example/`. Use canonical host parsing
+// so only the real Gmail host matches.
+export function isGmailTabUrl(urlString: string | null | undefined): boolean {
+  if (!urlString || typeof urlString !== "string") return false;
+  try {
+    const h = new URL(urlString).hostname;
+    return h === "mail.google.com";
+  } catch {
+    // Invalid URL (chrome://newtab, about:blank, malformed, etc.) — not Gmail.
+    return false;
+  }
+}
+
 // ── Gateway config ─────────────────────────────────────────────────────────
 
 export interface GatewayConfig {
@@ -510,7 +528,7 @@ export async function readGmailInboxSummary(
       if (!tabsRes.ok) return fail("gateway /tabs unreachable");
       const tabsData = (await tabsRes.json()) as any;
       const tab = (tabsData.tabs || []).find(
-        (t: any) => t?.type === "page" && (t.url || "").includes("mail.google.com"),
+        (t: any) => t?.type === "page" && isGmailTabUrl(t.url),
       );
       if (!tab?.targetId) return fail("no gmail tab");
       targetId = tab.targetId;
@@ -523,7 +541,7 @@ export async function readGmailInboxSummary(
       if (!res.ok) return fail("cdp /json/list unreachable");
       const tabs = (await res.json()) as any[];
       const tab = tabs.find(
-        (t) => t?.type === "page" && (t.url || "").includes("mail.google.com"),
+        (t) => t?.type === "page" && isGmailTabUrl(t.url),
       );
       if (!tab?.id) return fail("no gmail tab");
       targetId = tab.id;
@@ -613,7 +631,7 @@ export async function readGmailInbox(
       if (!tabsRes.ok) return fail("gateway /tabs unreachable");
       const tabsData = (await tabsRes.json()) as any;
       const tab = (tabsData.tabs || []).find(
-        (t: any) => t?.type === "page" && (t.url || "").includes("mail.google.com"),
+        (t: any) => t?.type === "page" && isGmailTabUrl(t.url),
       );
       if (!tab?.targetId) return fail("no gmail tab");
       targetId = tab.targetId;
@@ -626,7 +644,7 @@ export async function readGmailInbox(
       if (!res.ok) return fail("cdp /json/list unreachable");
       const tabs = (await res.json()) as any[];
       const tab = tabs.find(
-        (t) => t?.type === "page" && (t.url || "").includes("mail.google.com"),
+        (t) => t?.type === "page" && isGmailTabUrl(t.url),
       );
       if (!tab?.id) return fail("no gmail tab");
       targetId = tab.id;
