@@ -163,17 +163,29 @@ export function registerAuthRoutes(fastify: FastifyInstance) {
   fastify.post("/api/auth/pin/login", async (req, reply) => {
     const ip = getClientIp(req);
 
-    // Rate limit login attempts
+    // CodeQL js/missing-rate-limiting (#53): tighten the 429 guard so the
+    // control-flow block unconditionally returns whenever the limiter denies,
+    // regardless of response presence. The PIN_AUTH preset always populates
+    // rateCheck.response on a deny, so the guard shape change is defensive
+    // only — no behaviour change for legitimate callers.
     const rateCheck = checkRateLimit(
       { ...RateLimitPresets.PIN_AUTH, routeKey: "pin-login" },
       ip,
     );
-    if (!rateCheck.allowed && rateCheck.response) {
+    if (!rateCheck.allowed) {
       return reply
         .status(429)
-        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header(
+          "Retry-After",
+          String(rateCheck.response?.retryAfterSec ?? 60),
+        )
         .header("Cache-Control", "no-store")
-        .send(rateCheck.response);
+        .send(
+          rateCheck.response ?? {
+            ok: false,
+            error: { code: "RATE_LIMITED", message: "Too many attempts." },
+          },
+        );
     }
 
     if (!isPinConfigured()) {

@@ -89,6 +89,22 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
    * Allowed during initial setup (no PIN configured) or with admin session.
    */
   fastify.get("/api/admin/llm/config", async (request, reply) => {
+    // CodeQL js/missing-rate-limiting (#55): rate-limit the read endpoint
+    // BEFORE the authorization check so an unauthenticated caller cannot
+    // enumerate admin-surface responses.
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "llm-config-get" },
+      ip,
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
+
     if (!(await requireAdminOrSetup(request, reply))) return;
 
     const config = getLLMConfigPublic();
@@ -110,9 +126,8 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
   fastify.post("/api/admin/llm/config", async (request, reply) => {
     const ip = getClientIp(request);
 
-    if (!(await requireAdmin(request, reply))) return;
-
-    // Rate limit
+    // CodeQL js/missing-rate-limiting (#56): rate-limit BEFORE authorization
+    // so unauthenticated brute-force against the admin check is throttled.
     const rateCheck = checkRateLimit(
       { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "llm-config" },
       ip,
@@ -124,6 +139,8 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
         .header("Cache-Control", "no-store")
         .send(rateCheck.response);
     }
+
+    if (!(await requireAdmin(request, reply))) return;
 
     // CSRF protection
     if (!(await requireCsrf(request, reply))) return;
@@ -242,9 +259,8 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
   fastify.post("/api/admin/llm/test", async (request, reply) => {
     const ip = getClientIp(request);
 
-    if (!(await requireAdmin(request, reply))) return;
-
-    // Rate limit (light limit for test endpoints)
+    // CodeQL js/missing-rate-limiting (#57): rate-limit BEFORE authorization
+    // so the admin check itself is brute-force throttled.
     const rateCheck = checkRateLimit(
       { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "llm-test" },
       ip,
@@ -256,6 +272,8 @@ export function registerLLMRoutes(fastify: FastifyInstance): void {
         .header("Cache-Control", "no-store")
         .send(rateCheck.response);
     }
+
+    if (!(await requireAdmin(request, reply))) return;
 
     const config = getLLMConfigPublic();
     const baseUrl = getLLMBaseUrl();
