@@ -42,7 +42,7 @@ import {
   logApiRequest,
   createRequestLogger,
 } from "./utils/logger.js";
-import { registerSecurityHeaders } from "./security/index.js";
+import { registerSecurityHeaders, checkRateLimit, getClientIp, RateLimitPresets } from "./security/index.js";
 import {
   validateAndNormalizeSettings,
   safeJsonParse,
@@ -4859,7 +4859,21 @@ try {
   // — qr-scan/placeholder providers (WhatsApp, iMessage) are counted in
   // `providers` but contribute 0 to `connectedAccounts`/`totalAccounts`
   // because they don't go through the browser-session account model.
-  fastify.get("/api/channels/counts", async () => {
+  fastify.get("/api/channels/counts", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting hardening. Light bucket because this is
+    // a read-only aggregator; aggressive burst limiting is unnecessary but
+    // per-IP throttling prevents enumeration-of-channels amplification.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_LIGHT, routeKey: "channels-counts" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
     const categories: Array<"email" | "messages" | "phone"> = ["email", "messages", "phone"];
     const result: Record<string, { providers: number; connectedAccounts: number; totalAccounts: number }> = {};
 
@@ -4938,6 +4952,21 @@ try {
   // OpenClaw gateway's shared store and deleting it would take the gateway
   // offline for Gmail and any future gateway-backed provider.
   fastify.delete("/api/channels/:providerId/accounts/:accountId", async (req, reply) => {
+    // CodeQL js/missing-rate-limiting hardening. Moderate bucket because this
+    // is an account-destructive endpoint (kills Chrome subprocess + optionally
+    // purges the on-disk profile). Per-IP throttling blocks rapid enumeration
+    // + abuse of the existing X-AKIOR-Confirm-Purge gate below.
+    const rateCheck = checkRateLimit(
+      { ...RateLimitPresets.ADMIN_MODERATE, routeKey: "channels-account-delete" },
+      getClientIp(req),
+    );
+    if (!rateCheck.allowed && rateCheck.response) {
+      return reply
+        .status(429)
+        .header("Retry-After", String(rateCheck.response.retryAfterSec))
+        .header("Cache-Control", "no-store")
+        .send(rateCheck.response);
+    }
     const { providerId, accountId } = req.params as { providerId: string; accountId: string };
     const descriptor = resolveBrowserSessionProvider(providerId);
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
