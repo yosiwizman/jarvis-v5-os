@@ -66,20 +66,23 @@ function makeActivityId(): string {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
+async function createIfMissing(filePath: string, initialContent: string): Promise<void> {
+  // CodeQL js/file-system-race: use exclusive-write flag ("wx") so there is no
+  // check-then-act race. EEXIST is the expected outcome when the file already
+  // exists; any other error rethrows.
+  try {
+    await writeFile(filePath, initialContent, { encoding: 'utf-8', flag: 'wx' });
+  } catch (err: unknown) {
+    if ((err as NodeJS.ErrnoException)?.code === 'EEXIST') return;
+    throw err;
+  }
+}
+
 export async function initAssistantStore(): Promise<void> {
   try {
-    if (!existsSync(DATA_DIR)) {
-      await mkdir(DATA_DIR, { recursive: true });
-    }
-    if (!existsSync(ASSISTANT_DIR)) {
-      await mkdir(ASSISTANT_DIR, { recursive: true });
-    }
-    if (!existsSync(BRIEFINGS_FILE)) {
-      await writeFile(BRIEFINGS_FILE, JSON.stringify({ briefings: [] }, null, 2), 'utf-8');
-    }
-    if (!existsSync(ACTIVITY_FILE)) {
-      await writeFile(ACTIVITY_FILE, JSON.stringify({ activity: [] }, null, 2), 'utf-8');
-    }
+    await mkdir(ASSISTANT_DIR, { recursive: true });
+    await createIfMissing(BRIEFINGS_FILE, JSON.stringify({ briefings: [] }, null, 2));
+    await createIfMissing(ACTIVITY_FILE, JSON.stringify({ activity: [] }, null, 2));
     console.log('[AssistantStore] Initialized');
   } catch (error) {
     console.error('[AssistantStore] Failed to initialize:', error);
