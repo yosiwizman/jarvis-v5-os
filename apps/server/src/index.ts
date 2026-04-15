@@ -5070,7 +5070,6 @@ try {
   // `providers` but contribute 0 to `connectedAccounts`/`totalAccounts`
   // because they don't go through the browser-session account model.
   fastify.get("/api/channels/counts", async (req, reply) => {
-    if (!requireAdmin(req, reply)) return;
     // CodeQL js/missing-rate-limiting hardening. Light bucket because this is
     // a read-only aggregator; aggressive burst limiting is unnecessary but
     // per-IP throttling prevents enumeration-of-channels amplification.
