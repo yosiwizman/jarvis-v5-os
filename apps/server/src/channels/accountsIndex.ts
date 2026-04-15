@@ -100,17 +100,19 @@ export function saveUnifiedAccountsIndex(idx: UnifiedAccountsIndex): void {
   writeFileSync(UNIFIED_INDEX_PATH, JSON.stringify(idx, null, 2), "utf-8");
 }
 
-export function ensureGatewayDefaultAccount(): BrowserSessionAccountRecord {
+export function ensureGatewayDefaultAccount(
+  providerId: string = "gmail",
+): BrowserSessionAccountRecord {
   const idx = loadUnifiedAccountsIndex();
-  const existing = idx.accounts.find((a) => a.providerId === "gmail" && a.isDefault);
+  const existing = idx.accounts.find((a) => a.providerId === providerId && a.isDefault);
   if (existing) return existing;
-  const descriptor = getProviderDescriptor("gmail");
+  const descriptor = getProviderDescriptor(providerId);
   if (!descriptor || !descriptor.hasGatewayDefault) {
-    throw new Error("gmail descriptor missing or not gateway-backed");
+    throw new Error(`${providerId} descriptor missing or not gateway-backed`);
   }
   const now = new Date().toISOString();
   const record: BrowserSessionAccountRecord = {
-    providerId: "gmail",
+    providerId,
     accountId: "acc_default",
     identity: null,
     isDefault: true,

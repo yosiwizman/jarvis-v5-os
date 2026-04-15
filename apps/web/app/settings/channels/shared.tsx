@@ -34,7 +34,7 @@ export type ChannelState =
   | "reconnect_needed";
 
 // G-T06.D14: client-side mirror of the server's ChannelCategory enum.
-export type UiChannelCategory = "email" | "messages" | "phone";
+export type UiChannelCategory = "email" | "messages" | "phone" | "calendar";
 
 // G-T06.D4: Gmail unread-count field component.
 //
@@ -314,6 +314,26 @@ export const UI_PROVIDERS: Record<string, UiProviderDescriptor> = {
     accentHover: "hover:bg-cyan-600/30 hover:text-white",
     canMintAdditional: true,
     renderIcon: () => <OutlookBadge />,
+  },
+  "google-calendar": {
+    providerId: "google-calendar",
+    displayName: "Google Calendar",
+    category: "calendar",
+    ctaConnectLabel: "Connect Google Calendar",
+    ctaConnectingLabel: "Opening Google Calendar...",
+    ctaReconnectLabel: "Reconnect Google Calendar",
+    connectedHeadline: (id) => (id ? `Google Calendar Connected — ${id}` : "Google Calendar Connected"),
+    addTitle: "Add another Google Calendar account",
+    addButtonLabel: "Add Google Calendar Account",
+    addBusyLabel: "Opening new Chrome…",
+    addBlurb:
+      "Opens a managed-browser window so you can sign in to Google Calendar. No credentials are stored.",
+    accentBorder: "border-blue-500/40",
+    accentBg: "bg-blue-600/20",
+    accentText: "text-blue-300",
+    accentHover: "hover:bg-blue-600/30 hover:text-white",
+    canMintAdditional: false,
+    renderIcon: () => <GoogleIcon />,
   },
 };
 

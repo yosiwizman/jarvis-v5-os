@@ -4966,7 +4966,7 @@ try {
   async function accountsListForProvider(providerId: string) {
     const descriptor = resolveBrowserSessionProvider(providerId);
     if (!descriptor) return null;
-    if (descriptor.hasGatewayDefault) ensureGatewayDefaultAccount();
+    if (descriptor.hasGatewayDefault) ensureGatewayDefaultAccount(providerId);
     const records = listAccountsByProvider(providerId);
     const accounts = await Promise.all(
       records.map((r) => providerStatus(GATEWAY_CONFIG, descriptor, r)),
@@ -5084,7 +5084,7 @@ try {
         .header("Cache-Control", "no-store")
         .send(rateCheck.response);
     }
-    const categories: Array<"email" | "messages" | "phone"> = ["email", "messages", "phone"];
+    const categories: Array<"email" | "messages" | "phone" | "calendar"> = ["email", "messages", "phone", "calendar"];
     const result: Record<string, { providers: number; connectedAccounts: number; totalAccounts: number }> = {};
 
     for (const category of categories) {
@@ -5102,7 +5102,7 @@ try {
         ) {
           continue;
         }
-        if (descriptor.hasGatewayDefault) ensureGatewayDefaultAccount();
+        if (descriptor.hasGatewayDefault) ensureGatewayDefaultAccount(descriptor.providerId);
         const records = listAccountsByProvider(descriptor.providerId);
         totalAccounts += records.length;
         for (const record of records) {
@@ -5235,7 +5235,7 @@ try {
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
     const accountId = (req.query as any)?.accountId as string | undefined;
     let record = accountId ? getChannelAccountById(providerId, accountId) : null;
-    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount();
+    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount(providerId);
     if (!record) return reply.status(404).send({ error: "account not found" });
     return providerStatus(GATEWAY_CONFIG, descriptor, record);
   });
@@ -5248,7 +5248,7 @@ try {
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
     const accountId = (req.query as any)?.accountId as string | undefined;
     let record = accountId ? getChannelAccountById(providerId, accountId) : null;
-    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount();
+    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount(providerId);
     if (!record) return reply.status(404).send({ error: "account not found" });
     const result = await providerConnect(GATEWAY_CONFIG, descriptor, record);
     if (!result.ok) return reply.status(503).send(result);
@@ -5263,7 +5263,7 @@ try {
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
     const accountId = (req.query as any)?.accountId as string | undefined;
     let record = accountId ? getChannelAccountById(providerId, accountId) : null;
-    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount();
+    if (!record && descriptor.hasGatewayDefault) record = ensureGatewayDefaultAccount(providerId);
     if (!record) return reply.status(404).send({ error: "account not found" });
     const result = await providerDisconnect(GATEWAY_CONFIG, descriptor, record);
     if (result.closed) await new Promise((r) => setTimeout(r, 600));
