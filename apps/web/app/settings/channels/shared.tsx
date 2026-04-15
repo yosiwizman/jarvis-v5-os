@@ -518,6 +518,50 @@ function DriveFileList({ accountId }: { accountId: string }) {
   );
 }
 
+// GOOGLE-CONTACTS-MINIMAL-LIST-CANONICAL-SLICE-01: minimal read-only contacts list for the
+// Google Contacts connected-state card. Fetches the 10 most-recent contacts once on mount. No polling — MVP.
+type GoogleContact = { id: string; name: string; emailText: string; phoneText: string; url: string };
+
+function ContactsList({ accountId }: { accountId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<GoogleContact[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/channels/google-contacts/contacts?accountId=${encodeURIComponent(accountId)}&limit=10`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.ok === false) {
+          setError(data.error || data.reason || "Failed to load contacts");
+        } else {
+          setContacts(Array.isArray(data?.contacts) ? data.contacts : []);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) setError(e.message || "network error");
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [accountId]);
+
+  if (loading) return <div data-testid="contacts-list-loading" className="text-xs text-white/50 pt-1">Loading contacts…</div>;
+  if (error) return <div data-testid="contacts-list-error" className="text-xs text-red-300 pt-1">{error}</div>;
+  if (contacts.length === 0) return <div data-testid="contacts-list-empty" className="text-xs text-white/40 pt-1">No visible contacts</div>;
+  return (
+    <ul data-testid="contacts-list-list" className="space-y-1 pt-1">
+      {contacts.map((c) => (
+        <li key={c.id} data-testid="contacts-list-row" className="flex items-center gap-2 text-xs text-white/70">
+          <span className="font-medium truncate max-w-[180px]">{c.name || "(unnamed)"}</span>
+          {c.emailText && <span className="truncate text-white/50">{c.emailText}</span>}
+          {c.phoneText && <span className="truncate text-white/50">{c.phoneText}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ChannelAccountCard({
   descriptor,
   account,
@@ -618,6 +662,9 @@ export function ChannelAccountCard({
           )}
           {descriptor.providerId === "google-drive" && (
             <DriveFileList accountId={account.accountId} />
+          )}
+          {descriptor.providerId === "google-contacts" && (
+            <ContactsList accountId={account.accountId} />
           )}
           <button
             onClick={handleDisconnect}

@@ -428,6 +428,7 @@ import {
   readGmailInbox,
   readGoogleCalendarEvents,
   readGoogleDriveFiles,
+  readGoogleContacts,
 } from "./channels/providers/browserSession.js";
 import {
   CHANNEL_PROVIDERS,
@@ -5149,6 +5150,47 @@ try {
       providerId: "google-drive",
       accountId: record.accountId,
       files: result.files,
+    };
+  });
+
+  fastify.get("/api/channels/google-contacts/contacts", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const descriptor = resolveBrowserSessionProvider("google-contacts");
+    if (!descriptor) return reply.status(404).send({ ok: false, error: "google-contacts not registered", contacts: [] });
+    const q = (req.query as any) || {};
+    const accountId = q.accountId as string | undefined;
+    const limitRaw = Number(q.limit ?? 10);
+    const limit = Math.max(1, Math.min(50, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 10));
+    let record = accountId ? getChannelAccountById("google-contacts", accountId) : null;
+    if (!record) record = ensureGatewayDefaultAccount("google-contacts");
+    if (!record) return reply.status(404).send({ ok: false, error: "account not found", contacts: [] });
+    const env = await providerStatus(GATEWAY_CONFIG, descriptor, record);
+    if (env.channelState !== "connected") {
+      return reply.status(409).send({
+        ok: false,
+        reason: "not_connected",
+        providerId: "google-contacts",
+        accountId: record.accountId,
+        channelState: env.channelState,
+        contacts: [],
+      });
+    }
+    const result = await readGoogleContacts(GATEWAY_CONFIG, record, limit);
+    if (!result.ok) {
+      return reply.status(503).send({
+        ok: false,
+        reason: "read_failed",
+        error: result.error || "read failed",
+        providerId: "google-contacts",
+        accountId: record.accountId,
+        contacts: [],
+      });
+    }
+    return {
+      ok: true,
+      providerId: "google-contacts",
+      accountId: record.accountId,
+      contacts: result.contacts,
     };
   });
 
