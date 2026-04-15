@@ -388,6 +388,52 @@ function GmailInboxList({ accountId }: { accountId: string }) {
   );
 }
 
+// G-T06.D-GCAL-READ-EVENTS-01: minimal read-only events list for the Google Calendar
+// connected-state card. Fetches the 10 next events once on mount. No polling — MVP.
+type CalendarEvent = { id: string; title: string; timeText: string; dayLabel: string; locationText?: string };
+
+function CalendarEventsList({ accountId }: { accountId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/channels/google-calendar/events?accountId=${encodeURIComponent(accountId)}&limit=10`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.ok === false) {
+          setError(data.error || data.reason || "Failed to load events");
+        } else {
+          setEvents(Array.isArray(data?.events) ? data.events : []);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) setError(e.message || "network error");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [accountId]);
+
+  if (loading) return <div data-testid="calendar-events-loading" className="text-xs text-white/50 pt-1">Loading events…</div>;
+  if (error) return <div data-testid="calendar-events-error" className="text-xs text-red-300 pt-1">{error}</div>;
+  if (events.length === 0) return <div data-testid="calendar-events-empty" className="text-xs text-white/40 pt-1">No visible events</div>;
+  return (
+    <ul data-testid="calendar-events-list" className="space-y-1 pt-1">
+      {events.map((ev) => (
+        <li key={ev.id} data-testid="calendar-events-row" className="flex items-center gap-2 text-xs text-white/70">
+          <span className="font-medium truncate max-w-[160px]">{ev.title || "(untitled)"}</span>
+          {ev.dayLabel && <span className="truncate text-white/50">{ev.dayLabel}</span>}
+          {ev.timeText && <span className="truncate text-white/50">{ev.timeText}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ChannelAccountCard({
   descriptor,
   account,
@@ -482,6 +528,9 @@ export function ChannelAccountCard({
           </div>
           {descriptor.providerId === "gmail" && (
             <GmailInboxList accountId={account.accountId} />
+          )}
+          {descriptor.providerId === "google-calendar" && (
+            <CalendarEventsList accountId={account.accountId} />
           )}
           <button
             onClick={handleDisconnect}

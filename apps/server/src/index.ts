@@ -426,6 +426,7 @@ import {
   killSpawnedProcess,
   readGmailInboxSummary,
   readGmailInbox,
+  readGoogleCalendarEvents,
 } from "./channels/providers/browserSession.js";
 import {
   CHANNEL_PROVIDERS,
@@ -5059,6 +5060,50 @@ try {
       providerId: "gmail",
       accountId: record.accountId,
       messages: result.messages,
+    };
+  });
+
+  // G-CAL-READ-EVENTS-01: structured calendar events (read-only).
+  // Returns title/timeText/dayLabel for the first N events from the already-rendered
+  // Google Calendar tab. No credential operations, no mutations, no write paths.
+  fastify.get("/api/channels/google-calendar/events", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const descriptor = resolveBrowserSessionProvider("google-calendar");
+    if (!descriptor) return reply.status(404).send({ ok: false, error: "google-calendar not registered", events: [] });
+    const q = (req.query as any) || {};
+    const accountId = q.accountId as string | undefined;
+    const limitRaw = Number(q.limit ?? 10);
+    const limit = Math.max(1, Math.min(50, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 10));
+    let record = accountId ? getChannelAccountById("google-calendar", accountId) : null;
+    if (!record) record = ensureGatewayDefaultAccount("google-calendar");
+    if (!record) return reply.status(404).send({ ok: false, error: "account not found", events: [] });
+    const env = await providerStatus(GATEWAY_CONFIG, descriptor, record);
+    if (env.channelState !== "connected") {
+      return reply.status(409).send({
+        ok: false,
+        reason: "not_connected",
+        providerId: "google-calendar",
+        accountId: record.accountId,
+        channelState: env.channelState,
+        events: [],
+      });
+    }
+    const result = await readGoogleCalendarEvents(GATEWAY_CONFIG, record, limit);
+    if (!result.ok) {
+      return reply.status(503).send({
+        ok: false,
+        reason: "read_failed",
+        error: result.error || "read failed",
+        providerId: "google-calendar",
+        accountId: record.accountId,
+        events: [],
+      });
+    }
+    return {
+      ok: true,
+      providerId: "google-calendar",
+      accountId: record.accountId,
+      events: result.events,
     };
   });
 

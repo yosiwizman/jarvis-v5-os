@@ -616,6 +616,161 @@ export interface GmailInboxReadResult {
   error?: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// G-CAL-READ-EVENTS-01 — GOOGLE-CALENDAR-READ-EVENTS
+//
+// Structured per-event extraction from the managed-browser Google Calendar DOM.
+// Mirrors the Gmail inbox read pattern for tab discovery (gateway vs spawn)
+// and CDP evaluation. READ-ONLY — no click, send, or mutation. DEC-033
+// posture unchanged.
+// ─────────────────────────────────────────────────────────────────────
+
+// Security: mirrors isGmailTabUrl — hostname-only comparison prevents
+// substring-match spoofing (e.g. evil.com/?x=calendar.google.com).
+export function isCalendarTabUrl(urlString: string | null | undefined): boolean {
+  if (!urlString || typeof urlString !== "string") return false;
+  try {
+    const h = new URL(urlString).hostname;
+    return h === "calendar.google.com";
+  } catch {
+    // Invalid URL (chrome://newtab, about:blank, malformed, etc.) — not Calendar.
+    return false;
+  }
+}
+
+function googleCalendarEventsExpression(limit: number): string {
+  const safeLimit = Math.max(1, Math.min(50, limit));
+  return `(function(){
+    try {
+      var nodes = Array.from(document.querySelectorAll('[data-eventid]')).slice(0, ${safeLimit});
+      return { events: nodes.map(function(node) {
+        var ariaLabel = node.getAttribute('aria-label') || '';
+        var id = node.getAttribute('data-eventid') || '';
+        var rawText = (ariaLabel || node.textContent || '').replace(/\\s+/g, ' ').trim();
+        var title = rawText;
+        var timeText = '';
+        var dayLabel = '';
+        // Try to parse structured fields from aria-label (comma-separated segments).
+        // Typical format: "Title, time range, day, location" — we heuristically
+        // detect time-range segments (contain AM/PM or HH:MM pattern) and take
+        // the last segment as day label when multiple segments exist.
+        if (ariaLabel) {
+          var parts = ariaLabel.split(',').map(function(s){ return s.trim(); });
+          if (parts.length > 0) title = parts[0];
+          for (var i = 1; i < parts.length; i++) {
+            var p = parts[i];
+            if (/[0-9]:[0-9]/.test(p) || /AM|PM/i.test(p)) {
+              if (!timeText) timeText = p;
+            }
+          }
+          if (parts.length > 1) {
+            var last = parts[parts.length - 1];
+            // Only treat as dayLabel if it looks like a date/day (not a time).
+            if (!(/[0-9]:[0-9]/.test(last) || /AM|PM/i.test(last))) {
+              dayLabel = last;
+            }
+          }
+        }
+        return {
+          id: id,
+          title: title,
+          timeText: timeText,
+          dayLabel: dayLabel,
+          locationText: '',
+        };
+      })};
+    } catch(e) { return { events: [], evalError: String(e) }; }
+  })()`;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  timeText: string;
+  dayLabel: string;
+  locationText: string;
+}
+
+export interface GoogleCalendarEventsReadResult {
+  ok: boolean;
+  events: CalendarEvent[];
+  error?: string;
+}
+
+export async function readGoogleCalendarEvents(
+  gw: GatewayConfig,
+  record: BrowserSessionAccountRecord,
+  limit: number,
+): Promise<GoogleCalendarEventsReadResult> {
+  const fail = (error: string): GoogleCalendarEventsReadResult => ({
+    ok: false,
+    events: [],
+    error,
+  });
+  try {
+    let targetId: string | null = null;
+    let cdpPort: number;
+    if (record.isDefault) {
+      const gwStatusRes = await fetch(`http://127.0.0.1:${gw.port}/`, {
+        headers: { Authorization: `Bearer ${gw.authToken}` },
+      });
+      if (!gwStatusRes.ok) return fail("gateway unreachable");
+      const statusData = (await gwStatusRes.json()) as any;
+      if (!statusData.running) return fail("gateway not running");
+      cdpPort = Number(statusData.cdpPort) || 18800;
+      const tabsRes = await fetch(`http://127.0.0.1:${gw.port}/tabs`, {
+        headers: { Authorization: `Bearer ${gw.authToken}` },
+      });
+      if (!tabsRes.ok) return fail("gateway /tabs unreachable");
+      const tabsData = (await tabsRes.json()) as any;
+      const tab = (tabsData.tabs || []).find(
+        (t: any) => t?.type === "page" && isCalendarTabUrl(t.url),
+      );
+      if (!tab?.targetId) return fail("no calendar tab");
+      targetId = tab.targetId;
+    } else {
+      if (record.cdpPort == null) return fail("no cdpPort");
+      cdpPort = record.cdpPort;
+      const res = await fetch(`http://127.0.0.1:${cdpPort}/json/list`, {
+        signal: AbortSignal.timeout(2000),
+      });
+      if (!res.ok) return fail("cdp /json/list unreachable");
+      const tabs = (await res.json()) as any[];
+      const tab = tabs.find(
+        (t) => t?.type === "page" && isCalendarTabUrl(t.url),
+      );
+      if (!tab?.id) return fail("no calendar tab");
+      targetId = tab.id;
+    }
+
+    const evalResult = await cdpEvaluateOnTab(
+      cdpPort,
+      targetId!,
+      googleCalendarEventsExpression(limit),
+    );
+    if (!evalResult || typeof evalResult !== "object") {
+      return fail("unexpected eval result");
+    }
+    if (typeof (evalResult as any).evalError === "string") {
+      return fail((evalResult as any).evalError);
+    }
+    const rawEvents: any[] = Array.isArray((evalResult as any).events)
+      ? (evalResult as any).events
+      : [];
+    const events: CalendarEvent[] = rawEvents.map((ev: any) => ({
+      id: typeof ev.id === "string" ? ev.id : "",
+      title: typeof ev.title === "string" ? ev.title : "",
+      timeText: typeof ev.timeText === "string" ? ev.timeText : "",
+      dayLabel: typeof ev.dayLabel === "string" ? ev.dayLabel : "",
+      locationText: typeof ev.locationText === "string" ? ev.locationText : "",
+    }));
+    // Truthful-empty: zero events from [data-eventid] query is ok: returns { ok: true, events: [] }.
+    return { ok: true, events };
+  } catch (err) {
+    return fail((err as Error).message || "read error");
+  }
+}
+
 export async function readGmailInbox(
   gw: GatewayConfig,
   record: BrowserSessionAccountRecord,
