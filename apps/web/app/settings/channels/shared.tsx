@@ -34,7 +34,7 @@ export type ChannelState =
   | "reconnect_needed";
 
 // G-T06.D14: client-side mirror of the server's ChannelCategory enum.
-export type UiChannelCategory = "email" | "messages" | "phone" | "calendar" | "files";
+export type UiChannelCategory = "email" | "messages" | "phone" | "calendar" | "files" | "contacts";
 
 // G-T06.D4: Gmail unread-count field component.
 //
@@ -348,6 +348,26 @@ export const UI_PROVIDERS: Record<string, UiProviderDescriptor> = {
     addBusyLabel: "Opening new Chrome…",
     addBlurb:
       "Opens a managed-browser window so you can sign in to Google Drive. No credentials are stored.",
+    accentBorder: "border-blue-500/40",
+    accentBg: "bg-blue-600/20",
+    accentText: "text-blue-300",
+    accentHover: "hover:bg-blue-600/30 hover:text-white",
+    canMintAdditional: false,
+    renderIcon: () => <GoogleIcon />,
+  },
+  "google-contacts": {
+    providerId: "google-contacts",
+    displayName: "Google Contacts",
+    category: "contacts",
+    ctaConnectLabel: "Connect Google Contacts",
+    ctaConnectingLabel: "Opening Google Contacts...",
+    ctaReconnectLabel: "Reconnect Google Contacts",
+    connectedHeadline: (id) => (id ? `Google Contacts Connected — ${id}` : "Google Contacts Connected"),
+    addTitle: "Add another Google Contacts account",
+    addButtonLabel: "Add Google Contacts Account",
+    addBusyLabel: "Opening new Chrome…",
+    addBlurb:
+      "Opens a managed-browser window so you can sign in to Google Contacts. No credentials are stored.",
     accentBorder: "border-blue-500/40",
     accentBg: "bg-blue-600/20",
     accentText: "text-blue-300",

@@ -110,6 +110,23 @@ export const CHANNEL_PROVIDERS: Record<string, ChannelProviderDescriptor> = {
     uiIcon: "google",
     uiOrder: 20,
   },
+  "google-contacts": {
+    providerId: "google-contacts",
+    displayName: "Google Contacts",
+    category: "contacts",
+    authStrategy: "browser-session-gateway",
+    capabilities: { read: false, send: false, multiAccount: false, disconnect: true, reconnect: true },
+    landingUrl: "https://contacts.google.com/",
+    urlMatchers: ["contacts.google.com", "accounts.google.com"],
+    cdpPortBase: 18930,
+    profileDirPrefix: "user-data",
+    hasGatewayDefault: true,
+    identityRegex: EMAIL_IDENTITY_REGEX,
+    signedInPredicate: { kind: "title-not-signin" },
+    uiAccent: "blue",
+    uiIcon: "google",
+    uiOrder: 25,
+  },
   // D9 acceptance scaffold: Outlook demonstrates the "add a new provider in
   // <100 lines" target from D5 §3.7. It is a descriptor-only scaffold with
   // NO wired UI and NO routes, exactly matching the task's "keep skeletons

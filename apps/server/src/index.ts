@@ -5129,7 +5129,7 @@ try {
         .header("Cache-Control", "no-store")
         .send(rateCheck.response);
     }
-    const categories: Array<"email" | "messages" | "phone" | "calendar" | "files"> = ["email", "messages", "phone", "calendar", "files"];
+    const categories: Array<"email" | "messages" | "phone" | "calendar" | "files" | "contacts"> = ["email", "messages", "phone", "calendar", "files", "contacts"];
     const result: Record<string, { providers: number; connectedAccounts: number; totalAccounts: number }> = {};
 
     for (const category of categories) {
