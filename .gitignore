@@ -33,6 +33,7 @@ apps/server/data/dnd.json
 apps/server/data/tasks.json
 apps/server/data/scheduled-events.json
 apps/server/data/actions/
+apps/server/data/assistant/
 apps/server/data/audit.log
 apps/server/data/logs/
 
