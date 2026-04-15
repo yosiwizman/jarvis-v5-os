@@ -771,6 +771,169 @@ export async function readGoogleCalendarEvents(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// Google Drive read helpers (read-only, no mutations, no write paths).
+// ─────────────────────────────────────────────────────────────────────
+
+// Security: mirrors isCalendarTabUrl — hostname-only comparison prevents
+// substring-match spoofing (e.g. evil.com/?x=drive.google.com).
+export function isDriveTabUrl(urlString: string | null | undefined): boolean {
+  if (!urlString || typeof urlString !== "string") return false;
+  try {
+    const h = new URL(urlString).hostname;
+    return h === "drive.google.com";
+  } catch {
+    // Invalid URL (chrome://newtab, about:blank, malformed, etc.) — not Drive.
+    return false;
+  }
+}
+
+function googleDriveFilesExpression(limit: number): string {
+  const safeLimit = Math.max(1, Math.min(50, limit));
+  return `(function(){
+    try {
+      var nodes = Array.from(document.querySelectorAll('[data-id]')).slice(0, ${safeLimit});
+      var files = nodes.map(function(node) {
+        var ariaLabel = node.getAttribute('aria-label') || '';
+        var id = node.getAttribute('data-id') || '';
+        var name = '';
+        var itemType = '';
+        var modifiedText = '';
+        var url = '';
+
+        // Name: first comma-segment of aria-label trimmed; fallback textContent.
+        if (ariaLabel) {
+          var parts = ariaLabel.split(',').map(function(s){ return s.trim(); });
+          if (parts.length > 0) name = parts[0];
+          // itemType: infer from aria-label keywords.
+          if (ariaLabel.indexOf('Folder') !== -1) {
+            itemType = 'folder';
+          } else if (name) {
+            itemType = 'file';
+          }
+          // modifiedText: scan segments for date-looking pattern.
+          var datePattern = /\\d{4}|Today|Yesterday|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/;
+          for (var i = 1; i < parts.length; i++) {
+            if (parts[i].indexOf('Modified') !== -1 || datePattern.test(parts[i])) {
+              modifiedText = parts[i];
+              break;
+            }
+          }
+        }
+        if (!name) {
+          name = (node.textContent || '').trim().slice(0, 120);
+        }
+
+        // url: find ancestor or nested <a> with href containing drive.google.com.
+        var el = node;
+        var found = null;
+        // Search ancestors first (up to 5 levels).
+        for (var k = 0; k < 5 && el; k++) {
+          if (el.tagName === 'A' && el.href && el.href.indexOf('drive.google.com') !== -1) {
+            found = el;
+            break;
+          }
+          el = el.parentElement;
+        }
+        if (!found) {
+          // Search descendants.
+          var anchors = node.querySelectorAll('a[href*="drive.google.com"]');
+          if (anchors.length > 0) found = anchors[0];
+        }
+        if (found) url = found.href;
+
+        return { id: id, name: name, itemType: itemType, modifiedText: modifiedText, url: url };
+      });
+      return { files: files };
+    } catch(e) { return { files: [], evalError: String(e) }; }
+  })()`;
+}
+
+export interface DriveFile {
+  id: string;
+  name: string;
+  itemType: string;
+  modifiedText: string;
+  url: string;
+}
+
+export type GoogleDriveFilesReadResult =
+  | { ok: true; files: DriveFile[] }
+  | { ok: false; error: string };
+
+export async function readGoogleDriveFiles(
+  gw: GatewayConfig,
+  record: BrowserSessionAccountRecord,
+  limit: number,
+): Promise<GoogleDriveFilesReadResult> {
+  const fail = (error: string): GoogleDriveFilesReadResult => ({
+    ok: false,
+    error,
+  });
+  try {
+    let targetId: string | null = null;
+    let cdpPort: number;
+    if (record.isDefault) {
+      const gwStatusRes = await fetch(`http://127.0.0.1:${gw.port}/`, {
+        headers: { Authorization: `Bearer ${gw.authToken}` },
+      });
+      if (!gwStatusRes.ok) return fail("gateway unreachable");
+      const statusData = (await gwStatusRes.json()) as any;
+      if (!statusData.running) return fail("gateway not running");
+      cdpPort = Number(statusData.cdpPort) || 18800;
+      const tabsRes = await fetch(`http://127.0.0.1:${gw.port}/tabs`, {
+        headers: { Authorization: `Bearer ${gw.authToken}` },
+      });
+      if (!tabsRes.ok) return fail("gateway /tabs unreachable");
+      const tabsData = (await tabsRes.json()) as any;
+      const tab = (tabsData.tabs || []).find(
+        (t: any) => t?.type === "page" && isDriveTabUrl(t.url),
+      );
+      if (!tab?.targetId) return fail("no drive tab");
+      targetId = tab.targetId;
+    } else {
+      if (record.cdpPort == null) return fail("no cdpPort");
+      cdpPort = record.cdpPort;
+      const res = await fetch(`http://127.0.0.1:${cdpPort}/json/list`, {
+        signal: AbortSignal.timeout(2000),
+      });
+      if (!res.ok) return fail("cdp /json/list unreachable");
+      const tabs = (await res.json()) as any[];
+      const tab = tabs.find(
+        (t) => t?.type === "page" && isDriveTabUrl(t.url),
+      );
+      if (!tab?.id) return fail("no drive tab");
+      targetId = tab.id;
+    }
+
+    const evalResult = await cdpEvaluateOnTab(
+      cdpPort,
+      targetId!,
+      googleDriveFilesExpression(limit),
+    );
+    if (!evalResult || typeof evalResult !== "object") {
+      return fail("unexpected eval result");
+    }
+    if (typeof (evalResult as any).evalError === "string") {
+      return fail((evalResult as any).evalError);
+    }
+    const rawFiles: any[] = Array.isArray((evalResult as any).files)
+      ? (evalResult as any).files
+      : [];
+    const files: DriveFile[] = rawFiles.map((f: any) => ({
+      id: typeof f.id === "string" ? f.id : "",
+      name: typeof f.name === "string" ? f.name : "",
+      itemType: typeof f.itemType === "string" ? f.itemType : "",
+      modifiedText: typeof f.modifiedText === "string" ? f.modifiedText : "",
+      url: typeof f.url === "string" ? f.url : "",
+    }));
+    // Truthful-empty: zero files from [data-id] query is ok — returns { ok: true, files: [] }.
+    return { ok: true, files };
+  } catch (err) {
+    return fail((err as Error).message || "read error");
+  }
+}
+
 export async function readGmailInbox(
   gw: GatewayConfig,
   record: BrowserSessionAccountRecord,

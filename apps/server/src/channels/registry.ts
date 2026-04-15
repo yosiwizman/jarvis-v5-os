@@ -98,7 +98,7 @@ export const CHANNEL_PROVIDERS: Record<string, ChannelProviderDescriptor> = {
     displayName: "Google Drive",
     category: "files",
     authStrategy: "browser-session-gateway",
-    capabilities: { read: false, send: false, multiAccount: false, disconnect: true, reconnect: true },
+    capabilities: { read: true, send: false, multiAccount: false, disconnect: true, reconnect: true },
     landingUrl: "https://drive.google.com/",
     urlMatchers: ["drive.google.com", "accounts.google.com"],
     cdpPortBase: 18920,
