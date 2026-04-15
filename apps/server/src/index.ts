@@ -5123,6 +5123,7 @@ try {
 
   // List endpoint — providerId-parameterized.
   fastify.get("/api/channels/:providerId/accounts", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const { providerId } = req.params as { providerId: string };
     const payload = await accountsListForProvider(providerId);
     if (!payload) return reply.status(404).send({ error: "unknown provider" });
@@ -5133,6 +5134,7 @@ try {
   // default for gmail — mint-default is not supported; the default is
   // auto-ensured on list).
   fastify.post("/api/channels/:providerId/accounts", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const { providerId } = req.params as { providerId: string };
     const descriptor = resolveBrowserSessionProvider(providerId);
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
@@ -5162,6 +5164,7 @@ try {
   // OpenClaw gateway's shared store and deleting it would take the gateway
   // offline for Gmail and any future gateway-backed provider.
   fastify.delete("/api/channels/:providerId/accounts/:accountId", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     // CodeQL js/missing-rate-limiting hardening. Moderate bucket because this
     // is an account-destructive endpoint (kills Chrome subprocess + optionally
     // purges the on-disk profile). Per-IP throttling blocks rapid enumeration
