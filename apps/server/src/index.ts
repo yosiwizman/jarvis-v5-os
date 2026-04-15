@@ -5242,6 +5242,7 @@ try {
 
   // Per-account connect.
   fastify.post("/api/channels/:providerId/connect", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const { providerId } = req.params as { providerId: string };
     const descriptor = resolveBrowserSessionProvider(providerId);
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
@@ -5256,6 +5257,7 @@ try {
 
   // Per-account disconnect.
   fastify.post("/api/channels/:providerId/disconnect", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const { providerId } = req.params as { providerId: string };
     const descriptor = resolveBrowserSessionProvider(providerId);
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
