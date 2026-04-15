@@ -80,11 +80,9 @@ test.describe('Google Calendar Events Smoke', () => {
 
     if (!reachedListState) {
       // No CalendarEventsList rendered — account not connected in this environment.
-      // Assert the provider card heading is visible as the truthful fallback.
+      // Assert the unique provider-cluster testid is visible as the truthful fallback.
       await expect(
-        page.getByRole('heading', { name: /google calendar/i }).or(
-          page.getByText(/google calendar/i).first()
-        )
+        page.getByTestId('provider-cluster-google-calendar')
       ).toBeVisible({ timeout: 5000 });
     }
   });
