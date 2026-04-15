@@ -5229,6 +5229,7 @@ try {
 
   // Per-account status.
   fastify.get("/api/channels/:providerId/status", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
     const { providerId } = req.params as { providerId: string };
     const descriptor = resolveBrowserSessionProvider(providerId);
     if (!descriptor) return reply.status(404).send({ error: "unknown provider" });
