@@ -427,6 +427,7 @@ import {
   readGmailInboxSummary,
   readGmailInbox,
   readGoogleCalendarEvents,
+  readGoogleDriveFiles,
 } from "./channels/providers/browserSession.js";
 import {
   CHANNEL_PROVIDERS,
@@ -5104,6 +5105,50 @@ try {
       providerId: "google-calendar",
       accountId: record.accountId,
       events: result.events,
+    };
+  });
+
+  // GOOGLE-DRIVE-MINIMAL-BROWSE-CANONICAL-SLICE-01: structured Drive file list (read-only).
+  // Returns name/itemType/modifiedText/url for the first N files from the already-rendered
+  // Google Drive tab. No credential operations, no mutations, no write paths.
+  fastify.get("/api/channels/google-drive/files", async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const descriptor = resolveBrowserSessionProvider("google-drive");
+    if (!descriptor) return reply.status(404).send({ ok: false, error: "google-drive not registered", files: [] });
+    const q = (req.query as any) || {};
+    const accountId = q.accountId as string | undefined;
+    const limitRaw = Number(q.limit ?? 10);
+    const limit = Math.max(1, Math.min(50, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 10));
+    let record = accountId ? getChannelAccountById("google-drive", accountId) : null;
+    if (!record) record = ensureGatewayDefaultAccount("google-drive");
+    if (!record) return reply.status(404).send({ ok: false, error: "account not found", files: [] });
+    const env = await providerStatus(GATEWAY_CONFIG, descriptor, record);
+    if (env.channelState !== "connected") {
+      return reply.status(409).send({
+        ok: false,
+        reason: "not_connected",
+        providerId: "google-drive",
+        accountId: record.accountId,
+        channelState: env.channelState,
+        files: [],
+      });
+    }
+    const result = await readGoogleDriveFiles(GATEWAY_CONFIG, record, limit);
+    if (!result.ok) {
+      return reply.status(503).send({
+        ok: false,
+        reason: "read_failed",
+        error: result.error || "read failed",
+        providerId: "google-drive",
+        accountId: record.accountId,
+        files: [],
+      });
+    }
+    return {
+      ok: true,
+      providerId: "google-drive",
+      accountId: record.accountId,
+      files: result.files,
     };
   });
 

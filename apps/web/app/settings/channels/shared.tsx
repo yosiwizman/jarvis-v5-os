@@ -474,6 +474,50 @@ function CalendarEventsList({ accountId }: { accountId: string }) {
   );
 }
 
+// GOOGLE-DRIVE-MINIMAL-BROWSE-CANONICAL-SLICE-01: minimal read-only files list for the
+// Google Drive connected-state card. Fetches the 10 most-recent files once on mount. No polling — MVP.
+type DriveFile = { id: string; name: string; itemType: string; modifiedText: string; url: string };
+
+function DriveFileList({ accountId }: { accountId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<DriveFile[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/channels/google-drive/files?accountId=${encodeURIComponent(accountId)}&limit=10`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.ok === false) {
+          setError(data.error || data.reason || "Failed to load files");
+        } else {
+          setFiles(Array.isArray(data?.files) ? data.files : []);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) setError(e.message || "network error");
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [accountId]);
+
+  if (loading) return <div data-testid="drive-files-loading" className="text-xs text-white/50 pt-1">Loading files…</div>;
+  if (error) return <div data-testid="drive-files-error" className="text-xs text-red-300 pt-1">{error}</div>;
+  if (files.length === 0) return <div data-testid="drive-files-empty" className="text-xs text-white/40 pt-1">No visible files</div>;
+  return (
+    <ul data-testid="drive-files-list" className="space-y-1 pt-1">
+      {files.map((f) => (
+        <li key={f.id} data-testid="drive-files-row" className="flex items-center gap-2 text-xs text-white/70">
+          <span className="font-medium truncate max-w-[180px]">{f.name || "(unnamed)"}</span>
+          {f.itemType && <span className="truncate text-white/50">{f.itemType}</span>}
+          {f.modifiedText && <span className="truncate text-white/50">{f.modifiedText}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ChannelAccountCard({
   descriptor,
   account,
@@ -571,6 +615,9 @@ export function ChannelAccountCard({
           )}
           {descriptor.providerId === "google-calendar" && (
             <CalendarEventsList accountId={account.accountId} />
+          )}
+          {descriptor.providerId === "google-drive" && (
+            <DriveFileList accountId={account.accountId} />
           )}
           <button
             onClick={handleDisconnect}
