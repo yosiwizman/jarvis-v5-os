@@ -21,6 +21,8 @@ import { registerLLMRoutes } from "./routes/llm.routes.js";
 import { registerHttpsRoutes } from "./routes/https.routes.js";
 import { registerRemoteAccessRoutes } from "./routes/remote-access.routes.js";
 import { registerOpsRoutes } from "./routes/ops.routes.js";
+import { registerAssistantRoutes } from "./routes/assistant.routes.js";
+import { initAssistantStore } from "./storage/assistantStore.js";
 import { initializeLockdownService } from "./services/lockdownService.js";
 import { readSecrets } from "./storage/secretStore.js";
 import { isPinConfigured } from "./auth/index.js";
@@ -546,6 +548,10 @@ logger.info("Conversation store initialized");
 // Initialize action store
 await initActionStore();
 logger.info("Action store initialized");
+
+// Initialize assistant store
+await initAssistantStore();
+logger.info("Assistant store initialized");
 
 // Initialize notification scheduler
 await notificationScheduler.initialize();
@@ -2258,6 +2264,7 @@ try {
   register3DPrintRoutes(fastify);
   registerSmartHomeRoutes(fastify);
   registerLockdownRoutes(fastify);
+  registerAssistantRoutes(fastify);
 
   const ReasoningEffortSchema = z.enum(["minimal", "low", "medium", "high"]);
   const VerbositySchema = z.enum(["low", "medium", "high"]);
