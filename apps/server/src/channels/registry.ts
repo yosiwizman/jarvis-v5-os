@@ -88,7 +88,7 @@ export const CHANNEL_PROVIDERS: Record<string, ChannelProviderDescriptor> = {
     profileDirPrefix: "user-data",
     hasGatewayDefault: true,
     identityRegex: EMAIL_IDENTITY_REGEX,
-    signedInPredicate: { kind: "identity-required" },
+    signedInPredicate: { kind: "title-not-signin" },
     uiAccent: "blue",
     uiIcon: "google",
     uiOrder: 15,
