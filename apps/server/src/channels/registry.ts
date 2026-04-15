@@ -81,7 +81,7 @@ export const CHANNEL_PROVIDERS: Record<string, ChannelProviderDescriptor> = {
     displayName: "Google Calendar",
     category: "calendar",
     authStrategy: "browser-session-gateway",
-    capabilities: { read: false, send: false, multiAccount: false, disconnect: true, reconnect: true },
+    capabilities: { read: true, send: false, multiAccount: false, disconnect: true, reconnect: true },
     landingUrl: "https://calendar.google.com/",
     urlMatchers: ["calendar.google.com", "accounts.google.com"],
     cdpPortBase: 18910,
