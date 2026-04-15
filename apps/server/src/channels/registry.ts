@@ -76,6 +76,23 @@ export const CHANNEL_PROVIDERS: Record<string, ChannelProviderDescriptor> = {
     uiIcon: "imessage",
     uiOrder: 40,
   },
+  "google-calendar": {
+    providerId: "google-calendar",
+    displayName: "Google Calendar",
+    category: "calendar",
+    authStrategy: "browser-session-gateway",
+    capabilities: { read: false, send: false, multiAccount: false, disconnect: true, reconnect: true },
+    landingUrl: "https://calendar.google.com/",
+    urlMatchers: ["calendar.google.com", "accounts.google.com"],
+    cdpPortBase: 18910,
+    profileDirPrefix: "user-data",
+    hasGatewayDefault: true,
+    identityRegex: EMAIL_IDENTITY_REGEX,
+    signedInPredicate: { kind: "identity-required" },
+    uiAccent: "blue",
+    uiIcon: "google",
+    uiOrder: 15,
+  },
   // D9 acceptance scaffold: Outlook demonstrates the "add a new provider in
   // <100 lines" target from D5 §3.7. It is a descriptor-only scaffold with
   // NO wired UI and NO routes, exactly matching the task's "keep skeletons
