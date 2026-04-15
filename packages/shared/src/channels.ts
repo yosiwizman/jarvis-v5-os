@@ -38,7 +38,7 @@ export type AuthStrategy =
 // in exactly one of the four user-visible categories; a
 // "placeholder"-style lane becomes e.g. category: "messages" with an
 // authStrategy of "placeholder", not a hidden bucket.
-export type ChannelCategory = "email" | "messages" | "phone" | "calendar";
+export type ChannelCategory = "email" | "messages" | "phone" | "calendar" | "files";
 
 export interface ChannelCapabilities {
   read: boolean;
