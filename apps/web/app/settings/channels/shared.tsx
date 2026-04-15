@@ -34,7 +34,7 @@ export type ChannelState =
   | "reconnect_needed";
 
 // G-T06.D14: client-side mirror of the server's ChannelCategory enum.
-export type UiChannelCategory = "email" | "messages" | "phone" | "calendar";
+export type UiChannelCategory = "email" | "messages" | "phone" | "calendar" | "files";
 
 // G-T06.D4: Gmail unread-count field component.
 //
@@ -328,6 +328,26 @@ export const UI_PROVIDERS: Record<string, UiProviderDescriptor> = {
     addBusyLabel: "Opening new Chrome…",
     addBlurb:
       "Opens a managed-browser window so you can sign in to Google Calendar. No credentials are stored.",
+    accentBorder: "border-blue-500/40",
+    accentBg: "bg-blue-600/20",
+    accentText: "text-blue-300",
+    accentHover: "hover:bg-blue-600/30 hover:text-white",
+    canMintAdditional: false,
+    renderIcon: () => <GoogleIcon />,
+  },
+  "google-drive": {
+    providerId: "google-drive",
+    displayName: "Google Drive",
+    category: "files",
+    ctaConnectLabel: "Connect Google Drive",
+    ctaConnectingLabel: "Opening Google Drive...",
+    ctaReconnectLabel: "Reconnect Google Drive",
+    connectedHeadline: (id) => (id ? `Google Drive Connected — ${id}` : "Google Drive Connected"),
+    addTitle: "Add another Google Drive account",
+    addButtonLabel: "Add Google Drive Account",
+    addBusyLabel: "Opening new Chrome…",
+    addBlurb:
+      "Opens a managed-browser window so you can sign in to Google Drive. No credentials are stored.",
     accentBorder: "border-blue-500/40",
     accentBg: "bg-blue-600/20",
     accentText: "text-blue-300",
