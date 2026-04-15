@@ -934,6 +934,161 @@ export async function readGoogleDriveFiles(
   }
 }
 
+// Google Contacts read helpers (read-only, no mutations, no write paths).
+// ─────────────────────────────────────────────────────────────────────
+
+// Security: mirrors isDriveTabUrl — hostname-only comparison prevents
+// substring-match spoofing.
+export function isContactsTabUrl(urlString: string | null | undefined): boolean {
+  if (!urlString || typeof urlString !== "string") return false;
+  try {
+    const h = new URL(urlString).hostname;
+    return h === "contacts.google.com";
+  } catch {
+    return false;
+  }
+}
+
+function googleContactsExpression(limit: number): string {
+  const safeLimit = Math.max(1, Math.min(50, limit));
+  return `(function(){
+    try {
+      var nodes = Array.from(document.querySelectorAll('[data-id]')).slice(0, ${safeLimit});
+      var contacts = nodes.map(function(node) {
+        var ariaLabel = node.getAttribute('aria-label') || '';
+        var id = node.getAttribute('data-id') || '';
+        var name = '';
+        var emailText = '';
+        var phoneText = '';
+        var url = '';
+
+        if (ariaLabel) {
+          var parts = ariaLabel.split(',').map(function(s){ return s.trim(); });
+          // name: first comma-segment.
+          if (parts.length > 0) name = parts[0];
+          // emailText: segment matching email pattern.
+          var emailPattern = /@\\w+\\.[\\w.]+/;
+          for (var i = 0; i < parts.length; i++) {
+            if (emailPattern.test(parts[i])) { emailText = parts[i]; break; }
+          }
+          // phoneText: segment matching phone pattern.
+          var phonePattern = /[\\+\\(][\\d \\-\\.\\(\\)]{6,}/;
+          for (var j = 0; j < parts.length; j++) {
+            if (phonePattern.test(parts[j])) { phoneText = parts[j]; break; }
+          }
+        }
+        if (!name) {
+          name = (node.textContent || '').trim().slice(0, 120);
+        }
+
+        // url: find ancestor or descendant <a href*="contacts.google.com">.
+        var el = node;
+        var found = null;
+        for (var k = 0; k < 5 && el; k++) {
+          if (el.tagName === 'A' && el.href && el.href.indexOf('contacts.google.com') !== -1) {
+            found = el;
+            break;
+          }
+          el = el.parentElement;
+        }
+        if (!found) {
+          var anchors = node.querySelectorAll('a[href*="contacts.google.com"]');
+          if (anchors.length > 0) found = anchors[0];
+        }
+        if (found) url = found.href;
+
+        return { id: id, name: name, emailText: emailText, phoneText: phoneText, url: url };
+      });
+      return { contacts: contacts };
+    } catch(e) { return { contacts: [], evalError: String(e) }; }
+  })()`;
+}
+
+export interface GoogleContact {
+  id: string;
+  name: string;
+  emailText: string;
+  phoneText: string;
+  url: string;
+}
+
+export type GoogleContactsReadResult =
+  | { ok: true; contacts: GoogleContact[] }
+  | { ok: false; error: string };
+
+export async function readGoogleContacts(
+  gw: GatewayConfig,
+  record: BrowserSessionAccountRecord,
+  limit: number,
+): Promise<GoogleContactsReadResult> {
+  const fail = (error: string): GoogleContactsReadResult => ({
+    ok: false,
+    error,
+  });
+  try {
+    let targetId: string | null = null;
+    let cdpPort: number;
+    if (record.isDefault) {
+      const gwStatusRes = await fetch(`http://127.0.0.1:${gw.port}/`, {
+        headers: { Authorization: `Bearer ${gw.authToken}` },
+      });
+      if (!gwStatusRes.ok) return fail("gateway unreachable");
+      const statusData = (await gwStatusRes.json()) as any;
+      if (!statusData.running) return fail("gateway not running");
+      cdpPort = Number(statusData.cdpPort) || 18800;
+      const tabsRes = await fetch(`http://127.0.0.1:${gw.port}/tabs`, {
+        headers: { Authorization: `Bearer ${gw.authToken}` },
+      });
+      if (!tabsRes.ok) return fail("gateway /tabs unreachable");
+      const tabsData = (await tabsRes.json()) as any;
+      const tab = (tabsData.tabs || []).find(
+        (t: any) => t?.type === "page" && isContactsTabUrl(t.url),
+      );
+      if (!tab?.targetId) return fail("no contacts tab");
+      targetId = tab.targetId;
+    } else {
+      if (record.cdpPort == null) return fail("no cdpPort");
+      cdpPort = record.cdpPort;
+      const res = await fetch(`http://127.0.0.1:${cdpPort}/json/list`, {
+        signal: AbortSignal.timeout(2000),
+      });
+      if (!res.ok) return fail("cdp /json/list unreachable");
+      const tabs = (await res.json()) as any[];
+      const tab = tabs.find(
+        (t) => t?.type === "page" && isContactsTabUrl(t.url),
+      );
+      if (!tab?.id) return fail("no contacts tab");
+      targetId = tab.id;
+    }
+
+    const evalResult = await cdpEvaluateOnTab(
+      cdpPort,
+      targetId!,
+      googleContactsExpression(limit),
+    );
+    if (!evalResult || typeof evalResult !== "object") {
+      return fail("unexpected eval result");
+    }
+    if (typeof (evalResult as any).evalError === "string") {
+      return fail((evalResult as any).evalError);
+    }
+    const rawContacts: any[] = Array.isArray((evalResult as any).contacts)
+      ? (evalResult as any).contacts
+      : [];
+    const contacts: GoogleContact[] = rawContacts.map((c: any) => ({
+      id: typeof c.id === "string" ? c.id : "",
+      name: typeof c.name === "string" ? c.name : "",
+      emailText: typeof c.emailText === "string" ? c.emailText : "",
+      phoneText: typeof c.phoneText === "string" ? c.phoneText : "",
+      url: typeof c.url === "string" ? c.url : "",
+    }));
+    // Truthful-empty: zero contacts from [data-id] query is ok — returns { ok: true, contacts: [] }.
+    return { ok: true, contacts };
+  } catch (err) {
+    return fail((err as Error).message || "read error");
+  }
+}
+
 export async function readGmailInbox(
   gw: GatewayConfig,
   record: BrowserSessionAccountRecord,
