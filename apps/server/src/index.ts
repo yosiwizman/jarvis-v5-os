@@ -23,6 +23,8 @@ import { registerRemoteAccessRoutes } from "./routes/remote-access.routes.js";
 import { registerOpsRoutes } from "./routes/ops.routes.js";
 import { registerAssistantRoutes } from "./routes/assistant.routes.js";
 import { initAssistantStore } from "./storage/assistantStore.js";
+import { registerAdmissionCandidateRoutes } from "./routes/admissionCandidates.routes.js";
+import { initAdmissionCandidateStore } from "./storage/admissionCandidateStore.js";
 import { initializeLockdownService } from "./services/lockdownService.js";
 import { readSecrets } from "./storage/secretStore.js";
 import { isPinConfigured } from "./auth/index.js";
@@ -552,6 +554,10 @@ logger.info("Action store initialized");
 // Initialize assistant store
 await initAssistantStore();
 logger.info("Assistant store initialized");
+
+// Initialize admission candidate store (M-CP-10)
+await initAdmissionCandidateStore();
+logger.info("Admission candidate store initialized");
 
 // Initialize notification scheduler
 await notificationScheduler.initialize();
@@ -2265,6 +2271,7 @@ try {
   registerSmartHomeRoutes(fastify);
   registerLockdownRoutes(fastify);
   registerAssistantRoutes(fastify);
+  registerAdmissionCandidateRoutes(fastify);
 
   const ReasoningEffortSchema = z.enum(["minimal", "low", "medium", "high"]);
   const VerbositySchema = z.enum(["low", "medium", "high"]);
