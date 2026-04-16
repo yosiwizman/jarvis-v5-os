@@ -93,7 +93,27 @@ Every entry must include all of these fields:
 
 ## Active Reservations
 
-No active reservations yet.
+```yaml
+- id: R-20260416-04
+  team: T5
+  branch: wrap/yahoo-connect-browser-session-01
+  slice_id: WRAP-1
+  files_reserved:
+    - apps/server/src/channels/accountsIndex.ts
+    - apps/server/src/channels/providers/browserSession.ts
+    - apps/server/src/channels/providers/yahoo.ts
+  files_shared_wiring_only: []
+  depends_on_sha: 378d99635f004b1e5c62334d2a35ab9756047a80
+  depends_on_reservation:
+    - R-20260416-01
+    - R-20260416-02
+    - R-20260416-03
+  downstream_consumers: []
+  contract_freeze_ref: n/a
+  founder_approval_ref: founder approval for bounded WRAP-1 yahoo browser-session lane
+  opened_at: 2026-04-16T00:00:00Z
+  expires_at: 2026-04-21T00:00:00Z
+```
 
 ## Closed Reservations
 
