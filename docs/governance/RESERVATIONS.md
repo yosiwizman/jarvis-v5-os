@@ -154,6 +154,10 @@ modes.
 
 ## Active Reservations
 
+No active reservations.
+
+## Closed Reservations
+
 ```yaml
 - id: R-20260416-04
   team: T5
@@ -174,9 +178,12 @@ modes.
   founder_approval_ref: founder approval for bounded WRAP-1 yahoo browser-session lane
   opened_at: 2026-04-16T00:00:00Z
   expires_at: 2026-04-21T00:00:00Z
+  close_mode: noop_proof
+  proven_sha: 0f67a520861bb56b00c6472be6c196c9071e07a6
+  proof_ref: COMPANY RUN 8-2 TERMINAL - TERMINAL 1 OUTPUT .txt
+  noop_reason: reserved WRAP-1 yahoo browser-session slice was already real on main through existing generic registry/account/browser-session adapters; no implementation PR existed because no code change was required
+  closed_at: 2026-04-16T18:51:30Z
 ```
-
-## Closed Reservations
 
 ```yaml
 - id: R-20260416-03
