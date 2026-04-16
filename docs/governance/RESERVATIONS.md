@@ -91,6 +91,67 @@ Every entry must include all of these fields:
     the org. Prep / proof / research / QA / wrapper lanes against
     non-shared files are uncapped but still require a reservation.
 
+## How to close a reservation
+
+When a reservation resolves, T7 moves it from **Active Reservations**
+to **Closed Reservations** under exactly one of three close modes.
+The `close_mode` field names the path taken. Only T7 writes closures.
+The "How to open" step 5 above describes the common case (Path A);
+this section is the full, truthful enumeration.
+
+### Path A — `close_mode: merge`
+
+The working branch named in the reservation merges to `main` via PR.
+This is the default outcome for any reservation that produced code.
+Truthful closure fields:
+
+```yaml
+  close_mode: merge
+  merged_pr: "#<number>"          # PR that merged the working branch
+  merged_sha: <merge commit SHA on main>
+  closed_at: <ISO 8601 UTC>
+```
+
+### Path B — `close_mode: expiry`
+
+The reservation reaches `expires_at` without producing a merged
+working branch. T7 closes per rule 7 above. The reservation must be
+re-justified and re-opened if the work is still wanted; it does not
+auto-renew. Truthful closure fields:
+
+```yaml
+  close_mode: expiry
+  closed_at: <ISO 8601 UTC>
+  expiry_reason: <short description of why no merge occurred>
+```
+
+`merged_pr` and `merged_sha` are **not** written for expiry closures.
+
+### Path C — `close_mode: noop_proof`
+
+The reserved slice is already real on `main` at the time the
+reservation is evaluated, hard receipts prove the acceptance
+outcome, and no implementation PR exists because no code change
+was required (for example: the reservation targeted files whose
+generic, provider-agnostic code on `main` already serves the
+reserved capability). T7 may close the reservation without
+fabricating a `merged_pr`. Truthful closure fields:
+
+```yaml
+  close_mode: noop_proof
+  proven_sha: <main SHA at which the slice was proven real>
+  proof_ref: <accepted proof bundle reference>
+  noop_reason: <one-line description of why no implementation PR exists>
+  closed_at: <ISO 8601 UTC>
+```
+
+`merged_pr` is **not** required for `close_mode: noop_proof`, and
+`merged_sha` must **not** be fabricated for `close_mode: noop_proof`
+— writing a merge SHA where no merge happened is a governance-drift
+violation. Path A (merge) and Path B (expiry) are unchanged by this
+section; each reservation closes under exactly one of the three
+modes.
+
 ## Active Reservations
 
 ```yaml
