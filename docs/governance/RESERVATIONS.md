@@ -93,7 +93,26 @@ Every entry must include all of these fields:
 
 ## Active Reservations
 
-No active reservations yet.
+```yaml
+- id: R-20260416-02
+  team: T2
+  branch: cp/m-cp-3-unified-status-registry-01
+  slice_id: M-CP-3
+  files_reserved:
+    - apps/server/src/storage/statusRegistryStore.ts
+    - apps/server/src/services/statusRegistryService.ts
+    - apps/server/src/routes/statusRegistry.routes.ts
+  files_shared_wiring_only:
+    - apps/server/src/index.ts
+  depends_on_sha: a54922093f75ef44d5ccc7e81810e777d74c515f
+  depends_on_reservation:
+    - R-20260416-01
+  downstream_consumers: []
+  contract_freeze_ref: n/a
+  founder_approval_ref: founder approval for bounded M-CP-3 unified status registry lane
+  opened_at: 2026-04-16T00:00:00Z
+  expires_at: 2026-04-21T00:00:00Z
+```
 
 ## Closed Reservations
 
