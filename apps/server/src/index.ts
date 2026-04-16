@@ -25,6 +25,8 @@ import { registerAssistantRoutes } from "./routes/assistant.routes.js";
 import { initAssistantStore } from "./storage/assistantStore.js";
 import { registerAdmissionCandidateRoutes } from "./routes/admissionCandidates.routes.js";
 import { initAdmissionCandidateStore } from "./storage/admissionCandidateStore.js";
+import { registerAuthConnectRoutes } from "./routes/authConnect.routes.js";
+import { initAuthConnectStore } from "./storage/authConnectStore.js";
 import { initializeLockdownService } from "./services/lockdownService.js";
 import { readSecrets } from "./storage/secretStore.js";
 import { isPinConfigured } from "./auth/index.js";
@@ -558,6 +560,10 @@ logger.info("Assistant store initialized");
 // Initialize admission candidate store (M-CP-10)
 await initAdmissionCandidateStore();
 logger.info("Admission candidate store initialized");
+
+// Initialize auth/connect orchestrator store (M-CP-4)
+await initAuthConnectStore();
+logger.info("Auth/connect orchestrator store initialized");
 
 // Initialize notification scheduler
 await notificationScheduler.initialize();
@@ -2272,6 +2278,7 @@ try {
   registerLockdownRoutes(fastify);
   registerAssistantRoutes(fastify);
   registerAdmissionCandidateRoutes(fastify);
+  registerAuthConnectRoutes(fastify);
 
   const ReasoningEffortSchema = z.enum(["minimal", "low", "medium", "high"]);
   const VerbositySchema = z.enum(["low", "medium", "high"]);

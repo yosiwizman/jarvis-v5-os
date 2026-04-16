@@ -93,7 +93,25 @@ Every entry must include all of these fields:
 
 ## Active Reservations
 
-No active reservations yet.
+```yaml
+- id: R-20260416-01
+  team: T2
+  branch: cp/m-cp-4-auth-connect-orchestrator-01
+  slice_id: M-CP-4
+  files_reserved:
+    - apps/server/src/storage/authConnectStore.ts
+    - apps/server/src/services/authConnectOrchestrator.ts
+    - apps/server/src/routes/authConnect.routes.ts
+  files_shared_wiring_only:
+    - apps/server/src/index.ts
+  depends_on_sha: eaacdfd2a1085b410dd64b6512ccd50efb84e778
+  depends_on_reservation: []
+  downstream_consumers: []
+  contract_freeze_ref: n/a
+  founder_approval_ref: founder approval for bounded M-CP-4 auth/connect orchestrator lane
+  opened_at: 2026-04-16T00:00:00Z
+  expires_at: 2026-04-21T00:00:00Z
+```
 
 ## Closed Reservations
 
