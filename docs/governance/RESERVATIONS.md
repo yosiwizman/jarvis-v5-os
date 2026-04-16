@@ -93,6 +93,10 @@ Every entry must include all of these fields:
 
 ## Active Reservations
 
+No active reservations yet.
+
+## Closed Reservations
+
 ```yaml
 - id: R-20260416-01
   team: T2
@@ -111,8 +115,7 @@ Every entry must include all of these fields:
   founder_approval_ref: founder approval for bounded M-CP-4 auth/connect orchestrator lane
   opened_at: 2026-04-16T00:00:00Z
   expires_at: 2026-04-21T00:00:00Z
+  merged_sha: 97a8c5d5e5cb5f385d10701d1dc7fa3cc460c59a
+  merged_pr: "#137"
+  closed_at: 2026-04-16T00:00:00Z
 ```
-
-## Closed Reservations
-
-No closed reservations yet.
