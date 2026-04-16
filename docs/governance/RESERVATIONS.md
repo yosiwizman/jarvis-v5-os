@@ -93,7 +93,24 @@ Every entry must include all of these fields:
 
 ## Active Reservations
 
-No active reservations yet.
+```yaml
+- id: R-20260416-03
+  team: T3
+  branch: ps/m-ps-7-auth-connect-surface-01
+  slice_id: M-PS-7
+  files_reserved:
+    - apps/web/app/settings/auth-connect/page.tsx
+  files_shared_wiring_only: []
+  depends_on_sha: 393f2e47df49e34c27fb8971855648afeb98f429
+  depends_on_reservation:
+    - R-20260416-01
+    - R-20260416-02
+  downstream_consumers: []
+  contract_freeze_ref: n/a
+  founder_approval_ref: founder approval for bounded M-PS-7 auth-connect product-surface lane
+  opened_at: 2026-04-16T00:00:00Z
+  expires_at: 2026-04-21T00:00:00Z
+```
 
 ## Closed Reservations
 
