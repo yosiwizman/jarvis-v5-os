@@ -93,6 +93,10 @@ Every entry must include all of these fields:
 
 ## Active Reservations
 
+No active reservations yet.
+
+## Closed Reservations
+
 ```yaml
 - id: R-20260416-03
   team: T3
@@ -110,9 +114,10 @@ Every entry must include all of these fields:
   founder_approval_ref: founder approval for bounded M-PS-7 auth-connect product-surface lane
   opened_at: 2026-04-16T00:00:00Z
   expires_at: 2026-04-21T00:00:00Z
+  merged_sha: 2248d66ccf922947e4f6fa07c94d7fac6b1ffda5
+  merged_pr: "#141"
+  closed_at: 2026-04-16T00:00:00Z
 ```
-
-## Closed Reservations
 
 ```yaml
 - id: R-20260416-01
