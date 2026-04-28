@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200">
+  <defs>
+    <filter id="ringGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g fill="none" stroke="#63f6ff" stroke-linecap="round" stroke-linejoin="round" filter="url(#ringGlow)">
+    <ellipse cx="800" cy="430" rx="382" ry="356" stroke-width="1.8" opacity="0.9"/>
+    <ellipse cx="800" cy="430" rx="346" ry="322" stroke-width="1.2" opacity="0.35"/>
+    <ellipse cx="800" cy="430" rx="314" ry="292" stroke-width="1.1" opacity="0.30"/>
+    <ellipse cx="800" cy="430" rx="279" ry="260" stroke-width="1.2" opacity="0.35" stroke-dasharray="6 10"/>
+    <ellipse cx="800" cy="430" rx="232" ry="216" stroke-width="1.0" opacity="0.28"/>
+    <ellipse cx="800" cy="430" rx="178" ry="166" stroke-width="0.95" opacity="0.26"/>
+    <path d="M 790 50 A 385 360 0 0 1 885 70" stroke-width="1.2" opacity="0.38"/>
+    <path d="M 1010 125 A 350 325 0 0 1 1145 230" stroke-width="1.1" opacity="0.30"/>
+    <path d="M 1060 715 A 350 325 0 0 1 995 790" stroke-width="1.1" opacity="0.30"/>
+    <path d="M 505 675 A 350 325 0 0 0 680 800" stroke-width="1.0" opacity="0.26"/>
+    <path d="M 450 550 A 380 356 0 0 0 475 395" stroke-width="1.0" opacity="0.24"/>
+    <path d="M 500 180 A 330 308 0 0 1 640 100" stroke-width="1.0" opacity="0.22"/>
+    <path d="M 590 130 L 600 160" stroke-width="1.4" opacity="0.45"/>
+    <path d="M 900 50 L 890 85" stroke-width="1.4" opacity="0.45"/>
+    <path d="M 1120 390 L 1145 415" stroke-width="1.4" opacity="0.42"/>
+    <path d="M 1145 650 L 1165 675" stroke-width="1.4" opacity="0.42"/>
+    <path d="M 720 790 L 730 820" stroke-width="1.4" opacity="0.42"/>
+    <path d="M 435 485 L 462 492" stroke-width="1.4" opacity="0.42"/>
+  </g>
+</svg>
