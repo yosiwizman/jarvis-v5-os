@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <filter id="glowS" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowM" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowL" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="11" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="18%" stop-color="#dcffff" stop-opacity="0.98"/>
+      <stop offset="48%" stop-color="#85f7ff" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#28dcff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#62f6ff" stop-opacity="0"/>
+      <stop offset="18%" stop-color="#62f6ff" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#d9ffff" stop-opacity="1"/>
+      <stop offset="82%" stop-color="#62f6ff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#62f6ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+<g id="geometry">
+  <polygon points="512.00,282.00 711.19,627.00 312.81,627.00" stroke="#7bf8ff" stroke-opacity="0.92" stroke-width="2.2" filter="url(#glowS)"/>
+  <polygon points="512.00,742.00 312.81,397.00 711.19,397.00" stroke="#7bf8ff" stroke-opacity="0.92" stroke-width="2.2" filter="url(#glowS)"/>
+  <polygon points="512.00,352.00 650.56,592.00 373.44,592.00" stroke="#7bf8ff" stroke-opacity="0.84" stroke-width="2" filter="url(#glowS)"/>
+  <polygon points="512.00,672.00 373.44,432.00 650.56,432.00" stroke="#7bf8ff" stroke-opacity="0.84" stroke-width="2" filter="url(#glowS)"/>
+  <polygon points="402.00,402.00 622.00,402.00 622.00,622.00 402.00,622.00" stroke="#7bf8ff" stroke-opacity="0.68" stroke-width="1.8" filter="url(#glowS)"/>
+  <circle cx="512" cy="512" r="125" stroke="#63f2ff" stroke-opacity="0.22" stroke-width="1.2" filter="url(#glowS)"/>
+  <circle cx="512" cy="512" r="96" stroke="#63f2ff" stroke-opacity="0.16" stroke-width="1.2" filter="url(#glowS)"/>
+</g>
+</svg>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+<defs>
+
+<filter id="ringGlow" x="-50%" y="-50%" width="200%" height="200%">
+  <feGaussianBlur stdDeviation="1.8" result="blur"/>
+  <feComposite in="blur" in2="SourceGraphic" operator="over"/>
+</filter>
+
+</defs>
+<g id="akior-rings"><circle cx="800" cy="450" r="380" stroke="#63f6ff" stroke-opacity="0.62" stroke-width="1" filter="url(#ringGlow)"/>
+<circle cx="800" cy="450" r="330" stroke="#63f6ff" stroke-opacity="0.48" stroke-width="1" stroke-dasharray="6 10" filter="url(#ringGlow)"/>
+<circle cx="800" cy="450" r="282" stroke="#63f6ff" stroke-opacity="0.58" stroke-width="1" filter="url(#ringGlow)"/>
+<circle cx="800" cy="450" r="230" stroke="#63f6ff" stroke-opacity="0.42" stroke-width="1" stroke-dasharray="3 12" filter="url(#ringGlow)"/>
+<circle cx="800" cy="450" r="180" stroke="#63f6ff" stroke-opacity="0.38" stroke-width="1" filter="url(#ringGlow)"/>
+<circle cx="800" cy="450" r="360" stroke="#bffcff" stroke-opacity="0.18" stroke-width="0.6"/>
+<circle cx="800" cy="450" r="307" stroke="#bffcff" stroke-opacity="0.16" stroke-width="0.6"/>
+<circle cx="800" cy="450" r="255" stroke="#bffcff" stroke-opacity="0.14" stroke-width="0.6"/>
+<circle cx="800" cy="450" r="205" stroke="#bffcff" stroke-opacity="0.12" stroke-width="0.6"/>
+<line x1="1192.00" y1="450.00" x2="1220.00" y2="450.00" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="965.00" y1="450.00" x2="985.00" y2="450.00" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="1077.19" y1="727.19" x2="1096.98" y2="746.98" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="916.67" y1="566.67" x2="930.81" y2="580.81" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="800.00" y1="842.00" x2="800.00" y2="870.00" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="800.00" y1="615.00" x2="800.00" y2="635.00" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="522.81" y1="727.19" x2="503.02" y2="746.98" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="683.33" y1="566.67" x2="669.19" y2="580.81" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="408.00" y1="450.00" x2="380.00" y2="450.00" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="635.00" y1="450.00" x2="615.00" y2="450.00" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="522.81" y1="172.81" x2="503.02" y2="153.02" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="683.33" y1="333.33" x2="669.19" y2="319.19" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="800.00" y1="58.00" x2="800.00" y2="30.00" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="800.00" y1="285.00" x2="800.00" y2="265.00" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="1077.19" y1="172.81" x2="1096.98" y2="153.02" stroke="#83fbff" stroke-opacity="0.8" stroke-width="1"/>
+<line x1="916.67" y1="333.33" x2="930.81" y2="319.19" stroke="#63f6ff" stroke-opacity="0.55" stroke-width="0.8"/>
+<line x1="370" y1="450" x2="398" y2="450" stroke="#9afcff" stroke-opacity="0.7" stroke-width="1"/>
+<line x1="1202" y1="450" x2="1230" y2="450" stroke="#9afcff" stroke-opacity="0.7" stroke-width="1"/>
+<line x1="800" y1="20" x2="800" y2="48" stroke="#9afcff" stroke-opacity="0.7" stroke-width="1"/>
+<line x1="800" y1="852" x2="800" y2="880" stroke="#9afcff" stroke-opacity="0.7" stroke-width="1"/></g>
+</svg>
