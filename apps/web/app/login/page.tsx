@@ -46,10 +46,10 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-start relative overflow-hidden bg-[#020c1f] py-8">
       {/* Background Pattern */}
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-[0.06] mix-blend-screen pointer-events-none"
         style={{
           backgroundImage: "url(/assets/hex.png)",
           backgroundSize: "30%",
@@ -59,30 +59,34 @@ function LoginContent() {
       />
 
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 via-transparent to-blue-900/20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/10 via-transparent to-blue-900/10 pointer-events-none" />
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="card p-8 space-y-8 backdrop-blur-xl bg-black/40 border border-cyan-500/20 shadow-[0_0_60px_rgba(34,211,238,0.15)]">
-          {/* Logo Section */}
+      {/* AKIOR Hero — stacked ABOVE the access card, not overlapping it */}
+      <div className="relative z-10 pointer-events-none w-full flex justify-center flex-1 items-end pb-2">
+        <div className="w-[min(720px,92vw)]">
+          <AkiorCore state="idle" size="100%" surface="login-idle" />
+        </div>
+      </div>
+
+      {/* Login Card — sits BELOW the hero */}
+      <div className="relative z-10 w-full max-w-md mx-4 mt-4 mb-8">
+        <div className="card p-8 space-y-6 backdrop-blur-xl bg-black/55 border border-cyan-500/20 shadow-[0_0_60px_rgba(34,211,238,0.18)]">
+          {/* Branding — sits over the ambient AKIOR background */}
           <div className="text-center" data-testid="brand-mark">
-            <div className="flex flex-col items-center gap-4">
-              <AkiorCore state="idle" size={220} />
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="text-3xl font-bold tracking-[0.3em] text-cyan-400"
-                  style={{
-                    textShadow:
-                      "0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 212, 255, 0.3)",
-                  }}
-                >
-                  AKIOR
-                </div>
-                <div className="text-[9px] tracking-[0.15em] text-cyan-400/70 uppercase text-center leading-tight">
-                  Advanced Knowledge Intelligence
-                  <br />
-                  Operating Resource
-                </div>
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="text-4xl font-bold tracking-[0.35em] text-cyan-300"
+                style={{
+                  textShadow:
+                    "0 0 24px rgba(0, 212, 255, 0.75), 0 0 48px rgba(0, 212, 255, 0.35)",
+                }}
+              >
+                AKIOR
+              </div>
+              <div className="text-[10px] tracking-[0.2em] text-cyan-300/75 uppercase text-center leading-tight mt-1">
+                Advanced Knowledge Intelligence
+                <br />
+                Operating Resource
               </div>
             </div>
           </div>

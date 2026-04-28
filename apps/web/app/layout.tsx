@@ -1,7 +1,7 @@
 "use client";
 
 import "./globals.css";
-import "@/styles/akior.css";
+import "@/styles/akior.v3.css";
 import "@/styles/phase5-akior-css-addon.css";
 import Link from "next/link";
 import { NavigationBridge } from "@/components/navigation-bridge";
@@ -51,6 +51,7 @@ export default function RootLayout({
 
   // Hide sidebar on login page
   const isLoginPage = pathname === "/login";
+  const isJarvisPage = pathname === "/jarvis";
   const titleText = `${BRAND.productName} Console`;
 
   // Set document title
@@ -86,7 +87,7 @@ export default function RootLayout({
             <NotificationProvider>
               {/* HTTP security warning banner */}
               <InsecureBanner />
-              {!isLoginPage && (
+              {!isLoginPage && !isJarvisPage && (
                 <aside
                   className={`h-screen fixed top-0 left-0 p-4 card flex flex-col overflow-hidden z-50 transition-transform duration-300 ${isCollapsed ? "-translate-x-full" : "translate-x-0"} w-[260px]`}
                 >
@@ -217,7 +218,7 @@ export default function RootLayout({
               )}
 
               {/* Floating menu button when sidebar is hidden */}
-              {!isLoginPage && isCollapsed && (
+              {!isLoginPage && !isJarvisPage && isCollapsed && (
                 <button
                   onClick={() => setIsCollapsed(false)}
                   className="fixed top-4 left-4 z-40 btn p-3 shadow-lg"
@@ -228,14 +229,20 @@ export default function RootLayout({
               )}
 
               <main
-                className={`relative p-8 space-y-6 transition-all duration-300 ${isLoginPage ? "ml-0 p-0" : isCollapsed ? "ml-0" : "ml-[260px]"}`}
+                className={`relative transition-all duration-300 ${
+                  isLoginPage || isJarvisPage
+                    ? "ml-0 p-0"
+                    : isCollapsed
+                      ? "ml-0 p-8 space-y-6"
+                      : "ml-[260px] p-8 space-y-6"
+                }`}
               >
-                <NavigationBridge />
+                {!isJarvisPage && <NavigationBridge />}
                 {children}
               </main>
 
               {/* HUD Widget - System Status (V3 inspired) */}
-              {!isLoginPage && <HudWidget />}
+              {!isLoginPage && !isJarvisPage && <HudWidget />}
 
               {/* Global AKIOR Voice Assistant */}
               {!isLoginPage && showFloatingJarvis && (
