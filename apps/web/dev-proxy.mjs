@@ -7,7 +7,7 @@ const key = fs.readFileSync('./certs/dev-host-key.pem');
 const cert = fs.readFileSync('./certs/dev-host.pem');
 
 const NEXT_TARGET = 'http://localhost:3001';
-const API_TARGET = 'https://localhost:1234'; // Backend runs HTTPS
+const API_TARGET = 'http://localhost:3002'; // Backend runs HTTP on :3002 (DISABLE_HTTPS=true)
 
 const proxy = httpProxy.createProxyServer({
   changeOrigin: true,
@@ -70,18 +70,8 @@ process.on('uncaughtException', (err) => {
 const server = https.createServer({ key, cert }, (req, res) => {
   const target = pickTarget(req);
   
-  // Strip /api prefix when forwarding to backend
-  if (target === API_TARGET && req.url && req.url.startsWith('/api')) {
-    if (req.url === '/api') {
-      req.url = '/';
-    } else if (req.url.startsWith('/api/')) {
-      req.url = req.url.slice(4);
-      if (!req.url.startsWith('/')) {
-        req.url = '/' + req.url;
-      }
-    }
-  }
-  
+  // Forward /api/* paths unchanged — backend serves routes with /api prefix
+
   proxy.web(req, res, { target }, (err) => {
     if (err) {
       console.error('Failed to proxy request:', req.url, err.message);
