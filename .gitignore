@@ -31,3 +31,7 @@ apps/server/infra/
 # Web certificates
 apps/web/certs/
 apps/web/*.pem
+
+# Runtime logs (apps/server) — runtime artifacts, never commit
+apps/server/data/audit.log
+apps/server/data/logs/
